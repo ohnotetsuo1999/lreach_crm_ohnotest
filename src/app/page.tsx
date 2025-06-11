@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Dashboard } from '@/components/Dashboard/Dashboard'
 import { UserManagement } from '@/components/UserManagement/UserManagement'
 import { SegmentBuilder } from '@/components/SegmentBuilder/SegmentBuilder'
+import { SegmentList } from '@/components/SegmentBuilder/SegmentList'
 import { ScenarioList } from '@/components/ScenarioList/ScenarioList'
 import { ScenarioEditor } from '@/components/ScenarioEditor/ScenarioEditor'
 import { TemplateEditor } from '@/components/TemplateEditor/TemplateEditor'
@@ -19,7 +20,7 @@ import {
   Template, 
   DeliveryLog 
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send, Plus } from 'lucide-react'
 import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
@@ -29,6 +30,8 @@ export default function LineMarketingApp() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<any>(null)
+  const [segmentView, setSegmentView] = useState<'list' | 'builder'>('list')
+  const [editingSegment, setEditingSegment] = useState<Segment | null>(null)
   
   // Data state
   const [users, setUsers] = useState<User[]>([])
@@ -575,6 +578,10 @@ export default function LineMarketingApp() {
     setActiveTab(tab)
     setCurrentView('list')
     setEditingItem(null)
+    if (tab === 'segments') {
+      setSegmentView('list')
+      setEditingSegment(null)
+    }
   }
   
   const handleEdit = (item: any) => {
@@ -638,17 +645,62 @@ export default function LineMarketingApp() {
   
   // Segment handlers
   const handleSaveSegment = (segment: Omit<Segment, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newSegment: Segment = {
-      ...segment,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+    if (editingSegment) {
+      // Update existing segment
+      const updatedSegment: Segment = {
+        ...editingSegment,
+        ...segment,
+        updatedAt: new Date()
+      }
+      setSegments(segments.map(s => s.id === editingSegment.id ? updatedSegment : s))
+    } else {
+      // Create new segment
+      const newSegment: Segment = {
+        ...segment,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      setSegments([...segments, newSegment])
     }
-    setSegments([...segments, newSegment])
+    
+    // Return to list view
+    setSegmentView('list')
+    setEditingSegment(null)
   }
   
   const handleLoadSegment = (segment: Segment) => {
     console.log('Load segment', segment)
+  }
+
+  const handleCreateSegment = () => {
+    setEditingSegment(null)
+    setSegmentView('builder')
+  }
+
+  const handleEditSegment = (segment: Segment) => {
+    setEditingSegment(segment)
+    setSegmentView('builder')
+  }
+
+  const handleDuplicateSegment = (segment: Segment) => {
+    const duplicatedSegment: Segment = {
+      ...segment,
+      id: Date.now().toString(),
+      name: `${segment.name} (コピー)`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setSegments([...segments, duplicatedSegment])
+  }
+
+  const handleDeleteSegment = (segmentId: string) => {
+    setSegments(segments.filter(s => s.id !== segmentId))
+  }
+
+  const handleBackToSegmentList = () => {
+    setSegmentView('list')
+    setEditingSegment(null)
   }
   
   // Scenario handlers
@@ -903,20 +955,26 @@ export default function LineMarketingApp() {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <Dashboard
-            deliveries={deliveryLogs}
-            totalUsers={dashboardStats.totalUsers}
-            totalSent={dashboardStats.totalSent}
-            totalOpened={dashboardStats.totalOpened}
-            totalClicked={dashboardStats.totalClicked}
-            totalReservations={dashboardStats.totalReservations}
-            reservationRate={dashboardStats.reservationRate}
-            todayReservations={dashboardStats.todayReservations}
-            openRate={dashboardStats.openRate}
-            clickRate={dashboardStats.clickRate}
-            users={users}
-            scenarios={scenarios}
-          />
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">ダッシュボード</h1>
+              <p className="text-gray-600 mt-1">システム全体の状況を確認</p>
+            </div>
+            <Dashboard
+              deliveries={deliveryLogs}
+              totalUsers={dashboardStats.totalUsers}
+              totalSent={dashboardStats.totalSent}
+              totalOpened={dashboardStats.totalOpened}
+              totalClicked={dashboardStats.totalClicked}
+              totalReservations={dashboardStats.totalReservations}
+              reservationRate={dashboardStats.reservationRate}
+              todayReservations={dashboardStats.todayReservations}
+              openRate={dashboardStats.openRate}
+              clickRate={dashboardStats.clickRate}
+              users={users}
+              scenarios={scenarios}
+            />
+          </div>
         )
         
       case 'users':
@@ -936,14 +994,42 @@ export default function LineMarketingApp() {
         )
         
       case 'segments':
+        if (segmentView === 'builder') {
+          return (
+            <div>
+              <div className="flex items-center mb-6">
+                <button
+                  onClick={handleBackToSegmentList}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-4"
+                >
+                  ← セグメント一覧に戻る
+                </button>
+                <h2 className="text-lg font-medium text-gray-900">
+                  {editingSegment ? `${editingSegment.name} を編集` : '新規セグメント作成'}
+                </h2>
+              </div>
+              <SegmentBuilder
+                segments={segments}
+                users={users}
+                tags={tags}
+                statuses={statuses}
+                onSaveSegment={handleSaveSegment}
+                onLoadSegment={handleLoadSegment}
+                editingSegment={editingSegment}
+              />
+            </div>
+          )
+        }
+        
         return (
-          <SegmentBuilder
+          <SegmentList
             segments={segments}
-            users={users}
             tags={tags}
             statuses={statuses}
-            onSaveSegment={handleSaveSegment}
-            onLoadSegment={handleLoadSegment}
+            onCreateSegment={handleCreateSegment}
+            onEditSegment={handleEditSegment}
+            onDuplicateSegment={handleDuplicateSegment}
+            onDeleteSegment={handleDeleteSegment}
           />
         )
         
@@ -963,21 +1049,27 @@ export default function LineMarketingApp() {
         
       case 'templates':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">テンプレート管理</h2>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">テンプレート一覧</h1>
+                <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+                  <span>全0件</span>
+                </div>
+              </div>
               <button
                 onClick={() => {
                   setEditingItem(null)
                   setCurrentView('edit')
                 }}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
+                <Plus className="w-4 h-4 mr-2" />
                 新規テンプレート
               </button>
             </div>
             
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <p className="text-gray-500">テンプレート一覧がここに表示されます。</p>
             </div>
           </div>
@@ -1041,13 +1133,13 @@ export default function LineMarketingApp() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0">
+      <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0 fixed left-0 top-0 h-full z-10 flex flex-col">
         <div className="p-6">
           <h1 className="text-xl font-bold text-gray-900">LINE Marketing</h1>
           <p className="text-sm text-gray-600 mt-1">自動化プラットフォーム</p>
         </div>
         
-        <nav className="px-4 pb-4">
+        <nav className="px-4 pb-4 flex-1">
           <div className="space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon
@@ -1068,51 +1160,30 @@ export default function LineMarketingApp() {
             })}
           </div>
         </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {navigationItems.find(item => item.id === activeTab)?.label}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {activeTab === 'dashboard' && 'システム全体の状況を確認'}
-                  {activeTab === 'users' && 'ユーザー情報の管理とセグメンテーション'}
-                  {activeTab === 'segments' && 'ユーザーセグメントの作成と管理'}
-                  {activeTab === 'scenarios' && '自動配信シナリオの設定'}
-                  {activeTab === 'templates' && 'メッセージテンプレートの管理'}
-                  {activeTab === 'tags' && 'タグをフォルダで整理して効率的に管理'}
-                  {activeTab === 'broadcast' && 'ユーザーセグメントに対する一斉メッセージ配信'}
-                  {activeTab === 'action-rules' && 'ユーザーアクションに基づく自動タグ付与ルール'}
-                  {activeTab === 'reports' && '配信結果の分析とレポート'}
-                </p>
+        
+        {/* 管理者情報 */}
+        <div className="px-4 py-4 border-t border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-medium">管</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-gray-900">
+                管理者
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    管理者
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date().toLocaleDateString('ja-JP')}
-                  </div>
-                </div>
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">管</span>
-                </div>
+              <div className="text-xs text-gray-500">
+                {new Date().toLocaleDateString('ja-JP')}
               </div>
             </div>
           </div>
-        </header>
+        </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 ml-64">
         {/* Main Content Area */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
+        <main className="flex-1 bg-gray-50">
+          <div className="p-6 h-full">
             {renderMainContent()}
           </div>
         </main>

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConditionBuilder } from './ConditionBuilder'
 import { PreviewCount } from './PreviewCount'
 import { SegmentFilter, Segment, User, Tag, Status } from '@/types'
-import { Save, Eye, Code } from 'lucide-react'
+import { Save, Filter, Plus } from 'lucide-react'
 
 interface SegmentBuilderProps {
   segments: Segment[]
@@ -13,6 +13,7 @@ interface SegmentBuilderProps {
   statuses: Status[]
   onSaveSegment: (segment: Omit<Segment, 'id' | 'createdAt' | 'updatedAt'>) => void
   onLoadSegment: (segment: Segment) => void
+  editingSegment?: Segment | null
 }
 
 export function SegmentBuilder({
@@ -21,15 +22,42 @@ export function SegmentBuilder({
   tags,
   statuses,
   onSaveSegment,
-  onLoadSegment
+  onLoadSegment,
+  editingSegment
 }: SegmentBuilderProps) {
   const [segmentName, setSegmentName] = useState('')
+  const [segmentMemo, setSegmentMemo] = useState('')
   const [filter, setFilter] = useState<SegmentFilter>({
     conditions: [],
     logic: 'AND'
   })
-  const [showSQL, setShowSQL] = useState(false)
   const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null)
+
+  // Load editing segment data
+  useEffect(() => {
+    if (editingSegment) {
+      try {
+        const loadedFilter = JSON.parse(editingSegment.filterJson) as SegmentFilter
+        setFilter(loadedFilter)
+        setSegmentName(editingSegment.name)
+        setSegmentMemo(editingSegment.memo || '')
+        setSelectedSegment(editingSegment)
+      } catch (error) {
+        console.error('Failed to load editing segment:', error)
+        // Reset to empty state if loading fails
+        setFilter({ conditions: [], logic: 'AND' })
+        setSegmentName('')
+        setSegmentMemo('')
+        setSelectedSegment(null)
+      }
+    } else {
+      // Reset to empty state when not editing
+      setFilter({ conditions: [], logic: 'AND' })
+      setSegmentName('')
+      setSegmentMemo('')
+      setSelectedSegment(null)
+    }
+  }, [editingSegment])
 
   const handleSaveSegment = () => {
     if (!segmentName.trim()) {
@@ -44,12 +72,11 @@ export function SegmentBuilder({
 
     onSaveSegment({
       name: segmentName,
+      memo: segmentMemo.trim() || undefined,
       filterJson: JSON.stringify(filter)
     })
 
-    setSegmentName('')
-    setFilter({ conditions: [], logic: 'AND' })
-    setSelectedSegment(null)
+    // Don't reset state here - let the parent component handle navigation
   }
 
   const handleLoadSegment = (segment: Segment) => {
@@ -65,271 +92,135 @@ export function SegmentBuilder({
     }
   }
 
-  const generateSQL = (filter: SegmentFilter): string => {
-    if (filter.conditions.length === 0) {
-      return 'SELECT * FROM users;'
-    }
-
-    const conditions = filter.conditions.map((condition, index) => {
-      let clause = ''
-      
-      switch (condition.field) {
-        case 'name':
-          clause = `users.name ${getOperatorSQL(condition.operator)} '${condition.value}'`
-          break
-        case 'address':
-          clause = `users.address ${getOperatorSQL(condition.operator)} '${condition.value}'`
-          break
-        case 'phone':
-          clause = `users.phone ${getOperatorSQL(condition.operator)} '${condition.value}'`
-          break
-        case 'createdAt':
-          clause = `users.created_at ${getOperatorSQL(condition.operator)} '${condition.value}'`
-          break
-        case 'tags':
-          if (condition.operator === 'in') {
-            const tagIds = Array.isArray(condition.value) ? condition.value : [condition.value]
-            clause = `users.id IN (SELECT user_id FROM user_tags WHERE tag_id IN (${tagIds.map(id => `'${id}'`).join(', ')}))`
-          }
-          break
-        default:
-          clause = `users.${condition.field} ${getOperatorSQL(condition.operator)} '${condition.value}'`
-      }
-
-      if (index > 0 && condition.logic) {
-        return ` ${condition.logic} ${clause}`
-      }
-      return clause
-    }).join('')
-
-    return `SELECT DISTINCT users.*
-FROM users
-LEFT JOIN user_tags ON users.id = user_tags.user_id
-LEFT JOIN user_status_logs ON users.id = user_status_logs.user_id
-WHERE ${conditions};`
-  }
-
-  const getOperatorSQL = (operator: string): string => {
-    switch (operator) {
-      case 'equals': return '='
-      case 'not_equals': return '!='
-      case 'contains': return 'LIKE'
-      case 'not_contains': return 'NOT LIKE'
-      case 'greater_than': return '>'
-      case 'less_than': return '<'
-      case 'greater_equal': return '>='
-      case 'less_equal': return '<='
-      case 'in': return 'IN'
-      case 'not_in': return 'NOT IN'
-      default: return '='
-    }
-  }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* ヘッダー */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">セグメントビルダー</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            条件を組み合わせてユーザーセグメントを作成
-          </p>
-        </div>
-        
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button
-            onClick={() => setShowSQL(!showSQL)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Code className="w-4 h-4 mr-2" />
-            SQL表示
-          </button>
+          <h1 className="text-2xl font-bold text-gray-900">セグメントビルダー</h1>
+          <p className="text-gray-600 mt-1">条件を設定してユーザーセグメントを作成</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* セグメント一覧 */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">保存済みセグメント</h3>
-            
-            {segments.length === 0 ? (
-              <p className="text-gray-500 text-sm">保存されたセグメントはありません</p>
-            ) : (
-              <div className="space-y-2">
-                {segments.map((segment) => {
-                  let conditions = []
-                  try {
-                    const parsedFilter = JSON.parse(segment.filterJson)
-                    conditions = parsedFilter.conditions || []
-                  } catch (error) {
-                    conditions = []
-                  }
-                  
-                  const formatCondition = (condition: any) => {
-                    const fieldLabels: { [key: string]: string } = {
-                      'name': 'ユーザー名',
-                      'address': '住所',
-                      'phone': '電話番号',
-                      'createdAt': '登録日',
-                      'updatedAt': '最終更新日',
-                      'tags': 'タグ',
-                      'status': 'ステータス'
-                    }
-                    
-                    const operatorLabels: { [key: string]: string } = {
-                      'equals': '等しい',
-                      'contains': '含む',
-                      'greater_than': 'より大きい',
-                      'less_than': 'より小さい',
-                      'in': '含む',
-                      'not_in': '含まない'
-                    }
-                    
-                    const field = fieldLabels[condition.field] || condition.field
-                    const operator = operatorLabels[condition.operator] || condition.operator
-                    
-                    if (condition.field === 'tags') {
-                      const tagNames = tags.filter(tag => 
-                        Array.isArray(condition.value) 
-                          ? condition.value.includes(tag.id)
-                          : condition.value === tag.id
-                      ).map(tag => tag.name).join(', ')
-                      return `${field} ${operator} "${tagNames}"`
-                    }
-                    
-                    if (condition.field === 'status') {
-                      const statusNames = statuses.filter(status => 
-                        Array.isArray(condition.value)
-                          ? condition.value.includes(status.id)
-                          : condition.value === status.id
-                      ).map(status => status.label).join(', ')
-                      return `${field} ${operator} "${statusNames}"`
-                    }
-                    
-                    return `${field} ${operator} "${condition.value}"`
-                  }
-                  
-                  return (
-                    <button
-                      key={segment.id}
-                      onClick={() => handleLoadSegment(segment)}
-                      className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                        selectedSegment?.id === segment.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-medium text-gray-900 mb-2">{segment.name}</div>
-                      
-                      {conditions.length > 0 && (
-                        <div className="space-y-1 mb-2">
-                          {conditions.slice(0, 2).map((condition: any, index: number) => (
-                            <div key={index} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                              {formatCondition(condition)}
-                            </div>
-                          ))}
-                          {conditions.length > 2 && (
-                            <div className="text-xs text-gray-500">
-                              +{conditions.length - 2}件の条件
-                            </div>
-                          )}
-                        </div>
+      {/* メインコンテンツ */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* 左サイドバー: プレビュー */}
+        <div className="xl:col-span-1">
+          <PreviewCount 
+            filter={filter} 
+            users={users}
+            onRefresh={() => {
+              // リフレッシュロジック
+              setFilter({ ...filter })
+            }}
+          />
+        </div>
+
+          {/* メインエリア: 条件ビルダー */}
+          <div className="xl:col-span-3">
+            <div className="space-y-8">
+              {/* セグメント名入力 */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {/* セグメント名 */}
+                    <div>
+                      <label className="block text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                        <Filter className="w-5 h-5 mr-2 text-blue-600" />
+                        セグメント名
+                      </label>
+                      <input
+                        type="text"
+                        value={segmentName}
+                        onChange={(e) => setSegmentName(e.target.value)}
+                        className="block w-full px-4 py-3 text-lg border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="例: アクティブユーザー、新規登録者、VIPカスタマーなど"
+                      />
+                      <p className="mt-2 text-sm text-gray-600">
+                        わかりやすい名前をつけて、後で簡単に見つけられるようにしましょう
+                      </p>
+                    </div>
+
+                    {/* メモ */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        メモ（任意）
+                      </label>
+                      <textarea
+                        value={segmentMemo}
+                        onChange={(e) => setSegmentMemo(e.target.value)}
+                        rows={3}
+                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                        placeholder="このセグメントの用途や特徴などを記録できます（例: 月次キャンペーン用、リテンション対象者など）"
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        セグメントの目的や使用場面をメモしておくと後で便利です
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 条件ビルダー - より広いスペース */}
+              <div className="min-h-[600px]">
+                <ConditionBuilder
+                  filter={filter}
+                  tags={tags}
+                  statuses={statuses}
+                  onChange={setFilter}
+                />
+              </div>
+
+
+              {/* アクションバー */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm sticky bottom-0">
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-600">
+                      {filter.conditions.length > 0 && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                          {filter.conditions.length}個の条件
+                        </span>
                       )}
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-500">
-                          {new Date(segment.updatedAt).toLocaleDateString('ja-JP')}
-                        </div>
-                        {conditions.length > 1 && (
-                          <div className="text-xs text-blue-600 font-medium">
-                            {JSON.parse(segment.filterJson).logic || 'AND'}
-                          </div>
-                        )}
-                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        const newCondition = {
+                          field: 'lineFriendAddedAt',
+                          operator: 'after' as const,
+                          value: '',
+                          logic: filter.conditions.length > 0 ? 'AND' as const : undefined,
+                          title: ''
+                        }
+                        setFilter({
+                          ...filter,
+                          conditions: [...filter.conditions, newCondition]
+                        })
+                      }}
+                      className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      新しい条件を追加
                     </button>
-                  )
-                })}
+                    
+                    <button
+                      onClick={handleSaveSegment}
+                      disabled={!segmentName.trim() || filter.conditions.length === 0}
+                      className="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {editingSegment ? 'セグメント更新' : 'セグメント保存'}
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* プレビュー */}
-          <div className="mt-6">
-            <PreviewCount 
-              filter={filter} 
-              users={users}
-              onRefresh={() => {
-                // リフレッシュロジック
-                setFilter({ ...filter })
-              }}
-            />
-          </div>
-        </div>
-
-        {/* 条件ビルダー */}
-        <div className="lg:col-span-2">
-          <div className="space-y-6">
-            {/* セグメント名入力 */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                セグメント名
-              </label>
-              <input
-                type="text"
-                value={segmentName}
-                onChange={(e) => setSegmentName(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="例: アクティブユーザー、新規登録者など"
-              />
-            </div>
-
-            {/* 条件ビルダー */}
-            <ConditionBuilder
-              filter={filter}
-              tags={tags}
-              statuses={statuses}
-              onChange={setFilter}
-            />
-
-            {/* SQL表示 */}
-            {showSQL && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">生成されるSQL</h3>
-                <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-                  <code>{generateSQL(filter)}</code>
-                </pre>
-                <p className="mt-2 text-xs text-gray-500">
-                  ※ 実際のクエリは最適化される場合があります
-                </p>
-              </div>
-            )}
-
-            {/* アクション */}
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setSegmentName('')
-                  setFilter({ conditions: [], logic: 'AND' })
-                  setSelectedSegment(null)
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                リセット
-              </button>
-              
-              <button
-                onClick={handleSaveSegment}
-                disabled={!segmentName.trim() || filter.conditions.length === 0}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                セグメント保存
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
   )
 }

@@ -70,7 +70,9 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
         fieldValue = user.name
         break
       case 'address':
-        fieldValue = user.address || ''
+        // 住所から都道府県を抽出（モックデータでは直接都道府県名を返す）
+        const prefectures = ['東京都', '大阪府', '神奈川県', '愛知県', '福岡県', '埼玉県', '千葉県', '北海道']
+        fieldValue = [prefectures[Math.floor(Math.random() * prefectures.length)]]
         break
       case 'phone':
         fieldValue = user.phone || ''
@@ -81,11 +83,33 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
       case 'updatedAt':
         fieldValue = new Date(user.updatedAt)
         break
+      case 'lineFriendAddedAt':
+        // モックデータ: 実際の実装では user.lineFriendAddedAt を使用
+        fieldValue = new Date(user.createdAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000)
+        break
+      case 'lastReactionAt':
+        // モックデータ: 実際の実装では user.lastReactionAt を使用
+        fieldValue = new Date(user.updatedAt.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'lastInflowAt':
+        // モックデータ: 実際の実装では user.lastInflowAt を使用
+        fieldValue = new Date(user.createdAt.getTime() + Math.random() * 60 * 24 * 60 * 60 * 1000)
+        break
       case 'tags':
         fieldValue = user.tags.map(tag => tag.id)
         break
       case 'status':
-        fieldValue = user.statusHistory[0]?.statusId || null
+        fieldValue = user.statusHistory.map(s => s.statusId)
+        break
+      case 'age':
+        // モックデータ: 実際の実装では user.age を使用
+        const birthYear = new Date().getFullYear() - Math.floor(Math.random() * 60) - 18 // 18-78歳のランダム年齢
+        fieldValue = new Date().getFullYear() - birthYear
+        break
+      case 'calendarReservation':
+        // モックデータ: ユーザーの予約状況をランダムに生成
+        // 実際の実装では user.reservations から今後の予約をチェック
+        fieldValue = Math.random() > 0.5 // 50%の確率で今後の予約あり
         break
       default:
         return false
@@ -130,6 +154,57 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
           return Array.isArray(value) && !value.some(v => fieldValue.includes(v))
         }
         return Array.isArray(value) && !value.includes(fieldValue)
+      case 'contains_all':
+        // すべてのタグを含む
+        if (Array.isArray(fieldValue) && Array.isArray(value)) {
+          return value.every(v => fieldValue.includes(v))
+        }
+        return false
+      case 'contains_any':
+        // いずれかのタグを含む
+        if (Array.isArray(fieldValue) && Array.isArray(value)) {
+          return value.some(v => fieldValue.includes(v))
+        }
+        return false
+      case 'between':
+        // 期間内の評価（日付または年齢）
+        if (fieldValue instanceof Date && typeof value === 'object') {
+          const fromDate = value.from ? new Date(value.from) : null
+          const toDate = value.to ? new Date(value.to) : null
+          
+          if (fromDate && toDate) {
+            return fieldValue >= fromDate && fieldValue <= toDate
+          } else if (fromDate) {
+            return fieldValue >= fromDate
+          } else if (toDate) {
+            return fieldValue <= toDate
+          }
+        } else if (typeof fieldValue === 'number' && typeof value === 'object') {
+          // 年齢の範囲指定
+          const fromAge = value.from ? Number(value.from) : null
+          const toAge = value.to ? Number(value.to) : null
+          
+          if (fromAge !== null && toAge !== null) {
+            return fieldValue >= fromAge && fieldValue <= toAge
+          } else if (fromAge !== null) {
+            return fieldValue >= fromAge
+          } else if (toAge !== null) {
+            return fieldValue <= toAge
+          }
+        }
+        return false
+      case 'before':
+        // それ以前
+        if (fieldValue instanceof Date) {
+          return fieldValue < new Date(value)
+        }
+        return false
+      case 'after':
+        // それ以降
+        if (fieldValue instanceof Date) {
+          return fieldValue > new Date(value)
+        }
+        return false
       case 'exists':
         return fieldValue !== null && fieldValue !== undefined && fieldValue !== ''
       case 'not_exists':
@@ -157,7 +232,7 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6 z-20">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">プレビュー</h3>
         <button

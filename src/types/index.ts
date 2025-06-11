@@ -55,6 +55,7 @@ export interface UserStatusLog {
 export interface Segment {
   id: string
   name: string
+  memo?: string
   filterJson: string
   createdAt: Date
   updatedAt: Date
@@ -215,9 +216,10 @@ export interface StatsCardProps {
 
 export interface FilterCondition {
   field: string
-  operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'in' | 'not_in'
+  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'in' | 'not_in' | 'exists' | 'not_exists' | 'contains_all' | 'contains_any' | 'between' | 'before' | 'after'
   value: any
   logic?: 'AND' | 'OR'
+  title?: string // Custom title for the condition
 }
 
 export interface SegmentFilter {
