@@ -359,7 +359,7 @@ export function TagManagement({
       {/* コンテキストメニュー */}
       {contextMenu && (
         <>
-          <div className="fixed inset-0 z-40" onClick={closeContextMenu} />
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-50" onClick={closeContextMenu} />
           <div 
             className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
             style={{ top: contextMenu.y, left: contextMenu.x }}

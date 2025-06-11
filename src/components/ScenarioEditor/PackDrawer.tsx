@@ -162,7 +162,7 @@ export function PackDrawer({
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
       
-      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-xl">
+      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white bg-opacity-60 shadow-xl">
         <div className="flex h-full flex-col">
           {/* ヘッダー */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
