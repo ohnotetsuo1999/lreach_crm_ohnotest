@@ -5,15 +5,13 @@ import { UserTable } from './UserTable'
 import { TagFilterPanel } from './TagFilterPanel'
 import { BulkActionBar } from './BulkActionBar'
 import { User, Tag, Status } from '@/types'
-import { Plus, Upload, Download } from 'lucide-react'
+import { Plus, Search, Filter } from 'lucide-react'
 
 interface UserManagementProps {
   users: User[]
   tags: Tag[]
   statuses: Status[]
   onCreateUser: () => void
-  onImportUsers: () => void
-  onExportUsers: () => void
   onEditUser: (user: User) => void
   onDeleteUser: (userId: string) => void
   onAddTag: (userId: string, tagId: string) => void
@@ -23,9 +21,6 @@ interface UserManagementProps {
     addTags: (userIds: string[], tagIds: string[]) => void
     removeTags: (userIds: string[], tagIds: string[]) => void
     changeStatus: (userIds: string[], statusId: string) => void
-    delete: (userIds: string[]) => void
-    export: (userIds: string[]) => void
-    sendMessage: (userIds: string[]) => void
   }
 }
 
@@ -34,8 +29,6 @@ export function UserManagement({
   tags,
   statuses,
   onCreateUser,
-  onImportUsers,
-  onExportUsers,
   onEditUser,
   onDeleteUser,
   onAddTag,
@@ -45,21 +38,27 @@ export function UserManagement({
 }: UserManagementProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
 
   // フィルタリング処理
   const filteredUsers = users.filter(user => {
     // 検索クエリによるフィルタ
     const matchesSearch = searchQuery === '' || 
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.phone?.includes(searchQuery)
 
     // タグによるフィルタ
     const matchesTags = selectedTags.length === 0 ||
       selectedTags.every(tagId => user.tags.some(tag => tag.id === tagId))
 
-    return matchesSearch && matchesTags
+    // ステータスによるフィルタ
+    const matchesStatuses = selectedStatuses.length === 0 ||
+      (user.statusHistory.length > 0 && selectedStatuses.includes(user.statusHistory[0].statusId))
+
+    return matchesSearch && matchesTags && matchesStatuses
   })
 
   const handleSelectUser = (userId: string) => {
@@ -84,6 +83,7 @@ export function UserManagement({
 
   const handleClearFilters = () => {
     setSelectedTags([])
+    setSelectedStatuses([])
     setSearchQuery('')
   }
 
@@ -99,20 +99,6 @@ export function UserManagement({
     onBulkActions.changeStatus(selectedUsers, statusId)
   }
 
-  const handleBulkDelete = () => {
-    if (confirm(`選択した${selectedUsers.length}人のユーザーを削除しますか？`)) {
-      onBulkActions.delete(selectedUsers)
-      setSelectedUsers([])
-    }
-  }
-
-  const handleBulkExport = () => {
-    onBulkActions.export(selectedUsers)
-  }
-
-  const handleBulkSendMessage = () => {
-    onBulkActions.sendMessage(selectedUsers)
-  }
 
   const handleClearSelection = () => {
     setSelectedUsers([])
@@ -129,23 +115,38 @@ export function UserManagement({
           </p>
         </div>
         
-        <div className="mt-4 sm:mt-0 flex space-x-3">
+        <div className="mt-4 sm:mt-0 flex items-center space-x-3">
+          {/* 検索窓 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="ユーザーを検索"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-64"
+            />
+          </div>
+          
+          {/* フィルターボタン */}
           <button
-            onClick={onImportUsers}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`inline-flex items-center px-4 py-2 border rounded-lg text-sm font-medium ${
+              showFilters || selectedTags.length > 0 || selectedStatuses.length > 0
+                ? 'border-blue-300 text-blue-700 bg-blue-50'
+                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+            }`}
           >
-            <Upload className="w-4 h-4 mr-2" />
-            インポート
+            <Filter className="w-4 h-4 mr-2" />
+            フィルター
+            {(selectedTags.length > 0 || selectedStatuses.length > 0) && (
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {selectedTags.length + selectedStatuses.length}
+              </span>
+            )}
           </button>
           
-          <button
-            onClick={onExportUsers}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            エクスポート
-          </button>
-          
+          {/* 新規ユーザーボタン */}
           <button
             onClick={onCreateUser}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -156,35 +157,33 @@ export function UserManagement({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* フィルターパネル */}
-        <div className="lg:col-span-1">
+      {/* フィルターパネル */}
+      {showFilters && (
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
           <TagFilterPanel
             tags={tags}
+            statuses={statuses}
             selectedTags={selectedTags}
-            searchQuery={searchQuery}
-            onTagSelect={handleTagSelect}
-            onSearchChange={setSearchQuery}
-            onClearFilters={handleClearFilters}
+            selectedStatuses={selectedStatuses}
+            onTagsChange={setSelectedTags}
+            onStatusesChange={setSelectedStatuses}
             onCreateTag={onCreateTag}
           />
         </div>
+      )}
 
-        {/* ユーザーテーブル */}
-        <div className="lg:col-span-3">
-          <UserTable
-            users={filteredUsers}
-            tags={tags}
-            selectedUsers={selectedUsers}
-            onSelectUser={handleSelectUser}
-            onSelectAll={handleSelectAll}
-            onEditUser={onEditUser}
-            onDeleteUser={onDeleteUser}
-            onAddTag={onAddTag}
-            onRemoveTag={onRemoveTag}
-          />
-        </div>
-      </div>
+      {/* ユーザーテーブル */}
+      <UserTable
+        users={filteredUsers}
+        tags={tags}
+        selectedUsers={selectedUsers}
+        onSelectUser={handleSelectUser}
+        onSelectAll={handleSelectAll}
+        onEditUser={onEditUser}
+        onDeleteUser={onDeleteUser}
+        onAddTag={onAddTag}
+        onRemoveTag={onRemoveTag}
+      />
 
       {/* バルクアクションバー */}
       <BulkActionBar
@@ -194,9 +193,6 @@ export function UserManagement({
         onAddTagsBulk={handleBulkAddTags}
         onRemoveTagsBulk={handleBulkRemoveTags}
         onChangeStatusBulk={handleBulkChangeStatus}
-        onDeleteBulk={handleBulkDelete}
-        onExportBulk={handleBulkExport}
-        onSendMessageBulk={handleBulkSendMessage}
         onClearSelection={handleClearSelection}
       />
     </div>

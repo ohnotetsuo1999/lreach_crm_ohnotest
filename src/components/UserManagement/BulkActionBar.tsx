@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Tag, Status } from '@/types'
-import { Users, Tags, BarChart3, Trash2, Download, Mail } from 'lucide-react'
+import { Users, Tags, BarChart3 } from 'lucide-react'
 
 interface BulkActionBarProps {
   selectedCount: number
@@ -11,9 +11,6 @@ interface BulkActionBarProps {
   onAddTagsBulk: (tagIds: string[]) => void
   onRemoveTagsBulk: (tagIds: string[]) => void
   onChangeStatusBulk: (statusId: string) => void
-  onDeleteBulk: () => void
-  onExportBulk: () => void
-  onSendMessageBulk: () => void
   onClearSelection: () => void
 }
 
@@ -24,9 +21,6 @@ export function BulkActionBar({
   onAddTagsBulk,
   onRemoveTagsBulk,
   onChangeStatusBulk,
-  onDeleteBulk,
-  onExportBulk,
-  onSendMessageBulk,
   onClearSelection
 }: BulkActionBarProps) {
   const [showTagMenu, setShowTagMenu] = useState(false)
@@ -138,32 +132,6 @@ export function BulkActionBar({
               )}
             </div>
 
-            {/* メッセージ送信 */}
-            <button
-              onClick={onSendMessageBulk}
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              メッセージ送信
-            </button>
-
-            {/* エクスポート */}
-            <button
-              onClick={onExportBulk}
-              className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 border border-gray-200"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              エクスポート
-            </button>
-
-            {/* 削除 */}
-            <button
-              onClick={onDeleteBulk}
-              className="flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 border border-red-200"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              削除
-            </button>
           </div>
 
           <div className="h-6 border-l border-gray-300" />

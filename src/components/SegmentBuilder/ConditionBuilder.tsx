@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { FilterCondition, SegmentFilter, Tag, Status } from '@/types'
-import { Plus, Trash2, Move } from 'lucide-react'
+import { Plus, Trash2, Move, Filter } from 'lucide-react'
 
 interface ConditionBuilderProps {
   filter: SegmentFilter
@@ -13,7 +13,7 @@ interface ConditionBuilderProps {
 
 const FIELD_OPTIONS = [
   { value: 'name', label: 'ユーザー名' },
-  { value: 'email', label: 'メールアドレス' },
+  { value: 'address', label: '住所' },
   { value: 'phone', label: '電話番号' },
   { value: 'createdAt', label: '登録日' },
   { value: 'updatedAt', label: '最終更新日' },
@@ -102,48 +102,221 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     }
   }
 
+  const [showTagModal, setShowTagModal] = useState<number | null>(null)
+  const [showStatusModal, setShowStatusModal] = useState<number | null>(null)
+  const [tagSearchQuery, setTagSearchQuery] = useState('')
+  const [statusSearchQuery, setStatusSearchQuery] = useState('')
+
   const renderValueInput = (condition: FilterCondition, index: number) => {
     if (['exists', 'not_exists'].includes(condition.operator)) {
       return null
     }
 
     if (condition.field === 'tags') {
+      const selectedTags = Array.isArray(condition.value) ? condition.value : []
+      const selectedTagObjects = tags.filter(tag => selectedTags.includes(tag.id))
+
       return (
-        <select
-          multiple
-          value={Array.isArray(condition.value) ? condition.value : []}
-          onChange={(e) => {
-            const values = Array.from(e.target.selectedOptions, option => option.value)
-            updateCondition(index, { value: values })
-          }}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          {tags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.name}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setShowTagModal(index)}
+            className="w-full p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors text-left"
+          >
+            {selectedTags.length === 0 ? (
+              <span className="text-gray-500">タグを選択してください</span>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {selectedTagObjects.slice(0, 3).map((tag) => (
+                    <span key={tag.id} className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
+                      {tag.name}
+                    </span>
+                  ))}
+                  {selectedTags.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-600">
+                      +{selectedTags.length - 3}個
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {selectedTags.length}個のタグが選択されています
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Tag Selection Modal */}
+          {showTagModal === index && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowTagModal(null)}>
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">タグを選択</h3>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="タグを検索..."
+                      value={tagSearchQuery}
+                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                      className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-6 overflow-y-auto max-h-96">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {tags
+                      .filter(tag => tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                      .map((tag) => {
+                        const isSelected = selectedTags.includes(tag.id)
+                        const getTagColor = (tagType: string) => {
+                          switch (tagType) {
+                            case 'MANUAL': return 'bg-blue-100 text-blue-800 border-blue-200'
+                            case 'AUTOMATIC': return 'bg-green-100 text-green-800 border-green-200'
+                            case 'BEHAVIORAL': return 'bg-purple-100 text-purple-800 border-purple-200'
+                            default: return 'bg-gray-100 text-gray-800 border-gray-200'
+                          }
+                        }
+                        
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => {
+                              const newValues = isSelected
+                                ? selectedTags.filter(id => id !== tag.id)
+                                : [...selectedTags, tag.id]
+                              updateCondition(index, { value: newValues })
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                              isSelected 
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                                : `${getTagColor(tag.type)} hover:shadow-sm`
+                            }`}
+                          >
+                            <span className="font-medium">{tag.name}</span>
+                            <span className="text-xs opacity-75">{tag.type}</span>
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+                
+                <div className="p-4 border-t border-gray-200 flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    {selectedTags.length}個のタグが選択されています
+                  </div>
+                  <button
+                    onClick={() => setShowTagModal(null)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    完了
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )
     }
 
     if (condition.field === 'status') {
+      const selectedStatuses = Array.isArray(condition.value) ? condition.value : []
+      const selectedStatusObjects = statuses.filter(status => selectedStatuses.includes(status.id))
+
       return (
-        <select
-          multiple
-          value={Array.isArray(condition.value) ? condition.value : []}
-          onChange={(e) => {
-            const values = Array.from(e.target.selectedOptions, option => option.value)
-            updateCondition(index, { value: values })
-          }}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          {statuses.map((status) => (
-            <option key={status.id} value={status.id}>
-              {status.label}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setShowStatusModal(index)}
+            className="w-full p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors text-left"
+          >
+            {selectedStatuses.length === 0 ? (
+              <span className="text-gray-500">ステータスを選択してください</span>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {selectedStatusObjects.slice(0, 3).map((status) => (
+                    <span key={status.id} className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                      {status.label}
+                    </span>
+                  ))}
+                  {selectedStatuses.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-600">
+                      +{selectedStatuses.length - 3}個
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {selectedStatuses.length}個のステータスが選択されています
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Status Selection Modal */}
+          {showStatusModal === index && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowStatusModal(null)}>
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">ステータスを選択</h3>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="ステータスを検索..."
+                      value={statusSearchQuery}
+                      onChange={(e) => setStatusSearchQuery(e.target.value)}
+                      className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-6 overflow-y-auto max-h-96">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {statuses
+                      .filter(status => status.label.toLowerCase().includes(statusSearchQuery.toLowerCase()))
+                      .map((status) => {
+                        const isSelected = selectedStatuses.includes(status.id)
+                        
+                        return (
+                          <button
+                            key={status.id}
+                            type="button"
+                            onClick={() => {
+                              const newValues = isSelected
+                                ? selectedStatuses.filter(id => id !== status.id)
+                                : [...selectedStatuses, status.id]
+                              updateCondition(index, { value: newValues })
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                              isSelected 
+                                ? 'bg-green-600 text-white border-green-600 shadow-sm' 
+                                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 hover:shadow-sm'
+                            }`}
+                          >
+                            <span className="font-medium">{status.label}</span>
+                            <span className="text-xs opacity-75">{status.code}</span>
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+                
+                <div className="p-4 border-t border-gray-200 flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    {selectedStatuses.length}個のステータスが選択されています
+                  </div>
+                  <button
+                    onClick={() => setShowStatusModal(null)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    完了
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )
     }
 
@@ -153,7 +326,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
           type="datetime-local"
           value={condition.value}
           onChange={(e) => updateCondition(index, { value: e.target.value })}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         />
       )
     }
@@ -164,7 +337,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
           type="number"
           value={condition.value}
           onChange={(e) => updateCondition(index, { value: e.target.value })}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           placeholder={condition.field.includes('Rate') ? '0-100' : '0'}
         />
       )
@@ -175,10 +348,39 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
         type="text"
         value={condition.value}
         onChange={(e) => updateCondition(index, { value: e.target.value })}
-        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         placeholder="値を入力"
       />
     )
+  }
+
+  const formatConditionSummary = (condition: FilterCondition) => {
+    const fieldLabel = FIELD_OPTIONS.find(f => f.value === condition.field)?.label || condition.field
+    const operatorLabel = getOperatorOptions(condition.field).find(o => o.value === condition.operator)?.label || condition.operator
+    
+    if (condition.field === 'tags') {
+      const tagNames = tags.filter(tag => 
+        Array.isArray(condition.value) 
+          ? condition.value.includes(tag.id)
+          : condition.value === tag.id
+      ).map(tag => tag.name).join(', ')
+      return `${fieldLabel} ${operatorLabel} ${tagNames ? `"${tagNames}"` : '(未選択)'}`
+    }
+    
+    if (condition.field === 'status') {
+      const statusNames = statuses.filter(status => 
+        Array.isArray(condition.value)
+          ? condition.value.includes(status.id)
+          : condition.value === status.id
+      ).map(status => status.label).join(', ')
+      return `${fieldLabel} ${operatorLabel} ${statusNames ? `"${statusNames}"` : '(未選択)'}`
+    }
+    
+    if (['exists', 'not_exists'].includes(condition.operator)) {
+      return `${fieldLabel} ${operatorLabel}`
+    }
+    
+    return `${fieldLabel} ${operatorLabel} "${condition.value || '(未入力)'}"`
   }
 
   return (
@@ -187,12 +389,39 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
         <h3 className="text-lg font-semibold text-gray-900">条件設定</h3>
         <button
           onClick={addCondition}
-          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Plus className="w-4 h-4 mr-2" />
           条件追加
         </button>
       </div>
+
+      {/* Current Conditions Summary */}
+      {filter.conditions.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
+            <Filter className="w-4 h-4 mr-2" />
+            現在の条件
+          </h4>
+          <div className="flex flex-wrap items-center gap-2">
+            {filter.conditions.map((condition, index) => (
+              <div key={index} className="flex items-center">
+                {index > 0 && (
+                  <span className="mx-2 px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded">
+                    {condition.logic || 'AND'}
+                  </span>
+                )}
+                <div className="inline-flex items-center px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm text-gray-700 shadow-sm">
+                  {formatConditionSummary(condition)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-blue-600">
+            {filter.conditions.length}個の条件でフィルタリング
+          </div>
+        </div>
+      )}
 
       {filter.conditions.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
@@ -201,93 +430,81 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
       ) : (
         <div className="space-y-4">
           {filter.conditions.map((condition, index) => (
-            <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-              {/* Logic Operator */}
+            <div key={index} className="relative bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors shadow-sm">
+              {/* Condition Number Badge */}
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {index + 1}
+              </div>
+
+              {/* Logic Operator for non-first conditions */}
               {index > 0 && (
-                <div className="flex-shrink-0">
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">条件の組み合わせ</label>
                   <select
                     value={condition.logic || 'AND'}
                     onChange={(e) => updateCondition(index, { logic: e.target.value as 'AND' | 'OR' })}
-                    className="block w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="AND">AND</option>
-                    <option value="OR">OR</option>
+                    <option value="AND">かつ (AND)</option>
+                    <option value="OR">または (OR)</option>
                   </select>
                 </div>
               )}
 
-              {/* Field */}
-              <div className="flex-1">
-                <select
-                  value={condition.field}
-                  onChange={(e) => updateCondition(index, { field: e.target.value })}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {FIELD_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Field */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">項目</label>
+                  <select
+                    value={condition.field}
+                    onChange={(e) => updateCondition(index, { field: e.target.value })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  >
+                    {FIELD_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Operator */}
-              <div className="flex-1">
-                <select
-                  value={condition.operator}
-                  onChange={(e) => updateCondition(index, { operator: e.target.value as any })}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {getOperatorOptions(condition.field).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Operator */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">条件</label>
+                  <select
+                    value={condition.operator}
+                    onChange={(e) => updateCondition(index, { operator: e.target.value as any })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  >
+                    {getOperatorOptions(condition.field).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Value */}
-              <div className="flex-1">
-                {renderValueInput(condition, index)}
+                {/* Value */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">値</label>
+                  <div className="relative">
+                    {renderValueInput(condition, index)}
+                  </div>
+                </div>
               </div>
 
               {/* Actions */}
-              <div className="flex-shrink-0 flex items-center space-x-2">
+              <div className="absolute top-4 right-4">
                 <button
                   onClick={() => removeCondition(index)}
-                  className="p-2 text-gray-400 hover:text-red-600"
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="この条件を削除"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {filter.conditions.length > 1 && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">条件の組み合わせ</h4>
-          <div className="text-sm text-blue-700">
-            <p>
-              {filter.conditions.map((condition, index) => (
-                <span key={index}>
-                  {index > 0 && (
-                    <span className="font-medium mx-2">
-                      {condition.logic}
-                    </span>
-                  )}
-                  <span className="bg-white px-2 py-1 rounded border">
-                    {FIELD_OPTIONS.find(f => f.value === condition.field)?.label} {' '}
-                    {getOperatorOptions(condition.field).find(o => o.value === condition.operator)?.label}
-                    {!['exists', 'not_exists'].includes(condition.operator) && (
-                      <span> "{Array.isArray(condition.value) ? condition.value.join(', ') : condition.value}"</span>
-                    )}
-                  </span>
-                </span>
-              ))}
-            </p>
-          </div>
         </div>
       )}
     </div>

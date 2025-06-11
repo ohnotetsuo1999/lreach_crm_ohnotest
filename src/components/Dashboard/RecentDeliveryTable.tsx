@@ -101,7 +101,7 @@ export function RecentDeliveryTable({ deliveries }: RecentDeliveryTableProps) {
                         {delivery.user.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {delivery.user.email || delivery.user.phone}
+                        {delivery.user.address || delivery.user.phone}
                       </div>
                     </div>
                   </div>

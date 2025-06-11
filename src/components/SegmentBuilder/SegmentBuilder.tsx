@@ -77,8 +77,8 @@ export function SegmentBuilder({
         case 'name':
           clause = `users.name ${getOperatorSQL(condition.operator)} '${condition.value}'`
           break
-        case 'email':
-          clause = `users.email ${getOperatorSQL(condition.operator)} '${condition.value}'`
+        case 'address':
+          clause = `users.address ${getOperatorSQL(condition.operator)} '${condition.value}'`
           break
         case 'phone':
           clause = `users.phone ${getOperatorSQL(condition.operator)} '${condition.value}'`
@@ -157,22 +157,99 @@ WHERE ${conditions};`
               <p className="text-gray-500 text-sm">保存されたセグメントはありません</p>
             ) : (
               <div className="space-y-2">
-                {segments.map((segment) => (
-                  <button
-                    key={segment.id}
-                    onClick={() => handleLoadSegment(segment)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      selectedSegment?.id === segment.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900">{segment.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(segment.updatedAt).toLocaleDateString('ja-JP')}
-                    </div>
-                  </button>
-                ))}
+                {segments.map((segment) => {
+                  let conditions = []
+                  try {
+                    const parsedFilter = JSON.parse(segment.filterJson)
+                    conditions = parsedFilter.conditions || []
+                  } catch (error) {
+                    conditions = []
+                  }
+                  
+                  const formatCondition = (condition: any) => {
+                    const fieldLabels: { [key: string]: string } = {
+                      'name': 'ユーザー名',
+                      'address': '住所',
+                      'phone': '電話番号',
+                      'createdAt': '登録日',
+                      'updatedAt': '最終更新日',
+                      'tags': 'タグ',
+                      'status': 'ステータス'
+                    }
+                    
+                    const operatorLabels: { [key: string]: string } = {
+                      'equals': '等しい',
+                      'contains': '含む',
+                      'greater_than': 'より大きい',
+                      'less_than': 'より小さい',
+                      'in': '含む',
+                      'not_in': '含まない'
+                    }
+                    
+                    const field = fieldLabels[condition.field] || condition.field
+                    const operator = operatorLabels[condition.operator] || condition.operator
+                    
+                    if (condition.field === 'tags') {
+                      const tagNames = tags.filter(tag => 
+                        Array.isArray(condition.value) 
+                          ? condition.value.includes(tag.id)
+                          : condition.value === tag.id
+                      ).map(tag => tag.name).join(', ')
+                      return `${field} ${operator} "${tagNames}"`
+                    }
+                    
+                    if (condition.field === 'status') {
+                      const statusNames = statuses.filter(status => 
+                        Array.isArray(condition.value)
+                          ? condition.value.includes(status.id)
+                          : condition.value === status.id
+                      ).map(status => status.label).join(', ')
+                      return `${field} ${operator} "${statusNames}"`
+                    }
+                    
+                    return `${field} ${operator} "${condition.value}"`
+                  }
+                  
+                  return (
+                    <button
+                      key={segment.id}
+                      onClick={() => handleLoadSegment(segment)}
+                      className={`w-full text-left p-4 rounded-lg border transition-colors ${
+                        selectedSegment?.id === segment.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium text-gray-900 mb-2">{segment.name}</div>
+                      
+                      {conditions.length > 0 && (
+                        <div className="space-y-1 mb-2">
+                          {conditions.slice(0, 2).map((condition: any, index: number) => (
+                            <div key={index} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                              {formatCondition(condition)}
+                            </div>
+                          ))}
+                          {conditions.length > 2 && (
+                            <div className="text-xs text-gray-500">
+                              +{conditions.length - 2}件の条件
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-500">
+                          {new Date(segment.updatedAt).toLocaleDateString('ja-JP')}
+                        </div>
+                        {conditions.length > 1 && (
+                          <div className="text-xs text-blue-600 font-medium">
+                            {JSON.parse(segment.filterJson).logic || 'AND'}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>

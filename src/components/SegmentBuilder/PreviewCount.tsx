@@ -69,8 +69,8 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
       case 'name':
         fieldValue = user.name
         break
-      case 'email':
-        fieldValue = user.email || ''
+      case 'address':
+        fieldValue = user.address || ''
         break
       case 'phone':
         fieldValue = user.phone || ''

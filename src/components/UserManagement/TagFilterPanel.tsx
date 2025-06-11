@@ -1,26 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Tag } from '@/types'
-import { Search, Filter, X, Plus } from 'lucide-react'
+import { Tag, Status } from '@/types'
+import { Filter, X, Plus } from 'lucide-react'
 
 interface TagFilterPanelProps {
   tags: Tag[]
+  statuses: Status[]
   selectedTags: string[]
-  searchQuery: string
-  onTagSelect: (tagId: string) => void
-  onSearchChange: (query: string) => void
-  onClearFilters: () => void
+  selectedStatuses: string[]
+  onTagsChange: (tagIds: string[]) => void
+  onStatusesChange: (statusIds: string[]) => void
   onCreateTag: () => void
 }
 
 export function TagFilterPanel({
   tags,
+  statuses,
   selectedTags,
-  searchQuery,
-  onTagSelect,
-  onSearchChange,
-  onClearFilters,
+  selectedStatuses,
+  onTagsChange,
+  onStatusesChange,
   onCreateTag
 }: TagFilterPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -51,18 +51,33 @@ export function TagFilterPanel({
     }
   }
 
-  const filteredTags = tags.filter(tag =>
-    tag.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const handleTagSelect = (tagId: string) => {
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(id => id !== tagId)
+      : [...selectedTags, tagId]
+    onTagsChange(newTags)
+  }
+
+  const handleStatusSelect = (statusId: string) => {
+    const newStatuses = selectedStatuses.includes(statusId)
+      ? selectedStatuses.filter(id => id !== statusId)
+      : [...selectedStatuses, statusId]
+    onStatusesChange(newStatuses)
+  }
+
+  const handleClearFilters = () => {
+    onTagsChange([])
+    onStatusesChange([])
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">フィルター</h3>
         <div className="flex items-center space-x-2">
-          {selectedTags.length > 0 && (
+          {(selectedTags.length > 0 || selectedStatuses.length > 0) && (
             <button
-              onClick={onClearFilters}
+              onClick={handleClearFilters}
               className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
             >
               <X className="w-4 h-4 mr-1" />
@@ -78,18 +93,6 @@ export function TagFilterPanel({
         </div>
       </div>
 
-      <div className="relative mb-4">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="ユーザーを検索..."
-        />
-      </div>
 
       {isExpanded && (
         <div className="space-y-4">
@@ -106,7 +109,7 @@ export function TagFilterPanel({
 
           <div className="space-y-3">
             {['MANUAL', 'AUTOMATIC', 'BEHAVIORAL'].map((type) => {
-              const typeTags = filteredTags.filter(tag => tag.type === type)
+              const typeTags = tags.filter(tag => tag.type === type)
               if (typeTags.length === 0) return null
 
               return (
@@ -118,7 +121,7 @@ export function TagFilterPanel({
                     {typeTags.map((tag) => (
                       <button
                         key={tag.id}
-                        onClick={() => onTagSelect(tag.id)}
+                        onClick={() => handleTagSelect(tag.id)}
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
                           selectedTags.includes(tag.id)
                             ? 'bg-blue-500 text-white border-blue-500'
@@ -137,17 +140,37 @@ export function TagFilterPanel({
             })}
           </div>
 
-          {filteredTags.length === 0 && (
-            <div className="text-center py-4 text-gray-500 text-sm">
-              該当するタグが見つかりません
+          
+          {/* Status filters */}
+          <div>
+            <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+              ステータス
+            </h5>
+            <div className="flex flex-wrap gap-2">
+              {statuses.map((status) => (
+                <button
+                  key={status.id}
+                  onClick={() => handleStatusSelect(status.id)}
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                    selectedStatuses.includes(status.id)
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'bg-gray-100 text-gray-800 border-gray-200'
+                  }`}
+                >
+                  {status.label}
+                  {selectedStatuses.includes(status.id) && (
+                    <X className="w-3 h-3 ml-1" />
+                  )}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {selectedTags.length > 0 && (
+      {(selectedTags.length > 0 || selectedStatuses.length > 0) && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">選択中のタグ</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">選択中のフィルター</h4>
           <div className="flex flex-wrap gap-2">
             {selectedTags.map((tagId) => {
               const tag = tags.find(t => t.id === tagId)
@@ -160,8 +183,27 @@ export function TagFilterPanel({
                 >
                   {tag.name}
                   <button
-                    onClick={() => onTagSelect(tagId)}
+                    onClick={() => handleTagSelect(tagId)}
                     className="ml-1 text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )
+            })}
+            {selectedStatuses.map((statusId) => {
+              const status = statuses.find(s => s.id === statusId)
+              if (!status) return null
+
+              return (
+                <span
+                  key={statusId}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  {status.label}
+                  <button
+                    onClick={() => handleStatusSelect(statusId)}
+                    className="ml-1 text-green-600 hover:text-green-800"
                   >
                     <X className="w-3 h-3" />
                   </button>

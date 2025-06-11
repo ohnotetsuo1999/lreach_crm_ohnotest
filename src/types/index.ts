@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   lineUid?: string
-  email?: string
+  address?: string
   phone?: string
   createdAt: Date
   updatedAt: Date
@@ -24,7 +24,18 @@ export interface Tag {
   id: string
   name: string
   type: 'MANUAL' | 'AUTOMATIC' | 'BEHAVIORAL'
+  folderId?: string
+  note?: string
   createdAt: Date
+}
+
+export interface TagFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Status {

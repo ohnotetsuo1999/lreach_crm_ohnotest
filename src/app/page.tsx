@@ -7,10 +7,11 @@ import { SegmentBuilder } from '@/components/SegmentBuilder/SegmentBuilder'
 import { ScenarioList } from '@/components/ScenarioList/ScenarioList'
 import { ScenarioEditor } from '@/components/ScenarioEditor/ScenarioEditor'
 import { TemplateEditor } from '@/components/TemplateEditor/TemplateEditor'
-import { DeliveryReport } from '@/components/DeliveryReport/DeliveryReport'
+import { TagManagement } from '@/components/TagManagement/TagManagement'
 import { 
   User, 
   Tag, 
+  TagFolder,
   Status, 
   Segment, 
   Campaign, 
@@ -18,22 +19,21 @@ import {
   Template, 
   DeliveryLog 
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Brain, Zap } from 'lucide-react'
-import { AIInsights } from '@/components/AI/AIInsights'
-import { AIChatAssistant } from '@/components/AI/AIChatAssistant'
-import { AIPredictiveAnalytics } from '@/components/AI/AIPredictiveAnalytics'
-import { AISmartAlerts } from '@/components/AI/AISmartAlerts'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send } from 'lucide-react'
 import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
+import { Reports } from '@/components/Reports/Reports'
+import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'reports' | 'ai-insights' | 'ai-analytics' | 'action-rules'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<any>(null)
   
   // Data state
   const [users, setUsers] = useState<User[]>([])
   const [tags, setTags] = useState<Tag[]>([])
+  const [tagFolders, setTagFolders] = useState<TagFolder[]>([])
   const [statuses, setStatuses] = useState<Status[]>([])
   const [segments, setSegments] = useState<Segment[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -45,12 +45,23 @@ export default function LineMarketingApp() {
   // Initialize data
   useEffect(() => {
     // Initialize with mock data
+    const mockTagFolders: TagFolder[] = [
+      { id: '1', name: 'プロジェクト', description: 'プロジェクト関連のタグ', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: 'ウェブサイト', description: 'ウェブ開発技術', parentId: '1', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: 'モバイルアプリ', description: 'モバイル開発技術', parentId: '1', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: '個人', description: '個人的なタグ', createdAt: new Date(), updatedAt: new Date() },
+      { id: '5', name: '趣味', description: '趣味・娯楽関連', parentId: '4', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
     const mockTags: Tag[] = [
-      { id: '1', name: 'VIP', type: 'MANUAL', createdAt: new Date() },
-      { id: '2', name: 'プレミアム', type: 'MANUAL', createdAt: new Date() },
-      { id: '3', name: '新規', type: 'AUTOMATIC', createdAt: new Date() },
-      { id: '4', name: '休眠', type: 'BEHAVIORAL', createdAt: new Date() },
-      { id: '5', name: 'アクティブ', type: 'BEHAVIORAL', createdAt: new Date() }
+      { id: '1', name: 'JavaScript', type: 'MANUAL', folderId: '2', note: 'フロントエンド開発で使用', createdAt: new Date() },
+      { id: '2', name: 'React', type: 'MANUAL', folderId: '2', note: 'UIライブラリ、SPAに最適', createdAt: new Date() },
+      { id: '3', name: 'Vue.js', type: 'MANUAL', folderId: '2', note: 'プログレッシブフレームワーク', createdAt: new Date() },
+      { id: '4', name: 'Swift', type: 'MANUAL', folderId: '3', note: 'iOS開発言語', createdAt: new Date() },
+      { id: '5', name: 'Kotlin', type: 'MANUAL', folderId: '3', note: 'Android開発に使用', createdAt: new Date() },
+      { id: '6', name: '写真', type: 'AUTOMATIC', folderId: '5', note: '趣味の写真撮影', createdAt: new Date() },
+      { id: '7', name: '旅行', type: 'BEHAVIORAL', folderId: '5', note: '国内外の旅行記録', createdAt: new Date() },
+      { id: '8', name: 'その他', type: 'MANUAL', note: '分類が決まっていないタグ', createdAt: new Date() } // 未分類タグ
     ]
     
     const mockStatuses: Status[] = [
@@ -64,7 +75,7 @@ export default function LineMarketingApp() {
       {
         id: '1',
         name: '田中太郎',
-        email: 'tanaka@example.com',
+        address: '東京都渋谷区渋谷2-24-12',
         phone: '090-1234-5678',
         lineUid: 'U1234567890',
         createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -83,7 +94,7 @@ export default function LineMarketingApp() {
       {
         id: '2',
         name: '佐藤花子',
-        email: 'sato@example.com',
+        address: '大阪府大阪市北区梅田3-1-3',
         phone: '080-9876-5432',
         lineUid: 'U0987654321',
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -102,7 +113,7 @@ export default function LineMarketingApp() {
       {
         id: '3',
         name: '鈴木一郎',
-        email: 'suzuki@example.com',
+        address: '愛知県名古屋市中区栄3-15-33',
         phone: '070-1111-2222',
         lineUid: 'U1111222233',
         createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
@@ -121,7 +132,7 @@ export default function LineMarketingApp() {
       {
         id: '4',
         name: '高橋美咲',
-        email: 'takahashi@example.com',
+        address: '福岡県福岡市博多区博多駅前2-1-1',
         lineUid: 'U4444555566',
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
@@ -139,7 +150,7 @@ export default function LineMarketingApp() {
       {
         id: '5',
         name: '山田次郎',
-        email: 'yamada@example.com',
+        address: '神奈川県横浜市西区高島2-19-12',
         phone: '090-5555-6666',
         lineUid: 'U5555666677',
         createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
@@ -479,6 +490,7 @@ export default function LineMarketingApp() {
     ]
     
     setTags(mockTags)
+    setTagFolders(mockTagFolders)
     setStatuses(mockStatuses)
     setUsers(mockUsers)
     setSegments(mockSegments)
@@ -574,18 +586,11 @@ export default function LineMarketingApp() {
     setCurrentView('list')
     setEditingItem(null)
   }
+
   
   // User Management handlers
   const handleCreateUser = () => {
     console.log('Create user')
-  }
-  
-  const handleImportUsers = () => {
-    console.log('Import users')
-  }
-  
-  const handleExportUsers = () => {
-    console.log('Export users')
   }
   
   const handleEditUser = (user: User) => {
@@ -615,8 +620,8 @@ export default function LineMarketingApp() {
     ))
   }
   
-  const handleCreateTag = () => {
-    console.log('Create tag')
+  const handleCreateTagForUser = () => {
+    console.log('Create tag for user')
   }
   
   const bulkActions = {
@@ -628,15 +633,6 @@ export default function LineMarketingApp() {
     },
     changeStatus: (userIds: string[], statusId: string) => {
       console.log('Bulk change status', userIds, statusId)
-    },
-    delete: (userIds: string[]) => {
-      setUsers(users.filter(u => !userIds.includes(u.id)))
-    },
-    export: (userIds: string[]) => {
-      console.log('Bulk export', userIds)
-    },
-    sendMessage: (userIds: string[]) => {
-      console.log('Bulk send message', userIds)
     }
   }
   
@@ -742,58 +738,7 @@ export default function LineMarketingApp() {
     })))
   }
   
-  // Report handlers
-  const handleExportReport = () => {
-    console.log('Export report')
-  }
-  
-  const handleRetryDelivery = (logId: string) => {
-    console.log('Retry delivery', logId)
-  }
-  
-  const handleViewLogDetails = (log: DeliveryLog) => {
-    console.log('View log details', log)
-  }
 
-  // AI handlers
-  const handleApplySuggestion = (suggestion: any) => {
-    console.log('Apply AI suggestion:', suggestion)
-    
-    switch (suggestion.action?.type) {
-      case 'create_segment':
-        console.log('Creating segment:', suggestion.action.name)
-        break
-      case 'create_scenario':
-        console.log('Creating scenario:', suggestion.action.name)
-        break
-      case 'update_timing':
-        console.log('Updating timing to hour:', suggestion.action.recommendedHour)
-        break
-      case 'improve_template':
-        console.log('Improving template:', suggestion.action.templateId)
-        break
-      default:
-        console.log('Generic action applied')
-    }
-  }
-
-  const handleAIAction = (action: string, data: any) => {
-    console.log('AI Action:', action, data)
-    
-    switch (action) {
-      case 'テンプレート見直し':
-        setActiveTab('templates')
-        break
-      case 'VIPセグメント作成':
-        setActiveTab('segments')
-        break
-      case 'シナリオ見直し':
-        setActiveTab('scenarios')
-        break
-      default:
-        console.log('Action not implemented:', action)
-    }
-  }
 
   // Action Rule handlers
   const handleCreateActionRule = (rule: any) => {
@@ -822,12 +767,76 @@ export default function LineMarketingApp() {
     ))
   }
 
+  // Tag Management handlers
+  const handleCreateTag = (tag: Omit<Tag, 'id' | 'createdAt'>) => {
+    const newTag: Tag = {
+      ...tag,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    }
+    setTags([...tags, newTag])
+  }
+
+  const handleUpdateTag = (tagId: string, updates: Partial<Tag>) => {
+    setTags(tags.map(tag => 
+      tag.id === tagId ? { ...tag, ...updates } : tag
+    ))
+  }
+
+  const handleDeleteTag = (tagId: string) => {
+    setTags(tags.filter(tag => tag.id !== tagId))
+    // Remove tag from all users
+    setUsers(users.map(user => ({
+      ...user,
+      tags: user.tags.filter(tag => tag.id !== tagId)
+    })))
+  }
+
+  const handleCreateFolder = (folder: Omit<TagFolder, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newFolder: TagFolder = {
+      ...folder,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setTagFolders([...tagFolders, newFolder])
+  }
+
+  const handleUpdateFolder = (folderId: string, updates: Partial<TagFolder>) => {
+    setTagFolders(tagFolders.map(folder => 
+      folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+    ))
+  }
+
+  const handleDeleteFolder = (folderId: string) => {
+    // Move tags in this folder to uncategorized
+    setTags(tags.map(tag => 
+      tag.folderId === folderId ? { ...tag, folderId: undefined } : tag
+    ))
+    // Move subfolders to parent or uncategorized
+    const folderToDelete = tagFolders.find(f => f.id === folderId)
+    setTagFolders(tagFolders.filter(folder => folder.id !== folderId).map(folder =>
+      folder.parentId === folderId 
+        ? { ...folder, parentId: folderToDelete?.parentId }
+        : folder
+    ))
+  }
+
+  const handleMoveTag = (tagId: string, folderId: string | null) => {
+    setTags(tags.map(tag => 
+      tag.id === tagId ? { ...tag, folderId: folderId || undefined } : tag
+    ))
+  }
+
   // Calculate dashboard stats
   const dashboardStats = {
     totalUsers: users.length,
     totalSent: deliveryLogs.length,
     totalOpened: deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length,
     totalClicked: deliveryLogs.filter(log => log.status === 'CLICKED').length,
+    totalReservations: 18, // Mock data - replace with real reservation count
+    reservationRate: 0.93, // Mock data - replace with real reservation rate
+    todayReservations: 5, // Mock data - today's reservations
     openRate: deliveryLogs.length > 0 ? (deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length / deliveryLogs.length) * 100 : 0,
     clickRate: deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length > 0 ? (deliveryLogs.filter(log => log.status === 'CLICKED').length / deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length) * 100 : 0
   }
@@ -837,11 +846,11 @@ export default function LineMarketingApp() {
     { id: 'users', label: 'ユーザー管理', icon: Users },
     { id: 'segments', label: 'セグメント', icon: Target },
     { id: 'scenarios', label: 'シナリオ', icon: List },
+    { id: 'broadcast', label: '一斉配信', icon: Send },
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
+    { id: 'tags', label: 'タグ管理', icon: Tags },
     { id: 'action-rules', label: 'アクションルール', icon: Zap },
-    { id: 'reports', label: 'レポート', icon: BarChart3 },
-    { id: 'ai-insights', label: 'AIインサイト', icon: Brain },
-    { id: 'ai-analytics', label: 'AI予測分析', icon: Brain }
+    { id: 'reports', label: 'レポート', icon: BarChart3 }
   ] as const
 
   const renderMainContent = () => {
@@ -900,11 +909,13 @@ export default function LineMarketingApp() {
             totalSent={dashboardStats.totalSent}
             totalOpened={dashboardStats.totalOpened}
             totalClicked={dashboardStats.totalClicked}
+            totalReservations={dashboardStats.totalReservations}
+            reservationRate={dashboardStats.reservationRate}
+            todayReservations={dashboardStats.todayReservations}
             openRate={dashboardStats.openRate}
             clickRate={dashboardStats.clickRate}
             users={users}
             scenarios={scenarios}
-            onAIActionClick={handleAIAction}
           />
         )
         
@@ -915,13 +926,11 @@ export default function LineMarketingApp() {
             tags={tags}
             statuses={statuses}
             onCreateUser={handleCreateUser}
-            onImportUsers={handleImportUsers}
-            onExportUsers={handleExportUsers}
             onEditUser={handleEditUser}
             onDeleteUser={handleDeleteUser}
             onAddTag={handleAddTag}
             onRemoveTag={handleRemoveTag}
-            onCreateTag={handleCreateTag}
+            onCreateTag={handleCreateTagForUser}
             onBulkActions={bulkActions}
           />
         )
@@ -974,34 +983,18 @@ export default function LineMarketingApp() {
           </div>
         )
         
-      case 'reports':
+      case 'tags':
         return (
-          <DeliveryReport
-            deliveryLogs={deliveryLogs}
-            templates={templates}
-            onExportReport={handleExportReport}
-            onRetryDelivery={handleRetryDelivery}
-            onViewLogDetails={handleViewLogDetails}
-          />
-        )
-        
-      case 'ai-insights':
-        return (
-          <AIInsights
-            users={users}
-            deliveryLogs={deliveryLogs}
-            scenarios={scenarios}
-            templates={templates}
-            onApplySuggestion={handleApplySuggestion}
-          />
-        )
-        
-      case 'ai-analytics':
-        return (
-          <AIPredictiveAnalytics
-            deliveryLogs={deliveryLogs}
-            users={users}
-            scenarios={scenarios}
+          <TagManagement
+            tags={tags}
+            tagFolders={tagFolders}
+            onCreateTag={handleCreateTag}
+            onUpdateTag={handleUpdateTag}
+            onDeleteTag={handleDeleteTag}
+            onCreateFolder={handleCreateFolder}
+            onUpdateFolder={handleUpdateFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onMoveTag={handleMoveTag}
           />
         )
         
@@ -1020,6 +1013,23 @@ export default function LineMarketingApp() {
           />
         )
         
+      case 'broadcast':
+        return (
+          <BroadcastPage
+            users={users}
+            segments={segments}
+            templates={templates}
+            tags={tags}
+            statuses={statuses}
+            onSend={(broadcastData) => {
+              console.log('Sending broadcast:', broadcastData)
+            }}
+          />
+        )
+        
+      case 'reports':
+        return <Reports />
+        
       default:
         return <div>Unknown tab</div>
     }
@@ -1031,7 +1041,7 @@ export default function LineMarketingApp() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm border-r border-gray-200">
+      <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0">
         <div className="p-6">
           <h1 className="text-xl font-bold text-gray-900">LINE Marketing</h1>
           <p className="text-sm text-gray-600 mt-1">自動化プラットフォーム</p>
@@ -1061,9 +1071,9 @@ export default function LineMarketingApp() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
@@ -1076,20 +1086,14 @@ export default function LineMarketingApp() {
                   {activeTab === 'segments' && 'ユーザーセグメントの作成と管理'}
                   {activeTab === 'scenarios' && '自動配信シナリオの設定'}
                   {activeTab === 'templates' && 'メッセージテンプレートの管理'}
+                  {activeTab === 'tags' && 'タグをフォルダで整理して効率的に管理'}
+                  {activeTab === 'broadcast' && 'ユーザーセグメントに対する一斉メッセージ配信'}
                   {activeTab === 'action-rules' && 'ユーザーアクションに基づく自動タグ付与ルール'}
                   {activeTab === 'reports' && '配信結果の分析とレポート'}
-                  {activeTab === 'ai-insights' && 'AIによるスマートな改善提案'}
-                  {activeTab === 'ai-analytics' && '機械学習による予測分析'}
                 </p>
               </div>
               
               <div className="flex items-center space-x-2">
-                <AISmartAlerts
-                  users={users}
-                  deliveryLogs={deliveryLogs}
-                  scenarios={scenarios}
-                  onActionClick={handleAIAction}
-                />
                 <div className="text-right">
                   <div className="text-sm font-medium text-gray-900">
                     管理者
@@ -1107,18 +1111,12 @@ export default function LineMarketingApp() {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 overflow-auto">
-          {renderMainContent()}
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            {renderMainContent()}
+          </div>
         </main>
       </div>
-      
-      {/* AI Chat Assistant */}
-      <AIChatAssistant
-        users={users}
-        scenarios={scenarios}
-        deliveryLogs={deliveryLogs}
-        onExecuteAction={handleAIAction}
-      />
     </div>
   )
 }

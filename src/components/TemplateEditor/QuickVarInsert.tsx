@@ -49,10 +49,10 @@ export function QuickVarInsert({ onInsert, className = '' }: QuickVarInsertProps
           example: '田中'
         },
         {
-          key: '{{user.email}}',
-          label: 'メールアドレス',
-          description: 'ユーザーのメールアドレス',
-          example: 'tanaka@example.com'
+          key: '{{user.address}}',
+          label: '住所',
+          description: 'ユーザーの住所',
+          example: '東京都渋谷区渋谷2-24-12'
         },
         {
           key: '{{user.phone}}',

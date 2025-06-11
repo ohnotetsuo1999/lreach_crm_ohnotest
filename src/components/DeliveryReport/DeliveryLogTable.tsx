@@ -90,7 +90,7 @@ export function DeliveryLogTable({
     const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter
     const matchesSearch = searchQuery === '' || 
       log.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      log.user.address?.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesStatus && matchesSearch
   })
 
@@ -269,7 +269,7 @@ export function DeliveryLogTable({
                         {log.user.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {log.user.email || log.user.phone}
+                        {log.user.address || log.user.phone}
                       </div>
                     </div>
                   </div>
