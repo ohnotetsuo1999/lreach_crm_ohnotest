@@ -8,6 +8,16 @@ export interface User {
   updatedAt: Date
   tags: Tag[]
   statusHistory: UserStatusLog[]
+  reservations?: Reservation[]
+  customFields?: {
+    birthday?: Date
+    anniversary?: Date
+    contractExpiry?: Date
+    subscriptionRenewal?: Date
+    lastPurchaseDate?: Date
+    customDate1?: Date
+    customDate2?: Date
+  }
 }
 
 export interface Tag {
@@ -70,6 +80,32 @@ export interface Pack {
   conditionJson?: string
   createdAt: Date
   templates: Template[]
+  packType?: 'normal' | 'reminder'
+  reminderSettings?: ReminderSettings
+}
+
+export interface ReminderSettings {
+  targetType: 'manual' | 'reservation' | 'user_field' // 基準日時の種類
+  targetDate?: string // ISO date string for absolute date (manual用)
+  targetTime?: string // HH:MM format (manual用)
+  reservationField?: string // 予約フィールド名 (reservation用)
+  userField?: string // ユーザーフィールド名 (user_field用)
+  offsetMinutes: number // Negative for "before", positive for "after"
+  offsetType: 'before' | 'after'
+  description?: string
+}
+
+export interface Reservation {
+  id: string
+  userId: string
+  serviceId: string
+  reservationDate: Date
+  reservationTime: string
+  status: 'confirmed' | 'pending' | 'cancelled'
+  serviceName: string
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Template {
@@ -93,6 +129,51 @@ export interface DeliveryLog {
   createdAt: Date
   template: Template
   user: User
+  actions?: UserAction[]
+}
+
+export type ActionType = 'URL_CLICK' | 'BUTTON_CLICK' | 'IMAGE_CLICK' | 'TEXT_SELECT' | 'MESSAGE_SHARE' | 'REPLY' | 'REACTION' | 'POSTBACK' | 'LOCATION_SHARE' | 'CONTACT_SHARE' | 'CUSTOM'
+
+export interface UserAction {
+  id: string
+  userId: string
+  templateId: string
+  deliveryLogId: string
+  actionType: ActionType
+  actionValue: string // URL, button text, postback data, etc.
+  metadata?: Record<string, any> // Additional data like coordinates, custom fields
+  timestamp: Date
+  processed: boolean
+}
+
+export interface ActionRule {
+  id: string
+  templateId?: string // If null, applies to all templates
+  scenarioId?: string // If null, applies to all scenarios
+  packId?: string // If null, applies to all packs
+  actionType: ActionType
+  actionCondition: {
+    operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any'
+    value: string
+    regex: string
+  }
+  tagActions: TagAction[]
+  isActive: boolean
+  priority: number // Higher number = higher priority
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface TagAction {
+  type: 'ADD_TAG' | 'REMOVE_TAG' | 'SET_STATUS'
+  tagId?: string
+  statusId?: string
+  condition?: {
+    ifHasTag?: string[]
+    ifNotHasTag?: string[]
+    ifStatus?: string
+  }
 }
 
 export type TriggerType = 

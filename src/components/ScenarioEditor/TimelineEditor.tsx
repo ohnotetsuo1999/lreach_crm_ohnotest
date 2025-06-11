@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Pack, Template } from '@/types'
-import { Plus, Clock, Move, Edit2, Trash2, Play } from 'lucide-react'
+import { Pack, Template, ActionRule } from '@/types'
+import { Plus, Clock, Move, Edit2, Trash2, Play, Zap, AlertCircle, Calendar } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import { TimelineTemplatePreview } from './TimelineTemplatePreview'
 
 interface TimelineEditorProps {
   packs: Pack[]
@@ -12,6 +13,7 @@ interface TimelineEditorProps {
   onDeletePack: (packId: string) => void
   onAddPack: () => void
   onPreviewScenario: () => void
+  actionRules?: ActionRule[]
 }
 
 export function TimelineEditor({
@@ -20,7 +22,8 @@ export function TimelineEditor({
   onEditPack,
   onDeletePack,
   onAddPack,
-  onPreviewScenario
+  onPreviewScenario,
+  actionRules = []
 }: TimelineEditorProps) {
   const [selectedPack, setSelectedPack] = useState<string | null>(null)
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -42,11 +45,11 @@ export function TimelineEditor({
   }
 
   const getTotalDuration = () => {
-    return packs.reduce((total, pack) => total + pack.offsetMinutes, 0)
+    return packs.filter(pack => pack.packType !== 'reminder').reduce((total, pack) => total + pack.offsetMinutes, 0)
   }
 
   const getPackPosition = (packIndex: number) => {
-    const previousPacks = packs.slice(0, packIndex)
+    const previousPacks = packs.slice(0, packIndex).filter(pack => pack.packType !== 'reminder')
     return previousPacks.reduce((total, pack) => total + pack.offsetMinutes, 0)
   }
 
@@ -57,6 +60,60 @@ export function TimelineEditor({
     return `${Math.floor(minutes / 1440)}日${Math.floor((minutes % 1440) / 60) ? `${Math.floor((minutes % 1440) / 60)}時間` : ''}後`
   }
 
+  const getPackActionRules = (packId: string) => {
+    return actionRules.filter(rule => rule.packId === packId)
+  }
+
+  const getReminderDisplay = (pack: Pack) => {
+    if (pack.packType !== 'reminder' || !pack.reminderSettings) return null
+    
+    const settings = pack.reminderSettings
+    let baseText = ''
+    
+    switch (settings.targetType) {
+      case 'manual':
+        baseText = settings.targetDate && settings.targetTime
+          ? `${settings.targetDate} ${settings.targetTime}`
+          : '指定日時'
+        break
+      case 'reservation':
+        baseText = settings.reservationField 
+          ? `予約（${settings.reservationField}）`
+          : '予約日時'
+        break
+      case 'user_field':
+        baseText = settings.userField
+          ? `ユーザー項目（${settings.userField}）`
+          : 'ユーザー指定日時'
+        break
+      default:
+        baseText = '指定日時'
+    }
+    
+    const hours = Math.floor(Math.abs(settings.offsetMinutes) / 60)
+    const mins = Math.abs(settings.offsetMinutes) % 60
+    let offsetText = ''
+    
+    if (hours === 0) {
+      offsetText = `${mins}分`
+    } else if (mins === 0) {
+      offsetText = `${hours}時間`
+    } else {
+      offsetText = `${hours}時間${mins}分`
+    }
+    
+    return `${baseText}の${offsetText}${settings.offsetType === 'before' ? '前' : '後'}`
+  }
+
+
+  const getPackTypeColor = (pack: Pack) => {
+    if (pack.packType === 'reminder') {
+      return 'bg-orange-100 text-orange-800'
+    }
+    return 'bg-blue-100 text-blue-800'
+  }
+
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       <div className="p-6 border-b border-gray-200">
@@ -64,7 +121,7 @@ export function TimelineEditor({
           <div>
             <h3 className="text-lg font-semibold text-gray-900">タイムライン</h3>
             <p className="text-sm text-gray-600">
-              {packs.length}個のPack・総実行時間: {formatDuration(getTotalDuration())}
+              {packs.length}個のPack（通常: {packs.filter(p => p.packType !== 'reminder').length}件、リマインダー: {packs.filter(p => p.packType === 'reminder').length}件）・総実行時間: {formatDuration(getTotalDuration())}
             </p>
           </div>
           
@@ -133,7 +190,15 @@ export function TimelineEditor({
                             }`}
                           >
                             {/* タイミング表示 */}
-                            {pack.offsetMinutes > 0 && (
+                            {pack.packType === 'reminder' ? (
+                              <div className="flex items-center mb-2">
+                                <div className="flex-shrink-0 w-px h-8 bg-orange-300 ml-2" />
+                                <div className="ml-4 flex items-center text-sm text-orange-600">
+                                  <AlertCircle className="w-4 h-4 mr-2" />
+                                  リマインダー実行
+                                </div>
+                              </div>
+                            ) : pack.offsetMinutes > 0 && (
                               <div className="flex items-center mb-2">
                                 <div className="flex-shrink-0 w-px h-8 bg-gray-300 ml-2" />
                                 <div className="ml-4 flex items-center text-sm text-gray-500">
@@ -164,17 +229,35 @@ export function TimelineEditor({
 
                               <div className="flex items-start justify-between pr-8">
                                 <div className="flex items-center space-x-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-medium">
-                                    {pack.order}
+                                  <div className={`flex-shrink-0 w-8 h-8 ${getPackTypeColor(pack)} rounded-full flex items-center justify-center text-sm font-medium`}>
+                                    {pack.packType === 'reminder' ? (
+                                      <AlertCircle className="w-4 h-4" />
+                                    ) : (
+                                      pack.order
+                                    )}
                                   </div>
                                   
                                   <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-medium text-gray-900">
-                                      Pack {pack.order}
-                                    </h4>
-                                    <p className="text-sm text-gray-500">
-                                      {pack.templates?.length || 0}件のメッセージ
-                                    </p>
+                                    <div className="flex items-center space-x-2">
+                                      <h4 className="text-sm font-medium text-gray-900">
+                                        {pack.packType === 'reminder' ? `リマインダーPack ${pack.order}` : `Pack ${pack.order}`}
+                                      </h4>
+                                      {pack.packType === 'reminder' && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                          <Calendar className="w-3 h-3 mr-1" />
+                                          イベント連動
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                      <span>{pack.templates?.length || 0}件のメッセージ</span>
+                                      {getPackActionRules(pack.id).length > 0 && (
+                                        <span className="inline-flex items-center text-xs text-orange-600">
+                                          <Zap className="w-3 h-3 mr-1" />
+                                          {getPackActionRules(pack.id).length}ルール
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -206,20 +289,39 @@ export function TimelineEditor({
                               {/* 詳細情報（展開時） */}
                               {selectedPack === pack.id && (
                                 <div className="mt-4 pt-4 border-t border-gray-200">
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <span className="text-gray-500">実行タイミング:</span>
-                                      <span className="ml-2 font-medium">
-                                        {position === 0 ? 'すぐに' : formatDuration(position)}
-                                      </span>
+                                  {pack.packType === 'reminder' ? (
+                                    <div className="grid grid-cols-1 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-gray-500">実行タイミング:</span>
+                                        <span className="ml-2 font-medium text-orange-700">
+                                          {getReminderDisplay(pack) || 'リマインダー設定'}
+                                        </span>
+                                      </div>
+                                      {pack.reminderSettings?.description && (
+                                        <div>
+                                          <span className="text-gray-500">説明:</span>
+                                          <span className="ml-2 font-medium">
+                                            {pack.reminderSettings.description}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
-                                    <div>
-                                      <span className="text-gray-500">待機時間:</span>
-                                      <span className="ml-2 font-medium">
-                                        {pack.offsetMinutes === 0 ? 'なし' : formatDuration(pack.offsetMinutes)}
-                                      </span>
+                                  ) : (
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-gray-500">実行タイミング:</span>
+                                        <span className="ml-2 font-medium">
+                                          {position === 0 ? 'すぐに' : formatDuration(position)}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-500">待機時間:</span>
+                                        <span className="ml-2 font-medium">
+                                          {pack.offsetMinutes === 0 ? 'なし' : formatDuration(pack.offsetMinutes)}
+                                        </span>
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
 
                                   {pack.conditionJson && (
                                     <div className="mt-2">
@@ -232,19 +334,29 @@ export function TimelineEditor({
 
                                   {pack.templates && pack.templates.length > 0 && (
                                     <div className="mt-3">
-                                      <h5 className="text-sm font-medium text-gray-700 mb-2">
-                                        メッセージテンプレート
+                                      <h5 className="text-sm font-medium text-gray-700 mb-3">
+                                        メッセージテンプレート ({pack.templates.length}件)
                                       </h5>
-                                      <div className="space-y-2">
-                                        {pack.templates.slice(0, 3).map((template) => (
-                                          <div key={template.id} className="flex items-center text-sm text-gray-600">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
-                                            テンプレート {template.order}
-                                          </div>
+                                      <div className="space-y-3">
+                                        {pack.templates.slice(0, 2).map((template) => (
+                                          <TimelineTemplatePreview
+                                            key={template.id}
+                                            template={template}
+                                            actionRules={actionRules}
+                                            isExpanded={true}
+                                          />
                                         ))}
-                                        {pack.templates.length > 3 && (
-                                          <div className="text-sm text-gray-500">
-                                            他{pack.templates.length - 3}件...
+                                        {pack.templates.slice(2, 5).map((template) => (
+                                          <TimelineTemplatePreview
+                                            key={template.id}
+                                            template={template}
+                                            actionRules={actionRules}
+                                            isExpanded={false}
+                                          />
+                                        ))}
+                                        {pack.templates.length > 5 && (
+                                          <div className="text-sm text-gray-500 bg-gray-50 rounded p-2 text-center">
+                                            他{pack.templates.length - 5}件のテンプレート...
                                           </div>
                                         )}
                                       </div>

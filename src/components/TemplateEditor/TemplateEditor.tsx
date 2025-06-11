@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react'
 import { LineMessagePreview } from './LineMessagePreview'
 import { QuickVarInsert } from './QuickVarInsert'
-import { Template, LineMessage, LineTextMessage, LineFlexMessage } from '@/types'
+import { FlexMessagePreview } from './FlexMessagePreview'
+import { Template, LineMessage, LineTextMessage, LineFlexMessage, ActionRule, Tag, Status } from '@/types'
 import { 
   Save, 
   Eye, 
@@ -22,9 +23,23 @@ interface TemplateEditorProps {
   template: Template | null
   onSave: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
   onBack: () => void
+  actionRules?: ActionRule[]
+  tags?: Tag[]
+  statuses?: Status[]
+  onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onDeleteActionRule?: (ruleId: string) => void
 }
 
-export function TemplateEditor({ template, onSave, onBack }: TemplateEditorProps) {
+export function TemplateEditor({ 
+  template, 
+  onSave, 
+  onBack,
+  actionRules = [],
+  tags = [],
+  statuses = [],
+  onCreateActionRule,
+  onDeleteActionRule
+}: TemplateEditorProps) {
   const [messageType, setMessageType] = useState<'text' | 'flex'>('text')
   const [textContent, setTextContent] = useState('')
   const [flexContent, setFlexContent] = useState('')
@@ -475,7 +490,20 @@ export function TemplateEditor({ template, onSave, onBack }: TemplateEditorProps
         {showPreview && (
           <div className="w-1/2 bg-gray-50 p-4">
             <h3 className="text-sm font-medium text-gray-900 mb-4">プレビュー</h3>
-            <LineMessagePreview message={getCurrentMessage()} />
+            {messageType === 'flex' && getCurrentMessage()?.type === 'flex' && onCreateActionRule ? (
+              <FlexMessagePreview
+                templateId={template?.id || 'new'}
+                packId={template?.packId || ''}
+                flexMessage={getCurrentMessage() as LineFlexMessage}
+                actionRules={actionRules}
+                tags={tags}
+                statuses={statuses}
+                onCreateRule={onCreateActionRule}
+                onDeleteRule={onDeleteActionRule!}
+              />
+            ) : (
+              <LineMessagePreview message={getCurrentMessage()} />
+            )}
           </div>
         )}
       </div>

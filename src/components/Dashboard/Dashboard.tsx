@@ -2,6 +2,7 @@
 
 import { StatsCard } from './StatsCard'
 import { RecentDeliveryTable } from './RecentDeliveryTable'
+import { AIQuickInsights } from '@/components/AI/AIQuickInsights'
 import { DeliveryLog } from '@/types'
 import { Send, Eye, MousePointer, Users, TrendingUp, Clock } from 'lucide-react'
 
@@ -13,6 +14,9 @@ interface DashboardProps {
   totalClicked: number
   openRate: number
   clickRate: number
+  users?: any[]
+  scenarios?: any[]
+  onAIActionClick?: (action: string, data?: any) => void
 }
 
 export function Dashboard({ 
@@ -22,7 +26,10 @@ export function Dashboard({
   totalOpened, 
   totalClicked,
   openRate,
-  clickRate 
+  clickRate,
+  users = [],
+  scenarios = [],
+  onAIActionClick
 }: DashboardProps) {
   
   const recentDeliveries = deliveries.slice(0, 10)
@@ -69,6 +76,14 @@ export function Dashboard({
         </div>
         
         <div className="space-y-6">
+          {/* AI Quick Insights */}
+          <AIQuickInsights
+            users={users}
+            deliveryLogs={deliveries}
+            scenarios={scenarios}
+            onActionClick={onAIActionClick}
+          />
+          
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">配信統計</h3>
             <div className="space-y-4">

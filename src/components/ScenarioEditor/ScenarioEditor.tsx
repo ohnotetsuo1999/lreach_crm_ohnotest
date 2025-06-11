@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { TimelineEditor } from './TimelineEditor'
 import { PackDrawer } from './PackDrawer'
-import { Scenario, Pack, Template, TriggerType } from '@/types'
+import { ScenarioActionRulesSummary } from './ScenarioActionRulesSummary'
+import { Scenario, Pack, Template, TriggerType, ActionRule, Tag, Status } from '@/types'
 import { Save, Play, ArrowLeft } from 'lucide-react'
 
 interface ScenarioEditorProps {
@@ -15,6 +16,14 @@ interface ScenarioEditorProps {
   onDeleteTemplate: (templateId: string) => void
   onPreviewScenario: (scenario: Scenario) => void
   onReorderTemplates: (packId: string, templates: Template[]) => void
+  actionRules?: ActionRule[]
+  tags?: Tag[]
+  statuses?: Status[]
+  onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onUpdateActionRule?: (ruleId: string, rule: Partial<ActionRule>) => void
+  onDeleteActionRule?: (ruleId: string) => void
+  templates?: Template[]
+  onCreateTemplate?: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
 }
 
 export function ScenarioEditor({
@@ -25,7 +34,15 @@ export function ScenarioEditor({
   onEditTemplate,
   onDeleteTemplate,
   onPreviewScenario,
-  onReorderTemplates
+  onReorderTemplates,
+  actionRules = [],
+  tags = [],
+  statuses = [],
+  onCreateActionRule,
+  onUpdateActionRule,
+  onDeleteActionRule,
+  templates = [],
+  onCreateTemplate
 }: ScenarioEditorProps) {
   const [scenarioData, setScenarioData] = useState<Scenario>(
     scenario || {
@@ -296,7 +313,19 @@ export function ScenarioEditor({
         onDeletePack={handleDeletePack}
         onAddPack={handleAddPack}
         onPreviewScenario={() => onPreviewScenario(scenarioData)}
+        actionRules={actionRules}
       />
+
+      {/* アクションルールサマリー */}
+      {actionRules.length > 0 && (
+        <ScenarioActionRulesSummary
+          packs={scenarioData.packs}
+          actionRules={actionRules}
+          tags={tags}
+          statuses={statuses}
+          onDeleteRule={onDeleteActionRule}
+        />
+      )}
 
       {/* Pack設定ドロワー */}
       <PackDrawer
@@ -308,6 +337,36 @@ export function ScenarioEditor({
         onEditTemplate={onEditTemplate}
         onDeleteTemplate={onDeleteTemplate}
         onReorderTemplates={onReorderTemplates}
+        actionRules={actionRules}
+        tags={tags}
+        statuses={statuses}
+        onCreateActionRule={onCreateActionRule}
+        onUpdateActionRule={onUpdateActionRule}
+        onDeleteActionRule={onDeleteActionRule}
+        availableTemplates={templates || []}
+        onCreateTemplate={(template) => {
+          // Create new template and add to pack
+          const newTemplate = {
+            ...template,
+            id: `template_${Date.now()}`,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+          
+          // Add to global templates list
+          if (onCreateTemplate) {
+            onCreateTemplate(template)
+          }
+          
+          // Update the pack with new template
+          if (selectedPack) {
+            const updatedPack = {
+              ...selectedPack,
+              templates: [...(selectedPack.templates || []), newTemplate]
+            }
+            handleSavePack(updatedPack)
+          }
+        }}
       />
 
       {/* 完了状況 */}

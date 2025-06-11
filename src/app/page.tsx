@@ -18,11 +18,16 @@ import {
   Template, 
   DeliveryLog 
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2 } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Brain, Zap } from 'lucide-react'
+import { AIInsights } from '@/components/AI/AIInsights'
+import { AIChatAssistant } from '@/components/AI/AIChatAssistant'
+import { AIPredictiveAnalytics } from '@/components/AI/AIPredictiveAnalytics'
+import { AISmartAlerts } from '@/components/AI/AISmartAlerts'
+import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'reports'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'reports' | 'ai-insights' | 'ai-analytics' | 'action-rules'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<any>(null)
   
@@ -35,6 +40,7 @@ export default function LineMarketingApp() {
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([])
+  const [actionRules, setActionRules] = useState<any[]>([])
 
   // Initialize data
   useEffect(() => {
@@ -480,6 +486,76 @@ export default function LineMarketingApp() {
     setTemplates(mockTemplates)
     setCampaigns(mockCampaigns)
     setDeliveryLogs(mockDeliveryLogs)
+
+    // Mock Action Rules
+    const mockActionRules = [
+      {
+        id: '1',
+        description: '商品ページURL閲覧者にVIPタグ付与',
+        actionType: 'URL_CLICK',
+        actionCondition: {
+          operator: 'contains',
+          value: 'shop.example.com/product',
+          regex: ''
+        },
+        tagActions: [
+          {
+            type: 'ADD_TAG',
+            tagId: '1' // VIPタグ
+          }
+        ],
+        isActive: true,
+        priority: 10,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '2',
+        description: 'お問い合わせボタンクリック者にリード変更',
+        actionType: 'BUTTON_CLICK',
+        actionCondition: {
+          operator: 'equals',
+          value: 'お問い合わせ',
+          regex: ''
+        },
+        tagActions: [
+          {
+            type: 'SET_STATUS',
+            statusId: '1' // リードステータス
+          }
+        ],
+        isActive: true,
+        priority: 8,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        description: 'アンケート返信者に特別タグ付与',
+        actionType: 'REPLY',
+        actionCondition: {
+          operator: 'any',
+          value: '',
+          regex: ''
+        },
+        tagActions: [
+          {
+            type: 'ADD_TAG',
+            tagId: '5', // アクティブタグ
+            condition: {
+              ifNotHasTag: ['1'] // VIPタグを持っていない場合のみ
+            }
+          }
+        ],
+        templateId: '3', // アンケートテンプレート
+        isActive: true,
+        priority: 5,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      }
+    ]
+    
+    setActionRules(mockActionRules)
   }, [])
 
   // Navigation handlers
@@ -679,6 +755,73 @@ export default function LineMarketingApp() {
     console.log('View log details', log)
   }
 
+  // AI handlers
+  const handleApplySuggestion = (suggestion: any) => {
+    console.log('Apply AI suggestion:', suggestion)
+    
+    switch (suggestion.action?.type) {
+      case 'create_segment':
+        console.log('Creating segment:', suggestion.action.name)
+        break
+      case 'create_scenario':
+        console.log('Creating scenario:', suggestion.action.name)
+        break
+      case 'update_timing':
+        console.log('Updating timing to hour:', suggestion.action.recommendedHour)
+        break
+      case 'improve_template':
+        console.log('Improving template:', suggestion.action.templateId)
+        break
+      default:
+        console.log('Generic action applied')
+    }
+  }
+
+  const handleAIAction = (action: string, data: any) => {
+    console.log('AI Action:', action, data)
+    
+    switch (action) {
+      case 'テンプレート見直し':
+        setActiveTab('templates')
+        break
+      case 'VIPセグメント作成':
+        setActiveTab('segments')
+        break
+      case 'シナリオ見直し':
+        setActiveTab('scenarios')
+        break
+      default:
+        console.log('Action not implemented:', action)
+    }
+  }
+
+  // Action Rule handlers
+  const handleCreateActionRule = (rule: any) => {
+    const newRule = {
+      ...rule,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setActionRules([...actionRules, newRule])
+  }
+
+  const handleUpdateActionRule = (ruleId: string, rule: any) => {
+    setActionRules(actionRules.map(r => 
+      r.id === ruleId ? { ...r, ...rule, updatedAt: new Date() } : r
+    ))
+  }
+
+  const handleDeleteActionRule = (ruleId: string) => {
+    setActionRules(actionRules.filter(r => r.id !== ruleId))
+  }
+
+  const handleToggleActionRule = (ruleId: string, isActive: boolean) => {
+    setActionRules(actionRules.map(r => 
+      r.id === ruleId ? { ...r, isActive, updatedAt: new Date() } : r
+    ))
+  }
+
   // Calculate dashboard stats
   const dashboardStats = {
     totalUsers: users.length,
@@ -695,7 +838,10 @@ export default function LineMarketingApp() {
     { id: 'segments', label: 'セグメント', icon: Target },
     { id: 'scenarios', label: 'シナリオ', icon: List },
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
-    { id: 'reports', label: 'レポート', icon: BarChart3 }
+    { id: 'action-rules', label: 'アクションルール', icon: Zap },
+    { id: 'reports', label: 'レポート', icon: BarChart3 },
+    { id: 'ai-insights', label: 'AIインサイト', icon: Brain },
+    { id: 'ai-analytics', label: 'AI予測分析', icon: Brain }
   ] as const
 
   const renderMainContent = () => {
@@ -710,6 +856,22 @@ export default function LineMarketingApp() {
           onDeleteTemplate={handleDeleteTemplate}
           onPreviewScenario={handlePreviewScenario}
           onReorderTemplates={handleReorderTemplates}
+          actionRules={actionRules}
+          tags={tags}
+          statuses={statuses}
+          onCreateActionRule={handleCreateActionRule}
+          onUpdateActionRule={handleUpdateActionRule}
+          onDeleteActionRule={handleDeleteActionRule}
+          templates={templates}
+          onCreateTemplate={(template) => {
+            const newTemplate = {
+              ...template,
+              id: `template_${Date.now()}`,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+            setTemplates([...templates, newTemplate])
+          }}
         />
       )
     }
@@ -720,6 +882,11 @@ export default function LineMarketingApp() {
           template={editingItem}
           onSave={handleSaveTemplate}
           onBack={handleBack}
+          actionRules={actionRules}
+          tags={tags}
+          statuses={statuses}
+          onCreateActionRule={handleCreateActionRule}
+          onDeleteActionRule={handleDeleteActionRule}
         />
       )
     }
@@ -735,6 +902,9 @@ export default function LineMarketingApp() {
             totalClicked={dashboardStats.totalClicked}
             openRate={dashboardStats.openRate}
             clickRate={dashboardStats.clickRate}
+            users={users}
+            scenarios={scenarios}
+            onAIActionClick={handleAIAction}
           />
         )
         
@@ -815,6 +985,41 @@ export default function LineMarketingApp() {
           />
         )
         
+      case 'ai-insights':
+        return (
+          <AIInsights
+            users={users}
+            deliveryLogs={deliveryLogs}
+            scenarios={scenarios}
+            templates={templates}
+            onApplySuggestion={handleApplySuggestion}
+          />
+        )
+        
+      case 'ai-analytics':
+        return (
+          <AIPredictiveAnalytics
+            deliveryLogs={deliveryLogs}
+            users={users}
+            scenarios={scenarios}
+          />
+        )
+        
+      case 'action-rules':
+        return (
+          <ActionRuleManager
+            actionRules={actionRules}
+            tags={tags}
+            statuses={statuses}
+            scenarios={scenarios}
+            templates={templates}
+            onCreateRule={handleCreateActionRule}
+            onUpdateRule={handleUpdateActionRule}
+            onDeleteRule={handleDeleteActionRule}
+            onToggleRule={handleToggleActionRule}
+          />
+        )
+        
       default:
         return <div>Unknown tab</div>
     }
@@ -871,11 +1076,20 @@ export default function LineMarketingApp() {
                   {activeTab === 'segments' && 'ユーザーセグメントの作成と管理'}
                   {activeTab === 'scenarios' && '自動配信シナリオの設定'}
                   {activeTab === 'templates' && 'メッセージテンプレートの管理'}
+                  {activeTab === 'action-rules' && 'ユーザーアクションに基づく自動タグ付与ルール'}
                   {activeTab === 'reports' && '配信結果の分析とレポート'}
+                  {activeTab === 'ai-insights' && 'AIによるスマートな改善提案'}
+                  {activeTab === 'ai-analytics' && '機械学習による予測分析'}
                 </p>
               </div>
               
               <div className="flex items-center space-x-2">
+                <AISmartAlerts
+                  users={users}
+                  deliveryLogs={deliveryLogs}
+                  scenarios={scenarios}
+                  onActionClick={handleAIAction}
+                />
                 <div className="text-right">
                   <div className="text-sm font-medium text-gray-900">
                     管理者
@@ -897,6 +1111,14 @@ export default function LineMarketingApp() {
           {renderMainContent()}
         </main>
       </div>
+      
+      {/* AI Chat Assistant */}
+      <AIChatAssistant
+        users={users}
+        scenarios={scenarios}
+        deliveryLogs={deliveryLogs}
+        onExecuteAction={handleAIAction}
+      />
     </div>
   )
 }
