@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Pack, Template, ActionRule, Tag, Status } from '@/types'
+import { Pack, Template, ActionRule, Tag, Status, PackTemplate, ScenarioActionRule } from '@/types'
 import { X, Settings, Plus, Save, Move, ArrowUp, ArrowDown, Target } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { InlineActionRuleEditor } from './InlineActionRuleEditor'
@@ -9,6 +9,7 @@ import { TemplatePreviewCard } from '../TemplatePreview/TemplatePreviewCard'
 import { TemplateSelector } from '../TemplateSelection/TemplateSelector'
 import { QuickTemplateCreator } from '../TemplateSelection/QuickTemplateCreator'
 import { PackTimingEditor } from '../PackTiming/PackTimingEditor'
+import { ScenarioTemplateManager } from './ScenarioTemplateManager'
 
 interface PackDrawerProps {
   pack: Pack | null
@@ -19,12 +20,19 @@ interface PackDrawerProps {
   onEditTemplate: (template: Template) => void
   onDeleteTemplate: (templateId: string) => void
   onReorderTemplates: (packId: string, templates: Template[]) => void
+  // 新しい多対多関係システム用のプロパティ
+  packTemplates?: PackTemplate[]
+  onAddPackTemplate?: (templateId: string) => void
+  onRemovePackTemplate?: (packTemplateId: string) => void
+  onReorderPackTemplates?: (reorderedPackTemplates: PackTemplate[]) => void
+  // レガシーのアクションルール（削除予定）
   actionRules?: ActionRule[]
+  // 新しいシナリオ固有のアクションルール
+  onUpdateScenarioActionRule?: (packTemplateId: string, actionRule: Partial<ScenarioActionRule>) => void
+  onCreateScenarioActionRule?: (packTemplateId: string, actionRule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onDeleteScenarioActionRule?: (packTemplateId: string, actionRuleId: string) => void
   tags?: Tag[]
   statuses?: Status[]
-  onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onUpdateActionRule?: (ruleId: string, rule: Partial<ActionRule>) => void
-  onDeleteActionRule?: (ruleId: string) => void
   availableTemplates?: Template[]
   onCreateTemplate?: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
 }
@@ -38,12 +46,19 @@ export function PackDrawer({
   onEditTemplate,
   onDeleteTemplate,
   onReorderTemplates,
+  // 新しい多対多関係システム用のプロパティ
+  packTemplates = [],
+  onAddPackTemplate,
+  onRemovePackTemplate,
+  onReorderPackTemplates,
+  // レガシーのアクションルール
   actionRules = [],
+  // 新しいシナリオ固有のアクションルール
+  onUpdateScenarioActionRule,
+  onCreateScenarioActionRule,
+  onDeleteScenarioActionRule,
   tags = [],
   statuses = [],
-  onCreateActionRule,
-  onUpdateActionRule,
-  onDeleteActionRule,
   availableTemplates = [],
   onCreateTemplate
 }: PackDrawerProps) {
@@ -228,153 +243,140 @@ export function PackDrawer({
                 )}
               </div>
 
-              {/* メッセージテンプレート */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    メッセージテンプレート（{pack.templates?.length || 0}件）
-                  </h3>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowQuickCreator(true)}
-                      className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      新規作成
-                    </button>
-                    <button
-                      onClick={() => setShowTemplateSelector(true)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      既存から追加
-                    </button>
-                  </div>
-                </div>
-
-                {pack.templates && pack.templates.length > 0 ? (
-                  <DragDropContext onDragEnd={handleTemplateReorder}>
-                    <Droppable droppableId="templates">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="space-y-4"
-                        >
-                          {pack.templates.map((template, index) => (
-                            <Draggable key={template.id} draggableId={template.id} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`transition-all ${
-                                    snapshot.isDragging ? 'shadow-lg scale-105' : ''
-                                  }`}
-                                >
-                                  <div className="relative">
-                                    {/* Drag handle */}
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="absolute left-2 top-4 p-1 text-gray-400 hover:text-gray-600 cursor-grab z-10"
-                                    >
-                                      <Move className="w-4 h-4" />
-                                    </div>
-
-                                    {/* Move buttons */}
-                                    <div className="absolute right-2 top-2 flex flex-col space-y-1 z-10">
-                                      <button
-                                        onClick={() => moveTemplateUp(index)}
-                                        disabled={index === 0}
-                                        className="p-1 text-gray-400 hover:text-gray-600 rounded disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-sm"
-                                      >
-                                        <ArrowUp className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => moveTemplateDown(index)}
-                                        disabled={index === (pack.templates?.length || 0) - 1}
-                                        className="p-1 text-gray-400 hover:text-gray-600 rounded disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-sm"
-                                      >
-                                        <ArrowDown className="w-3 h-3" />
-                                      </button>
-                                    </div>
-
-                                    {/* Template Preview Card */}
-                                    <div className="pl-8 pr-16">
-                                      <TemplatePreviewCard
-                                        template={template}
-                                        actionRules={actionRules}
-                                        tags={tags}
-                                        statuses={statuses}
-                                        onEdit={onEditTemplate}
-                                        onDelete={(templateId) => {
-                                          if (confirm('このテンプレートを削除しますか？')) {
-                                            onDeleteTemplate(templateId)
-                                          }
-                                        }}
-                                      />
-                                    </div>
-
-                                    {/* Template-specific action rules section */}
-                                    {onCreateActionRule && (
-                                      <div className="pl-8 pr-4 mt-3">
-                                        <InlineActionRuleEditor
-                                          packId={pack.id}
-                                          templateId={template.id}
-                                          existingRules={actionRules}
-                                          tags={tags}
-                                          statuses={statuses}
-                                          onCreateRule={onCreateActionRule}
-                                          onUpdateRule={onUpdateActionRule!}
-                                          onDeleteRule={onDeleteActionRule!}
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <p className="text-sm mb-4">メッセージテンプレートがありません</p>
-                    <div className="flex justify-center space-x-3">
+              {/* 新しいシナリオテンプレート管理システム */}
+              {onAddPackTemplate && onRemovePackTemplate && onReorderPackTemplates && 
+               onCreateScenarioActionRule && onUpdateScenarioActionRule && onDeleteScenarioActionRule ? (
+                <ScenarioTemplateManager
+                  packId={pack.id}
+                  packTemplates={packTemplates}
+                  availableTemplates={availableTemplates}
+                  tags={tags}
+                  statuses={statuses}
+                  onAddTemplate={onAddPackTemplate}
+                  onRemoveTemplate={onRemovePackTemplate}
+                  onReorderTemplates={onReorderPackTemplates}
+                  onUpdateActionRule={onUpdateScenarioActionRule}
+                  onCreateActionRule={onCreateScenarioActionRule}
+                  onDeleteActionRule={onDeleteScenarioActionRule}
+                />
+              ) : (
+                // レガシー用のフォールバック（既存のテンプレート管理システム）
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-gray-900">
+                      メッセージテンプレート（{pack.templates?.length || 0}件）
+                    </h3>
+                    
+                    <div className="flex space-x-2">
                       <button
                         onClick={() => setShowQuickCreator(true)}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-3 h-3 mr-1" />
                         新規作成
                       </button>
                       <button
                         onClick={() => setShowTemplateSelector(true)}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-3 h-3 mr-1" />
                         既存から追加
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* アクションルール設定 */}
-              {onCreateActionRule && (
-                <div className="mt-6">
-                  <InlineActionRuleEditor
-                    packId={pack.id}
-                    existingRules={actionRules}
-                    tags={tags}
-                    statuses={statuses}
-                    onCreateRule={onCreateActionRule}
-                    onUpdateRule={onUpdateActionRule!}
-                    onDeleteRule={onDeleteActionRule!}
-                  />
+                  {pack.templates && pack.templates.length > 0 ? (
+                    <DragDropContext onDragEnd={handleTemplateReorder}>
+                      <Droppable droppableId="templates">
+                        {(provided) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className="space-y-4"
+                          >
+                            {pack.templates.map((template, index) => (
+                              <Draggable key={template.id} draggableId={template.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`transition-all ${
+                                      snapshot.isDragging ? 'shadow-lg scale-105' : ''
+                                    }`}
+                                  >
+                                    <div className="relative">
+                                      {/* Drag handle */}
+                                      <div
+                                        {...provided.dragHandleProps}
+                                        className="absolute left-2 top-4 p-1 text-gray-400 hover:text-gray-600 cursor-grab z-10"
+                                      >
+                                        <Move className="w-4 h-4" />
+                                      </div>
+
+                                      {/* Move buttons */}
+                                      <div className="absolute right-2 top-2 flex flex-col space-y-1 z-10">
+                                        <button
+                                          onClick={() => moveTemplateUp(index)}
+                                          disabled={index === 0}
+                                          className="p-1 text-gray-400 hover:text-gray-600 rounded disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-sm"
+                                        >
+                                          <ArrowUp className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => moveTemplateDown(index)}
+                                          disabled={index === (pack.templates?.length || 0) - 1}
+                                          className="p-1 text-gray-400 hover:text-gray-600 rounded disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-sm"
+                                        >
+                                          <ArrowDown className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                      {/* Template Preview Card */}
+                                      <div className="pl-8 pr-16">
+                                        <TemplatePreviewCard
+                                          template={template}
+                                          actionRules={actionRules}
+                                          tags={tags}
+                                          statuses={statuses}
+                                          onEdit={onEditTemplate}
+                                          onDelete={(templateId) => {
+                                            if (confirm('このテンプレートを削除しますか？')) {
+                                              onDeleteTemplate(templateId)
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <p className="text-sm mb-4">メッセージテンプレートがありません</p>
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => setShowQuickCreator(true)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          新規作成
+                        </button>
+                        <button
+                          onClick={() => setShowTemplateSelector(true)}
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          既存から追加
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -402,8 +404,8 @@ export function PackDrawer({
         </div>
       </div>
 
-      {/* テンプレート選択モーダル */}
-      {showTemplateSelector && (
+      {/* レガシー用のテンプレート選択・作成モーダル（新システムを使用しない場合のみ表示） */}
+      {!onAddPackTemplate && showTemplateSelector && (
         <TemplateSelector
           availableTemplates={availableTemplates}
           onCreateNew={() => {
@@ -416,8 +418,7 @@ export function PackDrawer({
         />
       )}
 
-      {/* クイック作成モーダル */}
-      {showQuickCreator && (
+      {!onAddPackTemplate && showQuickCreator && (
         <QuickTemplateCreator
           packId={pack.id}
           onSave={handleTemplateCreate}

@@ -245,6 +245,9 @@ export function QuickTemplateCreator({
     }
 
     const template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'> = {
+      name: 'クイック作成テンプレート',
+      type: messageType === 'text' ? 'TEXT' : 'FLEX',
+      content: messageType === 'text' ? textContent : messageJson,
       packId,
       order: suggestedOrder,
       lineMessageJson: messageJson

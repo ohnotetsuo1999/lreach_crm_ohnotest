@@ -17,7 +17,7 @@ export function TimelineTemplatePreview({
   
   const parseMessage = () => {
     try {
-      return JSON.parse(template.lineMessageJson)
+      return template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
     } catch {
       return null
     }

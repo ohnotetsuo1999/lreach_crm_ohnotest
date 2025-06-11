@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { LineMessagePreview } from './LineMessagePreview'
+import { EnhancedLinePreview } from '../TemplatePreview/EnhancedLinePreview'
 import { QuickVarInsert } from './QuickVarInsert'
 import { FlexMessagePreview } from './FlexMessagePreview'
 import { Template, LineMessage, LineTextMessage, LineFlexMessage, ActionRule, Tag, Status } from '@/types'
@@ -11,8 +11,6 @@ import {
   Code, 
   Type, 
   Layout, 
-  Plus, 
-  Trash2, 
   Copy,
   ArrowLeft,
   Download,
@@ -26,8 +24,10 @@ interface TemplateEditorProps {
   actionRules?: ActionRule[]
   tags?: Tag[]
   statuses?: Status[]
+  users?: any[] // テスト送信用ユーザーリスト
   onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
   onDeleteActionRule?: (ruleId: string) => void
+  onTestSend?: (userIds: string[], template: Template) => Promise<void>
 }
 
 export function TemplateEditor({ 
@@ -37,8 +37,10 @@ export function TemplateEditor({
   actionRules = [],
   tags = [],
   statuses = [],
+  users = [],
   onCreateActionRule,
-  onDeleteActionRule
+  onDeleteActionRule,
+  onTestSend
 }: TemplateEditorProps) {
   const [messageType, setMessageType] = useState<'text' | 'flex'>('text')
   const [textContent, setTextContent] = useState('')
@@ -53,13 +55,15 @@ export function TemplateEditor({
   useState(() => {
     if (template) {
       try {
-        const message = JSON.parse(template.lineMessageJson) as LineMessage
-        setMessageType(message.type)
-        
-        if (message.type === 'text') {
-          setTextContent(message.text)
-        } else if (message.type === 'flex') {
-          setFlexContent(template.lineMessageJson)
+        const message = template.lineMessageJson ? JSON.parse(template.lineMessageJson) as LineMessage : null
+        if (message) {
+          setMessageType(message.type)
+          
+          if (message.type === 'text') {
+            setTextContent(message.text)
+          } else if (message.type === 'flex') {
+            setFlexContent(template.lineMessageJson || '')
+          }
         }
       } catch (error) {
         console.error('Failed to parse template JSON:', error)
@@ -94,6 +98,9 @@ export function TemplateEditor({
     }
 
     onSave({
+      name: template?.name || 'Untitled Template',
+      type: messageType === 'text' ? 'TEXT' : 'FLEX',
+      content: messageType === 'text' ? textContent : flexContent,
       packId: template?.packId || '',
       order: template?.order || 1,
       lineMessageJson: JSON.stringify(message)
@@ -502,7 +509,20 @@ export function TemplateEditor({
                 onDeleteRule={onDeleteActionRule!}
               />
             ) : (
-              <LineMessagePreview message={getCurrentMessage()} />
+              <EnhancedLinePreview 
+                message={getCurrentMessage()} 
+                showTestSend={true}
+                users={users}
+                showMockChat={true}
+                onTestSend={async (userIds, message) => {
+                  if (onTestSend && template) {
+                    await onTestSend(userIds, template)
+                  } else {
+                    console.log('Test send to users:', userIds, 'message:', message)
+                    alert('テスト送信が実行されました')
+                  }
+                }}
+              />
             )}
           </div>
         )}

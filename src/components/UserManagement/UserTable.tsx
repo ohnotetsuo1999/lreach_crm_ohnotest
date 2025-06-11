@@ -73,7 +73,7 @@ export function UserTable({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left">
+              <th className="w-12 px-6 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -84,19 +84,19 @@ export function UserTable({
                   className="w-4 h-4 text-blue-600 rounded border-gray-300"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[200px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ユーザー
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[180px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 住所・連絡先
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[200px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 タグ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 登録日
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[150px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 最終ステータス更新
               </th>
               <th className="px-6 py-3 relative">
@@ -124,45 +124,52 @@ export function UserTable({
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4">
+                    <div className="ml-4 min-w-0">
                       <div className="text-sm font-medium text-gray-900">
-                        {user.name}
+                        <div className="truncate max-w-[150px]" title={user.name}>
+                          {user.name}
+                        </div>
                       </div>
                       {user.lineUid && (
                         <div className="text-sm text-gray-500">
-                          LINE: {user.lineUid.slice(-8)}
+                          <div className="truncate max-w-[150px]" title={`LINE: ${user.lineUid}`}>
+                            LINE: {user.lineUid.slice(-8)}
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     {user.address && (
                       <div className="flex items-center text-sm text-gray-500">
                         <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="truncate max-w-xs">{user.address}</span>
+                        <span className="truncate max-w-[140px]" title={user.address}>{user.address}</span>
                       </div>
                     )}
                     {user.phone && (
                       <div className="flex items-center text-sm text-gray-500">
-                        <Phone className="w-4 h-4 mr-2" />
-                        {user.phone}
+                        <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="truncate max-w-[140px]" title={user.phone}>{user.phone}</span>
                       </div>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 min-w-0">
                     {user.tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag.id}
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTagColor(tag.type)}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium max-w-[120px] ${getTagColor(tag.type)}`}
+                        title={tag.name}
                       >
-                        {tag.name}
+                        <span className="truncate">
+                          {tag.name.length > 10 ? tag.name.substring(0, 10) + '...' : tag.name}
+                        </span>
                         <button
                           onClick={() => onRemoveTag(user.id, tag.id)}
-                          className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-current hover:bg-black hover:bg-opacity-10"
+                          className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-current hover:bg-black hover:bg-opacity-10 flex-shrink-0"
                         >
                           <X className="w-3 h-3" />
                         </button>

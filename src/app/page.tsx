@@ -9,6 +9,7 @@ import { ScenarioList } from '@/components/ScenarioList/ScenarioList'
 import { ScenarioEditor } from '@/components/ScenarioEditor/ScenarioEditor'
 import { TemplateEditor } from '@/components/TemplateEditor/TemplateEditor'
 import { TagManagement } from '@/components/TagManagement/TagManagement'
+import { TemplateManagement } from '@/components/TemplateManagement/TemplateManagement'
 import { 
   User, 
   Tag, 
@@ -17,17 +18,22 @@ import {
   Segment, 
   Campaign, 
   Scenario, 
+  Pack,
   Template, 
+  TemplateFolder,
+  TemplatePack,
   DeliveryLog 
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send, Plus } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send } from 'lucide-react'
 import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
+import { PackManagement } from '@/components/PackManagement/PackManagement'
+import { LinePreviewTest } from '@/components/Debug/LinePreviewTest'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast' | 'debug'>('debug')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<any>(null)
   const [segmentView, setSegmentView] = useState<'list' | 'builder'>('list')
@@ -42,8 +48,11 @@ export default function LineMarketingApp() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
+  const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([])
+  const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([])
   const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([])
   const [actionRules, setActionRules] = useState<any[]>([])
+  const [packs, setPacks] = useState<Pack[]>([])
 
   // Initialize data
   useEffect(() => {
@@ -220,134 +229,141 @@ export default function LineMarketingApp() {
       }
     ]
 
+    const mockTemplateFolders: TemplateFolder[] = [
+      { id: '1', name: '未分類', description: '未分類のテンプレート', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: '営業・動画オンボーディング', description: '営業とオンボーディング用', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: '自動配信', description: '自動配信用テンプレート', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: 'LINE リマインド', description: 'リマインド系テンプレート', createdAt: new Date(), updatedAt: new Date() },
+      { id: '5', name: 'セミナー案内2024', description: 'セミナー案内用', parentId: '4', createdAt: new Date(), updatedAt: new Date() },
+      { id: '6', name: 'クリスマスキャンペーン', description: 'クリスマス関連', createdAt: new Date(), updatedAt: new Date() },
+      { id: '7', name: '全キャンペーン', description: '各種キャンペーン', createdAt: new Date(), updatedAt: new Date() },
+      { id: '8', name: 'ロコミキャンペーン', description: '口コミキャンペーン', parentId: '7', createdAt: new Date(), updatedAt: new Date() },
+      { id: '9', name: 'ギフトカードキャンペーン', description: 'ギフトカード関連', parentId: '7', createdAt: new Date(), updatedAt: new Date() },
+      { id: '10', name: '新生活準備キャンペーン', description: '新生活応援', parentId: '7', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
     const mockTemplates: Template[] = [
       {
         id: '1',
-        packId: '1',
-        order: 1,
-        lineMessageJson: JSON.stringify({
-          type: 'text',
-          text: 'こんにちは{{user.name}}さん！\n\nLINE公式アカウントにご登録いただき、ありがとうございます。\n\n特別なお知らせをお届けしますので、お楽しみに！'
-        }),
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        name: 'テンプレートa',
+        type: 'FLEX',
+        content: 'フレックスメッセージのテンプレート',
+        folderId: '2',
+        createdAt: new Date('2025-06-11'),
+      },
+      {
+        id: '2',
+        name: 'る',
+        type: 'FLEX',
+        content: 'シンプルなフレックスメッセージ',
+        folderId: '3',
+        createdAt: new Date('2025-02-04'),
+      },
+      {
+        id: '3',
+        name: '参加者へのイベント案内',
+        type: 'TEXT',
+        content: 'イベント参加者へのテキストメッセージ',
+        folderId: '3',
+        createdAt: new Date('2025-01-21'),
+      },
+      {
+        id: '4',
+        name: 'お知リマインド_明日',
+        type: 'TEXT',
+        content: '明日のリマインド用テキスト',
+        folderId: '5',
+        createdAt: new Date('2025-01-21'),
+      },
+      {
+        id: '5',
+        name: '当日_ZOOMリンク(9:40配信)',
+        type: 'TEXT',
+        content: '当日のZOOMリンク配信用',
+        folderId: '5',
+        createdAt: new Date('2024-12-24'),
+      },
+      {
+        id: '6',
+        name: '開始10分後_ZOOMリンク(10:10配信)',
+        type: 'TEXT',
+        content: '開始10分後のZOOMリンク配信',
+        folderId: '5',
+        createdAt: new Date('2024-12-24'),
+      },
+      {
+        id: '7',
+        name: '2/1_ユリボセミナー感想アンケート',
+        type: 'FLEX',
+        content: 'セミナー感想アンケート用フレックス',
+        folderId: '5',
+        createdAt: new Date('2025-02-02'),
+      },
+      {
+        id: '8',
+        name: '2/1_ユリボセミナー感想アンケート_回答済',
+        type: 'TEXT',
+        content: 'アンケート回答済み用メッセージ',
+        folderId: '5',
+        createdAt: new Date('2025-02-02'),
+      },
+      {
+        id: '9',
+        name: 'ウェルカムパック',
+        type: 'PACK',
+        content: '新規登録者向けの基本パック - テンプレートa、る を含む',
+        folderId: '2',
+        createdAt: new Date('2025-01-15'),
+      },
+      {
+        id: '10',
+        name: 'セミナー案内パック',
+        type: 'PACK',
+        content: 'セミナー関連のテンプレート一式 - リマインド、ZOOMリンク、アンケート を含む',
+        folderId: '5',
+        createdAt: new Date('2025-01-10'),
+      },
+      {
+        id: '11',
+        name: 'キャンペーン告知パック',
+        type: 'PACK',
+        content: 'キャンペーン告知用のテンプレート集',
+        folderId: '6',
+        createdAt: new Date('2024-12-20'),
+      },
+      {
+        id: '12',
+        name: '商品紹介画像セット',
+        type: 'IMAGE',
+        content: '商品紹介用の画像テンプレート',
+        folderId: '8',
+        createdAt: new Date('2024-12-15'),
+      },
+      {
+        id: '13',
+        name: 'プロフィール画像テンプレート',
+        type: 'IMAGE',
+        content: 'プロフィール紹介用画像',
+        folderId: '8',
+        createdAt: new Date('2024-12-10'),
+      }
+    ]
+
+    const mockTemplatePacks: TemplatePack[] = [
+      {
+        id: '1',
+        name: 'ウェルカムパック',
+        description: '新規登録者向けの基本パック',
+        templateIds: ['1', '2'],
+        createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: '2',
-        packId: '2',
-        order: 1,
-        lineMessageJson: JSON.stringify({
-          type: 'flex',
-          altText: '特別オファーのご案内',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: '🎉 特別オファー',
-                  weight: 'bold',
-                  size: 'xl',
-                  color: '#1DB446'
-                },
-                {
-                  type: 'text',
-                  text: '{{user.name}}様限定',
-                  size: 'sm',
-                  color: '#666666'
-                },
-                {
-                  type: 'text',
-                  text: '今なら30%オフでご利用いただけます！',
-                  wrap: true,
-                  margin: 'md'
-                }
-              ]
-            },
-            footer: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'button',
-                  action: {
-                    type: 'uri',
-                    label: '詳細を見る',
-                    uri: 'https://example.com/offer'
-                  },
-                  style: 'primary',
-                  color: '#1DB446'
-                }
-              ]
-            }
-          }
-        }),
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        packId: '2',
-        order: 2,
-        lineMessageJson: JSON.stringify({
-          type: 'text',
-          text: '📋 アンケートにご協力ください\n\nより良いサービス提供のため、簡単なアンケートにお答えください。\n\n回答者には特別クーポンをプレゼント🎁'
-        }),
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date()
-      },
-      {
-        id: '4',
-        packId: '3',
-        order: 1,
-        lineMessageJson: JSON.stringify({
-          type: 'text',
-          text: '🌸 春のキャンペーン開始！\n\n期間限定で全商品20%オフ！\n詳細は公式サイトをチェック✨'
-        }),
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date()
-      },
-      {
-        id: '5',
-        packId: '4',
-        order: 1,
-        lineMessageJson: JSON.stringify({
-          type: 'flex',
-          altText: 'VIP限定スペシャルオファー',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                {
-                  type: 'text',
-                  text: '👑 VIP限定',
-                  weight: 'bold',
-                  size: 'xl',
-                  color: '#FFD700'
-                },
-                {
-                  type: 'text',
-                  text: 'スペシャルオファー',
-                  size: 'lg',
-                  weight: 'bold',
-                  margin: 'sm'
-                },
-                {
-                  type: 'text',
-                  text: '{{user.name}}様だけの特別価格でご提供',
-                  size: 'sm',
-                  color: '#666666',
-                  margin: 'md'
-                }
-              ]
-            }
-          }
-        }),
-        createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+        name: 'セミナー案内パック',
+        description: 'セミナー関連のテンプレート一式',
+        templateIds: ['4', '5', '6', '7'],
+        createdAt: new Date(),
         updatedAt: new Date()
       }
     ]
@@ -499,6 +515,8 @@ export default function LineMarketingApp() {
     setSegments(mockSegments)
     setScenarios(mockScenarios)
     setTemplates(mockTemplates)
+    setTemplateFolders(mockTemplateFolders)
+    setTemplatePacks(mockTemplatePacks)
     setCampaigns(mockCampaigns)
     setDeliveryLogs(mockDeliveryLogs)
 
@@ -789,7 +807,35 @@ export default function LineMarketingApp() {
       )
     })))
   }
-  
+
+  // Pack Management handlers
+  const handleCreatePack = (pack: Omit<Pack, 'id' | 'createdAt'>) => {
+    const newPack: Pack = {
+      ...pack,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    }
+    setPacks([...packs, newPack])
+  }
+
+  const handleEditPack = (pack: Pack) => {
+    console.log('Edit pack', pack)
+    // TODO: Implement pack editing
+  }
+
+  const handleDeletePack = (packId: string) => {
+    setPacks(packs.filter(p => p.id !== packId))
+  }
+
+  const handleDuplicatePack = (pack: Pack) => {
+    const duplicatedPack: Pack = {
+      ...pack,
+      id: Date.now().toString(),
+      order: pack.order + 1,
+      createdAt: new Date()
+    }
+    setPacks([...packs, duplicatedPack])
+  }
 
 
   // Action Rule handlers
@@ -894,6 +940,7 @@ export default function LineMarketingApp() {
   }
   
   const navigationItems = [
+    { id: 'debug', label: '🐛 プレビューテスト', icon: LayoutDashboard },
     { id: 'dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
     { id: 'users', label: 'ユーザー管理', icon: Users },
     { id: 'segments', label: 'セグメント', icon: Target },
@@ -953,6 +1000,9 @@ export default function LineMarketingApp() {
     }
     
     switch (activeTab) {
+      case 'debug':
+        return <LinePreviewTest />
+        
       case 'dashboard':
         return (
           <div>
@@ -1049,30 +1099,58 @@ export default function LineMarketingApp() {
         
       case 'templates':
         return (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">テンプレート一覧</h1>
-                <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                  <span>全0件</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setEditingItem(null)
-                  setCurrentView('edit')
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                新規テンプレート
-              </button>
-            </div>
-            
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <p className="text-gray-500">テンプレート一覧がここに表示されます。</p>
-            </div>
-          </div>
+          <TemplateManagement
+            templates={templates}
+            templateFolders={templateFolders}
+            templatePacks={templatePacks}
+            onCreateTemplate={(template) => {
+              const newTemplate: Template = {
+                ...template,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+              }
+              setTemplates([...templates, newTemplate])
+            }}
+            onUpdateTemplate={(templateId, updates) => {
+              setTemplates(templates.map(template => 
+                template.id === templateId ? { ...template, ...updates } : template
+              ))
+            }}
+            onDeleteTemplate={(templateId) => {
+              setTemplates(templates.filter(template => template.id !== templateId))
+            }}
+            onCreateFolder={(folder) => {
+              const newFolder: TemplateFolder = {
+                ...folder,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setTemplateFolders([...templateFolders, newFolder])
+            }}
+            onUpdateFolder={(folderId, updates) => {
+              setTemplateFolders(templateFolders.map(folder => 
+                folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+              ))
+            }}
+            onCreatePack={(pack) => {
+              const newPack: TemplatePack = {
+                ...pack,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setTemplatePacks([...templatePacks, newPack])
+            }}
+            onUpdatePack={(packId, updates) => {
+              setTemplatePacks(templatePacks.map(pack => 
+                pack.id === packId ? { ...pack, ...updates, updatedAt: new Date() } : pack
+              ))
+            }}
+            onDeletePack={(packId) => {
+              setTemplatePacks(templatePacks.filter(pack => pack.id !== packId))
+            }}
+          />
         )
         
       case 'tags':

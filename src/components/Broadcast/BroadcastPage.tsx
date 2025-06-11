@@ -765,7 +765,7 @@ function TemplateSelection({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {templates.map((template) => {
-          const messageData = JSON.parse(template.lineMessageJson)
+          const messageData = template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
           const isSelected = selectedTemplateId === template.id
           
           return (
@@ -779,12 +779,12 @@ function TemplateSelection({
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">
-                    {messageData.type === 'text' ? 'テキストメッセージ' : 'Flexメッセージ'}
+                    {messageData?.type === 'text' ? 'テキストメッセージ' : 'Flexメッセージ'}
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    {messageData.type === 'text' 
-                      ? messageData.text.substring(0, 100) + (messageData.text.length > 100 ? '...' : '')
-                      : messageData.altText
+                    {messageData?.type === 'text' 
+                      ? (messageData.text?.substring(0, 100) + (messageData.text?.length > 100 ? '...' : ''))
+                      : messageData?.altText || template.content?.substring(0, 100) + (template.content?.length > 100 ? '...' : '')
                     }
                   </div>
                 </div>
@@ -903,7 +903,7 @@ function ConfirmationStep({
   }
 
   const template = templates.find(t => t.id === broadcastData.templateId)
-  const messageData = template ? JSON.parse(template.lineMessageJson) : null
+  const messageData = template && template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
 
   return (
     <div className="space-y-6">

@@ -67,19 +67,19 @@ export function RecentDeliveryTable({ deliveries }: RecentDeliveryTableProps) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[200px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ユーザー
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[150px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 メッセージ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ステータス
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 送信時刻
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 開封時刻
               </th>
             </tr>
@@ -96,22 +96,28 @@ export function RecentDeliveryTable({ deliveries }: RecentDeliveryTableProps) {
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4">
+                    <div className="ml-4 min-w-0">
                       <div className="text-sm font-medium text-gray-900">
-                        {delivery.user.name}
+                        <div className="truncate max-w-[150px]" title={delivery.user.name}>
+                          {delivery.user.name}
+                        </div>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {delivery.user.address || delivery.user.phone}
+                        <div className="truncate max-w-[150px]" title={delivery.user.address || delivery.user.phone}>
+                          {delivery.user.address || delivery.user.phone}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    テンプレート #{delivery.template.order}
+                    テンプレート #{delivery.template.order || 1}
                   </div>
                   <div className="text-sm text-gray-500">
-                    Pack ID: {delivery.template.packId.slice(-8)}
+                    <div className="truncate max-w-[100px]" title={`Pack ID: ${delivery.template.packId || 'N/A'}`}>
+                      Pack ID: {delivery.template.packId?.slice(-8) || 'N/A'}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

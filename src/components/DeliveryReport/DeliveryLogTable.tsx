@@ -211,13 +211,13 @@ export function DeliveryLogTable({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[200px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ユーザー
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[150px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 テンプレート
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ステータス
               </th>
               <th 
@@ -264,22 +264,28 @@ export function DeliveryLogTable({
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4">
+                    <div className="ml-4 min-w-0">
                       <div className="text-sm font-medium text-gray-900">
-                        {log.user.name}
+                        <div className="truncate max-w-[150px]" title={log.user.name}>
+                          {log.user.name}
+                        </div>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {log.user.address || log.user.phone}
+                        <div className="truncate max-w-[150px]" title={log.user.address || log.user.phone}>
+                          {log.user.address || log.user.phone}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    テンプレート #{log.template.order}
+                    テンプレート #{log.template.order || 1}
                   </div>
                   <div className="text-sm text-gray-500">
-                    Pack ID: {log.template.packId.slice(-8)}
+                    <div className="truncate max-w-[100px]" title={`Pack ID: ${log.template.packId || 'N/A'}`}>
+                      Pack ID: {log.template.packId?.slice(-8) || 'N/A'}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

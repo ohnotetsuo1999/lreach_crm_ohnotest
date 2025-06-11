@@ -84,6 +84,12 @@ export interface Scenario {
   packs: Pack[]
 }
 
+// Packと関連するテンプレート情報を含む拡張Pack
+export interface PackWithTemplates extends Pack {
+  packTemplates: PackTemplate[]
+  templates: Template[] // populateされたテンプレート
+}
+
 export interface Pack {
   id: string
   scenarioId: string
@@ -91,9 +97,38 @@ export interface Pack {
   offsetMinutes: number
   conditionJson?: string
   createdAt: Date
-  templates: Template[]
   packType?: 'normal' | 'reminder'
   reminderSettings?: ReminderSettings
+}
+
+// 多対多関係: Pack-Template の中間テーブル
+export interface PackTemplate {
+  id: string
+  packId: string
+  templateId: string
+  order: number
+  isActive: boolean
+  createdAt: Date
+  // このPack-Template関係でのアクションルール
+  actionRules: ScenarioActionRule[]
+}
+
+// シナリオ固有のアクションルール（テンプレートとシナリオの組み合わせ毎）
+export interface ScenarioActionRule {
+  id: string
+  packTemplateId: string // PackTemplateのID
+  actionType: ActionType
+  actionCondition: {
+    operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any'
+    value: string
+    regex?: string
+  }
+  tagActions: TagAction[]
+  isActive: boolean
+  priority: number
+  description?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface ReminderSettings {
@@ -122,9 +157,31 @@ export interface Reservation {
 
 export interface Template {
   id: string
-  packId: string
-  order: number
-  lineMessageJson: string
+  name: string
+  type: 'TEXT' | 'FLEX' | 'IMAGE' | 'PACK'
+  content: string
+  folderId?: string
+  packId?: string
+  order?: number
+  lineMessageJson?: string
+  createdAt: Date
+  updatedAt?: Date
+}
+
+export interface TemplateFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface TemplatePack {
+  id: string
+  name: string
+  description?: string
+  templateIds: string[]
   createdAt: Date
   updatedAt: Date
 }
@@ -286,3 +343,75 @@ export interface QuickReplyItem {
 }
 
 export type LineMessage = LineTextMessage | LineFlexMessage
+
+// スマートアクションルール推奨用の型
+export interface SuggestedActionRule {
+  id: string
+  actionType: ActionType
+  triggerElement: string // ボタンテキスト、URL等
+  suggestedTagActions: TagAction[]
+  confidence: number // 0-1の推奨度
+  reason: string // 推奨理由
+  isApplied?: boolean
+}
+
+// テンプレート利用コンテキスト
+export interface TemplateUsageContext {
+  scenarioId?: string
+  scenarioName?: string
+  campaignId?: string
+  campaignName?: string
+  targetSegmentId?: string
+  targetSegmentName?: string
+  purpose?: TemplatePurpose
+  stage?: ScenarioStage
+}
+
+export type TemplatePurpose = 
+  | 'WELCOME' // ウェルカムメッセージ
+  | 'NOTIFICATION' // お知らせ
+  | 'REMINDER' // リマインダー
+  | 'PROMOTION' // プロモーション
+  | 'SURVEY' // アンケート
+  | 'FOLLOW_UP' // フォローアップ
+  | 'SUPPORT' // サポート
+  | 'ENGAGEMENT' // エンゲージメント
+  | 'CONVERSION' // コンバージョン
+  | 'RETENTION' // リテンション
+  | 'OTHER' // その他
+
+export type ScenarioStage = 
+  | 'AWARENESS' // 認知
+  | 'INTEREST' // 興味
+  | 'CONSIDERATION' // 検討
+  | 'INTENT' // 意向
+  | 'EVALUATION' // 評価
+  | 'PURCHASE' // 購入
+  | 'RETENTION' // 維持
+  | 'ADVOCACY' // 推奨
+
+// テンプレート選択用のフィルター
+export interface TemplateFilter {
+  type?: Template['type'][]
+  purpose?: TemplatePurpose[]
+  stage?: ScenarioStage[]
+  folderId?: string
+  hasActions?: boolean
+  usageFrequency?: 'high' | 'medium' | 'low'
+  recentlyUsed?: boolean
+  searchTerm?: string
+}
+
+// テンプレート推奨システム用
+export interface TemplateRecommendation {
+  template: Template
+  score: number // 0-1の推奨スコア
+  reasons: string[] // 推奨理由のリスト
+  matchingCriteria: {
+    purposeMatch?: boolean
+    stageMatch?: boolean
+    segmentMatch?: boolean
+    contentSimilarity?: number
+    performanceScore?: number
+  }
+}

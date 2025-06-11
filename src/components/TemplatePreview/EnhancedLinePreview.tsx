@@ -1,40 +1,72 @@
 'use client'
 
 import { LineMessage, LineTextMessage, LineFlexMessage, User } from '@/types'
-import { MessageCircle, Image, Layout, Send, Users, X } from 'lucide-react'
+import { MessageCircle, Image, Layout, Send, Users, X, Phone, Calendar } from 'lucide-react'
 import { useState } from 'react'
 
-interface LineMessagePreviewProps {
+interface EnhancedLinePreviewProps {
   message: LineMessage | null
   className?: string
   showTestSend?: boolean
   users?: User[]
   onTestSend?: (userIds: string[], message: LineMessage) => Promise<void>
+  showMockChat?: boolean
 }
 
-export function LineMessagePreview({ 
+export function EnhancedLinePreview({ 
   message, 
   className = '', 
   showTestSend = false,
   users = [],
-  onTestSend
-}: LineMessagePreviewProps) {
+  onTestSend,
+  showMockChat = true
+}: EnhancedLinePreviewProps) {
   const [showUserSelector, setShowUserSelector] = useState(false)
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [isSending, setIsSending] = useState(false)
-  if (!message) {
-    return (
-      <div className={`bg-gray-50 rounded-lg p-4 text-center text-gray-500 ${className}`}>
-        <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-        <p>メッセージを作成してプレビューを表示</p>
-      </div>
+  const [mockChatHistory, setMockChatHistory] = useState([
+    { type: 'system', content: 'ユーザーがトークに参加しました', time: '14:20' },
+    { type: 'user', content: 'こんにちは！', time: '14:21' }
+  ])
+
+  const handleTestSend = async () => {
+    if (!message || !onTestSend || selectedUsers.length === 0) return
+    
+    setIsSending(true)
+    try {
+      await onTestSend(selectedUsers, message)
+      setShowUserSelector(false)
+      setSelectedUsers([])
+      
+      // モックチャットに送信メッセージを追加
+      if (showMockChat) {
+        const newMessage = {
+          type: 'bot',
+          content: message.type === 'text' ? message.text : message.altText,
+          time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        }
+        setMockChatHistory(prev => [...prev, newMessage])
+      }
+    } catch (error) {
+      console.error('Test send failed:', error)
+      alert('テスト送信に失敗しました')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
     )
   }
 
   const renderTextMessage = (textMessage: LineTextMessage) => {
     return (
-      <div className="relative">
-        <div className="bg-green-500 text-white rounded-2xl rounded-br-md p-3 shadow-sm">
+      <div className="relative mb-2">
+        <div className="bg-green-500 text-white rounded-2xl rounded-br-md p-3 shadow-sm max-w-[250px] ml-auto">
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{textMessage.text}</p>
           {textMessage.quickReply && textMessage.quickReply.items.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
@@ -62,12 +94,12 @@ export function LineMessagePreview({
 
     if (contents.type === 'bubble') {
       return (
-        <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md overflow-hidden shadow-lg max-w-xs">
+        <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md overflow-hidden shadow-lg max-w-[250px] ml-auto mb-2">
           {/* Hero Image */}
           {contents.hero && contents.hero.type === 'image' && (
-            <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <Image className="w-12 h-12 text-gray-400" />
-              <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+            <div className="h-32 bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center relative">
+              <Image className="w-10 h-10 text-gray-500" />
+              <div className="absolute inset-0 bg-black bg-opacity-5"></div>
             </div>
           )}
 
@@ -96,10 +128,10 @@ export function LineMessagePreview({
     }
 
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md p-4 max-w-xs shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md p-4 max-w-[250px] ml-auto shadow-sm mb-2">
         <div className="flex items-center text-gray-500 text-sm">
-          <Layout className="w-5 h-5 mr-2" />
-          <span className="font-medium">Flex Message (Carousel)</span>
+          <Layout className="w-4 h-4 mr-2" />
+          <span className="font-medium">Carousel</span>
         </div>
         <div className="mt-2 text-xs text-gray-400">
           複数のカードを横スクロールで表示
@@ -155,8 +187,8 @@ export function LineMessagePreview({
 
       case 'image':
         return (
-          <div className="h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
-            <Image className="w-8 h-8 text-gray-400" />
+          <div className="h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
+            <Image className="w-6 h-6 text-gray-400" />
             <div className="absolute inset-0 bg-black bg-opacity-5"></div>
           </div>
         )
@@ -172,92 +204,112 @@ export function LineMessagePreview({
     }
   }
 
-  const handleTestSend = async () => {
-    if (!message || !onTestSend || selectedUsers.length === 0) return
-    
-    setIsSending(true)
-    try {
-      await onTestSend(selectedUsers, message)
-      setShowUserSelector(false)
-      setSelectedUsers([])
-    } catch (error) {
-      console.error('Test send failed:', error)
-      alert('テスト送信に失敗しました')
-    } finally {
-      setIsSending(false)
-    }
-  }
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    )
-  }
-
   return (
     <div className={`relative ${className}`}>
-      {/* LINE風プレビューコンテナ */}
-      <div className="bg-gradient-to-b from-green-400 to-green-500 rounded-t-lg p-4">
+      {/* LINEスマートフォン風のプレビューコンテナ */}
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm mx-auto overflow-hidden border border-gray-200">
+        {/* スマートフォンのステータスバー */}
+        <div className="bg-black text-white px-4 py-2 flex justify-between items-center text-xs">
+          <span>9:41</span>
+          <div className="flex items-center space-x-1">
+            <div className="flex space-x-1">
+              <div className="w-1 h-1 bg-white rounded-full"></div>
+              <div className="w-1 h-1 bg-white rounded-full"></div>
+              <div className="w-1 h-1 bg-white rounded-full"></div>
+              <div className="w-1 h-1 bg-white rounded-full opacity-50"></div>
+            </div>
+            <span className="ml-2">100%</span>
+          </div>
+        </div>
+
         {/* LINEヘッダー */}
-        <div className="flex items-center mb-4">
+        <div className="bg-green-500 text-white px-4 py-3 flex items-center">
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center mr-3">
             <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">L</span>
             </div>
           </div>
-          <div className="text-white">
+          <div className="flex-1">
             <div className="font-medium text-sm">あなたのLINE Bot</div>
             <div className="text-xs opacity-80">オンライン</div>
+          </div>
+          <div className="flex space-x-3">
+            <Phone className="w-5 h-5 opacity-80" />
+            <Calendar className="w-5 h-5 opacity-80" />
           </div>
           {showTestSend && message && (
             <button
               onClick={() => setShowUserSelector(true)}
-              className="ml-auto bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-1 rounded-full text-xs flex items-center transition-colors"
+              className="ml-3 bg-white bg-opacity-90 hover:bg-white text-green-600 hover:text-green-700 px-4 py-2 rounded-full text-xs font-medium flex items-center transition-all shadow-sm hover:shadow-md border border-white border-opacity-20 backdrop-blur-sm"
             >
-              <Send className="w-3 h-3 mr-1" />
+              <Send className="w-3 h-3 mr-1.5" />
               テスト送信
             </button>
           )}
         </div>
-      </div>
 
-      {/* メッセージエリア */}
-      <div className="bg-gray-50 p-4 rounded-b-lg min-h-[200px] flex flex-col">
-        {!message ? (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
-            <div className="text-center">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-sm">メッセージを作成してプレビューを表示</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col justify-end">
-            {/* 時刻表示 */}
-            <div className="text-center mb-2">
-              <span className="bg-white px-2 py-1 rounded-full text-xs text-gray-500">
-                {new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-            
-            {/* メッセージバブル */}
-            <div className="flex justify-end">
-              <div className="max-w-[280px]">
-                {message.type === 'text' && renderTextMessage(message)}
-                {message.type === 'flex' && renderFlexMessage(message)}
+        {/* チャットエリア */}
+        <div className="bg-gray-50 h-96 p-4 overflow-y-auto">
+          {!message ? (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">メッセージを作成してプレビューを表示</p>
               </div>
             </div>
-            
-            {/* 配信確認 */}
-            <div className="flex justify-end mt-1">
-              <div className="flex items-center text-xs text-gray-400">
-                <span>配信済み</span>
-                <div className="w-1 h-1 bg-blue-500 rounded-full ml-1"></div>
+          ) : (
+            <div className="space-y-3">
+              {/* モックチャット履歴 */}
+              {showMockChat && mockChatHistory.map((msg, index) => (
+                <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : msg.type === 'bot' ? 'justify-end' : 'justify-center'}`}>
+                  {msg.type === 'system' ? (
+                    <div className="bg-gray-300 text-gray-600 text-xs px-3 py-1 rounded-full">
+                      {msg.content}
+                    </div>
+                  ) : msg.type === 'user' ? (
+                    <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md p-3 max-w-[200px] shadow-sm">
+                      <p className="text-sm">{msg.content}</p>
+                      <div className="text-xs text-gray-400 mt-1 text-right">{msg.time}</div>
+                    </div>
+                  ) : (
+                    <div className="max-w-[250px]">
+                      <div className="bg-green-500 text-white rounded-2xl rounded-br-md p-3 shadow-sm">
+                        <p className="text-sm">{msg.content}</p>
+                        <div className="text-xs text-green-100 mt-1 text-right">{msg.time}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* 現在のメッセージプレビュー */}
+              <div className="flex justify-end">
+                <div>
+                  {message.type === 'text' && renderTextMessage(message)}
+                  {message.type === 'flex' && renderFlexMessage(message)}
+                  
+                  {/* 配信確認と時刻 */}
+                  <div className="flex justify-end items-center text-xs text-gray-400 mt-1">
+                    <span className="mr-1">
+                      {new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* 入力エリア */}
+        <div className="bg-white border-t border-gray-200 p-3 flex items-center space-x-2">
+          <div className="flex-1 bg-gray-100 rounded-full px-4 py-2">
+            <span className="text-gray-500 text-sm">メッセージを入力</span>
           </div>
-        )}
+          <button className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <Send className="w-4 h-4 text-white" />
+          </button>
+        </div>
       </div>
 
       {/* テスト送信モーダル */}

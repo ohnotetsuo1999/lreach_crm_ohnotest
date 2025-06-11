@@ -35,7 +35,7 @@ export function TemplatePreviewCard({
   
   const parseMessage = () => {
     try {
-      return JSON.parse(template.lineMessageJson)
+      return template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
     } catch {
       return null
     }
@@ -150,7 +150,7 @@ export function TemplatePreviewCard({
             </div>
             
             <div className="text-xs text-gray-500">
-              {new Date(template.updatedAt).toLocaleDateString('ja-JP')}
+              {template.updatedAt ? new Date(template.updatedAt).toLocaleDateString('ja-JP') : 'N/A'}
             </div>
           </div>
         </div>

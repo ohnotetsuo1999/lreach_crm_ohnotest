@@ -30,7 +30,8 @@ export function TemplateSelector({
   // 検索とフィルタリング
   const filteredTemplates = unusedTemplates.filter(template => {
     try {
-      const message = JSON.parse(template.lineMessageJson)
+      const message = template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
+      if (!message) return false
       
       // タイプフィルタ
       if (selectedType !== 'all' && message.type !== selectedType) {
@@ -56,7 +57,8 @@ export function TemplateSelector({
 
   const getMessagePreview = (template: Template) => {
     try {
-      const message = JSON.parse(template.lineMessageJson)
+      const message = template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
+      if (!message) return 'No message data'
       if (message.type === 'text') {
         return message.text.length > 60 
           ? message.text.substring(0, 60) + '...' 
@@ -72,8 +74,8 @@ export function TemplateSelector({
 
   const getMessageType = (template: Template) => {
     try {
-      const message = JSON.parse(template.lineMessageJson)
-      return message.type
+      const message = template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
+      return message ? message.type : 'unknown'
     } catch {
       return 'unknown'
     }
@@ -81,7 +83,8 @@ export function TemplateSelector({
 
   const extractButtons = (template: Template) => {
     try {
-      const message = JSON.parse(template.lineMessageJson)
+      const message = template.lineMessageJson ? JSON.parse(template.lineMessageJson) : null
+      if (!message) return []
       const buttons: string[] = []
       
       const traverse = (obj: any) => {
@@ -238,7 +241,9 @@ export function TemplateSelector({
 
                       {/* プレビュー */}
                       <div className="mb-3 p-3 bg-gray-50 rounded border text-sm text-gray-700">
-                        {getMessagePreview(template)}
+                        <div className="line-clamp-3 overflow-hidden">
+                          {getMessagePreview(template)}
+                        </div>
                       </div>
 
                       {/* メタ情報 */}
@@ -251,7 +256,7 @@ export function TemplateSelector({
                             </span>
                           )}
                           <span>
-                            {new Date(template.updatedAt).toLocaleDateString('ja-JP')}
+                            {template.updatedAt ? new Date(template.updatedAt).toLocaleDateString('ja-JP') : 'N/A'}
                           </span>
                         </div>
                         
@@ -266,9 +271,12 @@ export function TemplateSelector({
                           {buttons.slice(0, 3).map((buttonText, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800 max-w-[120px]"
+                              title={buttonText}
                             >
-                              「{buttonText.length > 10 ? buttonText.substring(0, 10) + '...' : buttonText}」
+                              <span className="truncate">
+                                「{buttonText.length > 8 ? buttonText.substring(0, 8) + '...' : buttonText}」
+                              </span>
                             </span>
                           ))}
                           {buttons.length > 3 && (
