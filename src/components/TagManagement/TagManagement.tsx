@@ -359,7 +359,7 @@ export function TagManagement({
       {/* コンテキストメニュー */}
       {contextMenu && (
         <>
-          <div className="fixed inset-0 z-40 bg-black bg-opacity-50" onClick={closeContextMenu} />
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={closeContextMenu} />
           <div 
             className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
             style={{ top: contextMenu.y, left: contextMenu.x }}
@@ -776,7 +776,7 @@ function CreateTagModal({ onClose, onSubmit, folders, defaultFolderId }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">新規タグ作成</h3>
@@ -895,7 +895,7 @@ function CreateFolderModal({ onClose, onSubmit, folders, defaultParentId }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">新規フォルダ作成</h3>
@@ -1006,7 +1006,7 @@ function EditTagModal({ tag, onClose, onSubmit, onDelete, folders }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">タグ編集</h3>
@@ -1131,7 +1131,7 @@ function EditFolderModal({ folder, onClose, onSubmit, folders }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">フォルダ編集</h3>

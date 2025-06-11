@@ -148,7 +148,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
 
           {/* Tag Selection Modal */}
           {showTagModal === index && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowTagModal(null)}>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTagModal(null)}>
               <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">タグを選択</h3>
@@ -256,7 +256,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
 
           {/* Status Selection Modal */}
           {showStatusModal === index && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowStatusModal(null)}>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowStatusModal(null)}>
               <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">ステータスを選択</h3>
