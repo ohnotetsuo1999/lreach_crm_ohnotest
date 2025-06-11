@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id              String             @id @default(cuid())
+  name            String
+  lineUid         String?            @unique
+  email           String?
+  phone           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  userTags        UserTag[]
+  userStatusLogs  UserStatusLog[]
+  deliveryLogs    DeliveryLog[]
+  
+  @@map("users")
+}
+
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  type     TagType   @default(MANUAL)
+  createdAt DateTime @default(now())
+  
+  userTags UserTag[]
+  
+  @@map("tags")
+}
+
+model UserTag {
+  userId    String
+  tagId     String
+  assignedAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, tagId])
+  @@map("user_tags")
+}
+
+model Status {
+  id    String @id @default(cuid())
+  code  String @unique
+  label String
+  
+  userStatusLogs UserStatusLog[]
+  
+  @@map("statuses")
+}
+
+model UserStatusLog {
+  id        String   @id @default(cuid())
+  userId    String
+  statusId  String
+  changedAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    Status   @relation(fields: [statusId], references: [id])
+  
+  @@map("user_status_logs")
+}
+
+model Segment {
+  id         String   @id @default(cuid())
+  name       String
+  filterJson String   // JSON string for complex filter conditions
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@map("segments")
+}
+
+model Campaign {
+  id        String     @id @default(cuid())
+  name      String
+  startAt   DateTime?
+  endAt     DateTime?
+  createdBy String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  scenarios Scenario[]
+  
+  @@map("campaigns")
+}
+
+model Scenario {
+  id           String      @id @default(cuid())
+  campaignId   String
+  name         String
+  trigger      TriggerType
+  triggerValue String?     // Additional trigger parameters
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  campaign     Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  packs        Pack[]
+  
+  @@map("scenarios")
+}
+
+model Pack {
+  id            String   @id @default(cuid())
+  scenarioId    String
+  order         Int
+  offsetMinutes Int      @default(0) // Delay from trigger or previous pack
+  conditionJson String?  // JSON for conditional logic
+  createdAt     DateTime @default(now())
+  
+  scenario      Scenario   @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  templates     Template[]
+  
+  @@map("packs")
+}
+
+model Template {
+  id              String   @id @default(cuid())
+  packId          String
+  order           Int
+  lineMessageJson String   // LINE Flex Message or Text Message JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  pack            Pack           @relation(fields: [packId], references: [id], onDelete: Cascade)
+  deliveryLogs    DeliveryLog[]
+  
+  @@map("templates")
+}
+
+model DeliveryLog {
+  id         String        @id @default(cuid())
+  templateId String
+  userId     String
+  status     DeliveryStatus
+  sentAt     DateTime?
+  openedAt   DateTime?
+  clickedAt  DateTime?
+  error      String?
+  createdAt  DateTime      @default(now())
+  
+  template   Template      @relation(fields: [templateId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+  
+  @@map("delivery_logs")
+}
+
+enum TagType {
+  MANUAL
+  AUTOMATIC
+  BEHAVIORAL
+}
+
+enum TriggerType {
+  MANUAL
+  SCHEDULE
+  USER_ACTION
+  TAG_ADDED
+  STATUS_CHANGED
+  TIME_BASED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  FAILED
+  CANCELLED
+}
