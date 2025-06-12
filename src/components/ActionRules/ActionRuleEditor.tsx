@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
+import { ActionRule, ScenarioActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
 import { X, Plus, Trash2, AlertCircle, Target, HelpCircle } from 'lucide-react'
 
 interface ActionRuleEditorProps {
-  rule: ActionRule | null
+  rule: ScenarioActionRule | null
   isOpen: boolean
   onClose: () => void
-  onSave: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSave: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
   tags: Tag[]
   statuses: Status[]
   scenarios: Scenario[]
@@ -31,7 +31,7 @@ export function ActionRuleEditor({
     actionCondition: {
       operator: 'contains' as 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any',
       value: '',
-      regex: ''
+      regex: undefined as string | undefined
     },
     tagActions: [] as TagAction[],
     priority: 1,
@@ -48,13 +48,17 @@ export function ActionRuleEditor({
       setFormData({
         description: rule.description || '',
         actionType: rule.actionType,
-        actionCondition: rule.actionCondition,
+        actionCondition: {
+          operator: rule.actionCondition.operator,
+          value: rule.actionCondition.value,
+          regex: rule.actionCondition.regex || undefined
+        },
         tagActions: rule.tagActions,
         priority: rule.priority,
         isActive: rule.isActive,
-        templateId: rule.templateId || '',
-        scenarioId: rule.scenarioId || '',
-        packId: rule.packId || ''
+        templateId: '',
+        scenarioId: '',
+        packId: ''
       })
     } else {
       setFormData({
@@ -63,7 +67,7 @@ export function ActionRuleEditor({
         actionCondition: {
           operator: 'contains',
           value: '',
-          regex: ''
+          regex: undefined
         },
         tagActions: [],
         priority: 1,
@@ -163,16 +167,14 @@ export function ActionRuleEditor({
   const handleSave = () => {
     if (!validateForm()) return
 
-    const ruleData: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+    const ruleData: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+      packTemplateId: formData.packId || 'default-pt', // Temporary default value
       description: formData.description,
       actionType: formData.actionType,
       actionCondition: formData.actionCondition,
       tagActions: formData.tagActions,
       priority: formData.priority,
-      isActive: formData.isActive,
-      templateId: formData.templateId || undefined,
-      scenarioId: formData.scenarioId || undefined,
-      packId: formData.packId || undefined
+      isActive: formData.isActive
     }
 
     onSave(ruleData)

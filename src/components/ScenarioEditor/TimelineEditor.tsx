@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Pack, Template, ActionRule } from '@/types'
+import { Pack, PackWithTemplates, Template, ActionRule, ScenarioActionRule } from '@/types'
 import { Plus, Clock, Move, Edit2, Trash2, Play, Zap, AlertCircle, Calendar } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { TimelineTemplatePreview } from './TimelineTemplatePreview'
@@ -13,7 +13,7 @@ interface TimelineEditorProps {
   onDeletePack: (packId: string) => void
   onAddPack: () => void
   onPreviewScenario: () => void
-  actionRules?: ActionRule[]
+  actionRules?: ScenarioActionRule[]
 }
 
 export function TimelineEditor({
@@ -61,7 +61,7 @@ export function TimelineEditor({
   }
 
   const getPackActionRules = (packId: string) => {
-    return actionRules.filter(rule => rule.packId === packId)
+    return actionRules.filter(rule => rule.packTemplateId === packId || rule.packTemplateId.startsWith(`${packId}-`))
   }
 
   const getReminderDisplay = (pack: Pack) => {
@@ -250,7 +250,7 @@ export function TimelineEditor({
                                       )}
                                     </div>
                                     <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                      <span>{pack.templates?.length || 0}件のメッセージ</span>
+                                      <span>{(pack as PackWithTemplates).templates?.length || 0}件のメッセージ</span>
                                       {getPackActionRules(pack.id).length > 0 && (
                                         <span className="inline-flex items-center text-xs text-orange-600">
                                           <Zap className="w-3 h-3 mr-1" />
@@ -332,13 +332,13 @@ export function TimelineEditor({
                                     </div>
                                   )}
 
-                                  {pack.templates && pack.templates.length > 0 && (
+                                  {(pack as PackWithTemplates).templates && (pack as PackWithTemplates).templates.length > 0 && (
                                     <div className="mt-3">
                                       <h5 className="text-sm font-medium text-gray-700 mb-3">
-                                        メッセージテンプレート ({pack.templates.length}件)
+                                        メッセージテンプレート ({(pack as PackWithTemplates).templates.length}件)
                                       </h5>
                                       <div className="space-y-3">
-                                        {pack.templates.slice(0, 2).map((template) => (
+                                        {(pack as PackWithTemplates).templates.slice(0, 2).map((template: Template) => (
                                           <TimelineTemplatePreview
                                             key={template.id}
                                             template={template}
@@ -346,7 +346,7 @@ export function TimelineEditor({
                                             isExpanded={true}
                                           />
                                         ))}
-                                        {pack.templates.slice(2, 5).map((template) => (
+                                        {(pack as PackWithTemplates).templates.slice(2, 5).map((template: Template) => (
                                           <TimelineTemplatePreview
                                             key={template.id}
                                             template={template}
@@ -354,9 +354,9 @@ export function TimelineEditor({
                                             isExpanded={false}
                                           />
                                         ))}
-                                        {pack.templates.length > 5 && (
+                                        {(pack as PackWithTemplates).templates.length > 5 && (
                                           <div className="text-sm text-gray-500 bg-gray-50 rounded p-2 text-center">
-                                            他{pack.templates.length - 5}件のテンプレート...
+                                            他{(pack as PackWithTemplates).templates.length - 5}件のテンプレート...
                                           </div>
                                         )}
                                       </div>

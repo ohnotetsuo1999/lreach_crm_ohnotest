@@ -27,16 +27,10 @@ export function PackManagement({
   const [newPackOrder, setNewPackOrder] = useState(1)
 
   const handleCreatePack = () => {
-    if (!newPackName.trim()) {
-      alert('パック名を入力してください')
-      return
-    }
-
     onCreatePack({
       scenarioId: '', // Will be set by parent component
       order: newPackOrder,
-      offsetMinutes: newPackOffsetMinutes,
-      templates: []
+      offsetMinutes: newPackOffsetMinutes
     })
 
     setNewPackName('')
@@ -104,9 +98,9 @@ export function PackManagement({
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                {packs.reduce((total, pack) => total + pack.templates.length, 0)}
+                {packs.reduce((total, pack) => total + pack.offsetMinutes, 0)}
               </h3>
-              <p className="text-gray-600">アクティブテンプレート</p>
+              <p className="text-gray-600">総待機時間（分）</p>
             </div>
           </div>
         </div>
@@ -149,24 +143,11 @@ export function PackManagement({
                               パック #{pack.order}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {formatDuration(pack.offsetMinutes)} • {pack.templates.length}個のテンプレート
+                              {formatDuration(pack.offsetMinutes)}
                             </p>
                           </div>
                         </div>
                       </div>
-                      
-                      {pack.templates.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">含まれるテンプレート</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {pack.templates.map((template) => (
-                              <span key={template.id} className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-                                テンプレート #{template.order}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                     
                     <div className="flex items-center space-x-2">
@@ -223,7 +204,7 @@ export function PackManagement({
                   type="number"
                   min="1"
                   value={newPackOrder}
-                  onChange={(e) => setNewPackOrder(Number(e.target.value))}
+                  onChange={(e) => setNewPackOrder(Math.max(1, Number(e.target.value)))}
                   className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="1"
                 />
@@ -237,7 +218,7 @@ export function PackManagement({
                   type="number"
                   min="0"
                   value={newPackOffsetMinutes}
-                  onChange={(e) => setNewPackOffsetMinutes(Number(e.target.value))}
+                  onChange={(e) => setNewPackOffsetMinutes(Math.max(0, Number(e.target.value)))}
                   className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="0"
                 />

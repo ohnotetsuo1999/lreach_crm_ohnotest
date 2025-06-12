@@ -22,20 +22,20 @@ import {
   Template, 
   TemplateFolder,
   TemplatePack,
-  DeliveryLog 
+  DeliveryLog,
+  ScenarioActionRule
 } from '@/types'
 import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send } from 'lucide-react'
 import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { PackManagement } from '@/components/PackManagement/PackManagement'
-import { LinePreviewTest } from '@/components/Debug/LinePreviewTest'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast' | 'debug'>('debug')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
-  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [segmentView, setSegmentView] = useState<'list' | 'builder'>('list')
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null)
   
@@ -51,7 +51,7 @@ export default function LineMarketingApp() {
   const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([])
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([])
   const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([])
-  const [actionRules, setActionRules] = useState<any[]>([])
+  const [actionRules, setActionRules] = useState<ScenarioActionRule[]>([])
   const [packs, setPacks] = useState<Pack[]>([])
 
   // Initialize data
@@ -246,10 +246,14 @@ export default function LineMarketingApp() {
       {
         id: '1',
         name: 'テンプレートa',
-        type: 'FLEX',
-        content: 'フレックスメッセージのテンプレート',
+        type: 'TEXT',
+        content: 'こんにちは！\n\nサンプルテキストメッセージです。\nこちらはテンプレートaの内容です。',
         folderId: '2',
         createdAt: new Date('2025-06-11'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'こんにちは！\n\nサンプルテキストメッセージです。\nこちらはテンプレートaの内容です。'
+        })
       },
       {
         id: '2',
@@ -258,38 +262,96 @@ export default function LineMarketingApp() {
         content: 'シンプルなフレックスメッセージ',
         folderId: '3',
         createdAt: new Date('2025-02-04'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'シンプルフレックスメッセージ',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'お知らせ',
+                  weight: 'bold',
+                  size: 'lg',
+                  color: '#333333'
+                },
+                {
+                  type: 'text',
+                  text: 'こちらはシンプルなフレックスメッセージのサンプルです。',
+                  wrap: true,
+                  color: '#666666',
+                  size: 'sm'
+                }
+              ]
+            },
+            footer: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'button',
+                  action: {
+                    type: 'uri',
+                    label: '詳細を見る',
+                    uri: 'https://example.com'
+                  },
+                  style: 'primary'
+                }
+              ]
+            }
+          }
+        })
       },
       {
         id: '3',
         name: '参加者へのイベント案内',
         type: 'TEXT',
-        content: 'イベント参加者へのテキストメッセージ',
+        content: 'イベント参加者の皆様\n\n明日のイベントについてご案内します。\n時間：10:00-12:00\n場所：東京会議室',
         folderId: '3',
         createdAt: new Date('2025-01-21'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'イベント参加者の皆様\n\n明日のイベントについてご案内します。\n時間：10:00-12:00\n場所：東京会議室'
+        })
       },
       {
         id: '4',
         name: 'お知リマインド_明日',
         type: 'TEXT',
-        content: '明日のリマインド用テキスト',
+        content: '明日のイベントのリマインダーです。\n\nお忘れのないようにお願いします。',
         folderId: '5',
         createdAt: new Date('2025-01-21'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '明日のイベントのリマインダーです。\n\nお忘れのないようにお願いします。'
+        })
       },
       {
         id: '5',
         name: '当日_ZOOMリンク(9:40配信)',
         type: 'TEXT',
-        content: '当日のZOOMリンク配信用',
+        content: 'いよいよイベント開始です！\n\nZOOMリンク：https://zoom.us/j/123456789\nパスコード：123456',
         folderId: '5',
         createdAt: new Date('2024-12-24'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'いよいよイベント開始です！\n\nZOOMリンク：https://zoom.us/j/123456789\nパスコード：123456'
+        })
       },
       {
         id: '6',
         name: '開始10分後_ZOOMリンク(10:10配信)',
         type: 'TEXT',
-        content: '開始10分後のZOOMリンク配信',
+        content: 'イベントが始まっています！\n\nまだ間に合います。\nZOOMリンク：https://zoom.us/j/123456789',
         folderId: '5',
         createdAt: new Date('2024-12-24'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'イベントが始まっています！\n\nまだ間に合います。\nZOOMリンク：https://zoom.us/j/123456789'
+        })
       },
       {
         id: '7',
@@ -298,14 +360,59 @@ export default function LineMarketingApp() {
         content: 'セミナー感想アンケート用フレックス',
         folderId: '5',
         createdAt: new Date('2025-02-02'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'セミナー感想アンケート',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'セミナーお疲れ様でした！',
+                  weight: 'bold',
+                  size: 'lg'
+                },
+                {
+                  type: 'text',
+                  text: '簡単なアンケートにご協力ください',
+                  wrap: true,
+                  size: 'sm',
+                  color: '#666666'
+                }
+              ]
+            },
+            footer: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'button',
+                  action: {
+                    type: 'uri',
+                    label: 'アンケートに回答する',
+                    uri: 'https://forms.google.com/survey'
+                  },
+                  style: 'primary'
+                }
+              ]
+            }
+          }
+        })
       },
       {
         id: '8',
         name: '2/1_ユリボセミナー感想アンケート_回答済',
         type: 'TEXT',
-        content: 'アンケート回答済み用メッセージ',
+        content: 'アンケートのご回答ありがとうございました！\n\n今後ともよろしくお願いします。',
         folderId: '5',
         createdAt: new Date('2025-02-02'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'アンケートのご回答ありがとうございました！\n\n今後ともよろしくお願いします。'
+        })
       },
       {
         id: '9',
@@ -314,6 +421,10 @@ export default function LineMarketingApp() {
         content: '新規登録者向けの基本パック - テンプレートa、る を含む',
         folderId: '2',
         createdAt: new Date('2025-01-15'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '🎉 ようこそ！\n\nご登録ありがとうございます。\nこちらはウェルカムパックのプレビューです。\n\n実際は複数のメッセージが順次配信されます。'
+        })
       },
       {
         id: '10',
@@ -322,6 +433,10 @@ export default function LineMarketingApp() {
         content: 'セミナー関連のテンプレート一式 - リマインド、ZOOMリンク、アンケート を含む',
         folderId: '5',
         createdAt: new Date('2025-01-10'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '📅 セミナー案内パック\n\nセミナーに関する以下のメッセージが配信されます：\n・リマインド通知\n・ZOOMリンク案内\n・アンケートのご依頼\n\nお楽しみに！'
+        })
       },
       {
         id: '11',
@@ -330,6 +445,10 @@ export default function LineMarketingApp() {
         content: 'キャンペーン告知用のテンプレート集',
         folderId: '6',
         createdAt: new Date('2024-12-20'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '🎪 キャンペーン告知\n\nお得なキャンペーン情報をお届けします！\n\n詳細は続くメッセージでご確認ください。'
+        })
       },
       {
         id: '12',
@@ -338,6 +457,11 @@ export default function LineMarketingApp() {
         content: '商品紹介用の画像テンプレート',
         folderId: '8',
         createdAt: new Date('2024-12-15'),
+        lineMessageJson: JSON.stringify({
+          type: 'image',
+          originalContentUrl: 'https://example.com/product-image.jpg',
+          previewImageUrl: 'https://example.com/product-image-thumb.jpg'
+        })
       },
       {
         id: '13',
@@ -346,6 +470,11 @@ export default function LineMarketingApp() {
         content: 'プロフィール紹介用画像',
         folderId: '8',
         createdAt: new Date('2024-12-10'),
+        lineMessageJson: JSON.stringify({
+          type: 'image',
+          originalContentUrl: 'https://example.com/profile-image.jpg',
+          previewImageUrl: 'https://example.com/profile-image-thumb.jpg'
+        })
       }
     ]
 
@@ -384,16 +513,14 @@ export default function LineMarketingApp() {
             scenarioId: '1',
             order: 1,
             offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-            templates: [mockTemplates[0]] // ウェルカムメッセージ
+            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
           },
           {
             id: '2',
             scenarioId: '1',
             order: 2,
             offsetMinutes: 1440, // 24時間後
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-            templates: [mockTemplates[1], mockTemplates[2]] // 特別オファー + アンケート
+            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
           }
         ]
       },
@@ -412,8 +539,7 @@ export default function LineMarketingApp() {
             scenarioId: '2',
             order: 1,
             offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-            templates: [mockTemplates[3]] // 春のキャンペーン
+            createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
           }
         ]
       },
@@ -431,8 +557,7 @@ export default function LineMarketingApp() {
             scenarioId: '3',
             order: 1,
             offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-            templates: [mockTemplates[4]] // VIP限定オファー
+            createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
           }
         ]
       }
@@ -521,68 +646,67 @@ export default function LineMarketingApp() {
     setDeliveryLogs(mockDeliveryLogs)
 
     // Mock Action Rules
-    const mockActionRules = [
+    const mockActionRules: ScenarioActionRule[] = [
       {
         id: '1',
-        description: '商品ページURL閲覧者にVIPタグ付与',
-        actionType: 'URL_CLICK',
+        packTemplateId: 'pt1',
+        actionType: 'URL_CLICK' as const,
         actionCondition: {
-          operator: 'contains',
-          value: 'shop.example.com/product',
-          regex: ''
+          operator: 'contains' as const,
+          value: 'shop.example.com/product'
         },
         tagActions: [
           {
-            type: 'ADD_TAG',
+            type: 'ADD_TAG' as const,
             tagId: '1' // VIPタグ
           }
         ],
         isActive: true,
         priority: 10,
+        description: '商品ページURL閲覧者にVIPタグ付与',
         createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
         updatedAt: new Date()
       },
       {
         id: '2',
-        description: 'お問い合わせボタンクリック者にリード変更',
-        actionType: 'BUTTON_CLICK',
+        packTemplateId: 'pt2',
+        actionType: 'BUTTON_CLICK' as const,
         actionCondition: {
-          operator: 'equals',
-          value: 'お問い合わせ',
-          regex: ''
+          operator: 'equals' as const,
+          value: 'お問い合わせ'
         },
         tagActions: [
           {
-            type: 'SET_STATUS',
+            type: 'SET_STATUS' as const,
             statusId: '1' // リードステータス
           }
         ],
         isActive: true,
         priority: 8,
+        description: 'お問い合わせボタンクリック者にリード変更',
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
         updatedAt: new Date()
       },
       {
         id: '3',
-        description: 'アンケート返信者に特別タグ付与',
-        actionType: 'REPLY',
+        packTemplateId: 'pt3',
+        actionType: 'REPLY' as const,
         actionCondition: {
-          operator: 'any',
-          value: '',
-          regex: ''
+          operator: 'any' as const,
+          value: ''
         },
         tagActions: [
           {
-            type: 'ADD_TAG',
+            type: 'ADD_TAG' as const,
             tagId: '5', // アクティブタグ
             condition: {
               ifNotHasTag: ['1'] // VIPタグを持っていない場合のみ
             }
           }
         ],
-        templateId: '3', // アンケートテンプレート
         isActive: true,
         priority: 5,
+        description: 'アンケート返信者に特別タグ付与',
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         updatedAt: new Date()
       }
@@ -602,7 +726,7 @@ export default function LineMarketingApp() {
     }
   }
   
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Scenario | Template) => {
     setEditingItem(item)
     setCurrentView('edit')
   }
@@ -615,11 +739,12 @@ export default function LineMarketingApp() {
   
   // User Management handlers
   const handleCreateUser = () => {
-    console.log('Create user')
+    // TODO: Implement user creation
   }
   
   const handleEditUser = (user: User) => {
-    handleEdit(user)
+    setEditingItem(user)
+    setCurrentView('edit')
   }
   
   const handleDeleteUser = (userId: string) => {
@@ -646,18 +771,18 @@ export default function LineMarketingApp() {
   }
   
   const handleCreateTagForUser = () => {
-    console.log('Create tag for user')
+    // TODO: Implement tag creation for user
   }
   
   const bulkActions = {
     addTags: (userIds: string[], tagIds: string[]) => {
-      console.log('Bulk add tags', userIds, tagIds)
+      // TODO: Implement bulk tag addition
     },
     removeTags: (userIds: string[], tagIds: string[]) => {
-      console.log('Bulk remove tags', userIds, tagIds)
+      // TODO: Implement bulk tag removal
     },
     changeStatus: (userIds: string[], statusId: string) => {
-      console.log('Bulk change status', userIds, statusId)
+      // TODO: Implement bulk status change
     }
   }
   
@@ -688,7 +813,7 @@ export default function LineMarketingApp() {
   }
   
   const handleLoadSegment = (segment: Segment) => {
-    console.log('Load segment', segment)
+    // TODO: Implement segment loading
   }
 
   const handleCreateSegment = () => {
@@ -753,7 +878,7 @@ export default function LineMarketingApp() {
   }
   
   const handleViewAnalytics = (scenarioId: string) => {
-    console.log('View analytics', scenarioId)
+    // TODO: Implement analytics view
   }
   
   const handleSaveScenario = (scenario: Scenario) => {
@@ -773,7 +898,7 @@ export default function LineMarketingApp() {
   
   // Template handlers
   const handleAddTemplate = (packId: string) => {
-    console.log('Add template to pack', packId)
+    // TODO: Implement template addition to pack
   }
   
   const handleEditTemplate = (template: Template) => {
@@ -796,7 +921,7 @@ export default function LineMarketingApp() {
   }
   
   const handlePreviewScenario = (scenario: Scenario) => {
-    console.log('Preview scenario', scenario)
+    // TODO: Implement scenario preview
   }
   
   const handleReorderTemplates = (packId: string, templates: Template[]) => {
@@ -819,7 +944,6 @@ export default function LineMarketingApp() {
   }
 
   const handleEditPack = (pack: Pack) => {
-    console.log('Edit pack', pack)
     // TODO: Implement pack editing
   }
 
@@ -839,7 +963,7 @@ export default function LineMarketingApp() {
 
 
   // Action Rule handlers
-  const handleCreateActionRule = (rule: any) => {
+  const handleCreateActionRule = (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newRule = {
       ...rule,
       id: Date.now().toString(),
@@ -849,7 +973,7 @@ export default function LineMarketingApp() {
     setActionRules([...actionRules, newRule])
   }
 
-  const handleUpdateActionRule = (ruleId: string, rule: any) => {
+  const handleUpdateActionRule = (ruleId: string, rule: Partial<ScenarioActionRule>) => {
     setActionRules(actionRules.map(r => 
       r.id === ruleId ? { ...r, ...rule, updatedAt: new Date() } : r
     ))
@@ -940,7 +1064,6 @@ export default function LineMarketingApp() {
   }
   
   const navigationItems = [
-    { id: 'debug', label: '🐛 プレビューテスト', icon: LayoutDashboard },
     { id: 'dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
     { id: 'users', label: 'ユーザー管理', icon: Users },
     { id: 'segments', label: 'セグメント', icon: Target },
@@ -956,7 +1079,7 @@ export default function LineMarketingApp() {
     if (activeTab === 'scenarios' && currentView === 'edit') {
       return (
         <ScenarioEditor
-          scenario={editingItem}
+          scenario={editingItem as Scenario}
           onSave={handleSaveScenario}
           onBack={handleBack}
           onAddTemplate={handleAddTemplate}
@@ -987,7 +1110,7 @@ export default function LineMarketingApp() {
     if (activeTab === 'templates' && currentView === 'edit') {
       return (
         <TemplateEditor
-          template={editingItem}
+          template={editingItem as Template}
           onSave={handleSaveTemplate}
           onBack={handleBack}
           actionRules={actionRules}
@@ -1000,9 +1123,6 @@ export default function LineMarketingApp() {
     }
     
     switch (activeTab) {
-      case 'debug':
-        return <LinePreviewTest />
-        
       case 'dashboard':
         return (
           <div>
@@ -1192,7 +1312,7 @@ export default function LineMarketingApp() {
             tags={tags}
             statuses={statuses}
             onSend={(broadcastData) => {
-              console.log('Sending broadcast:', broadcastData)
+              // TODO: Implement broadcast sending
             }}
           />
         )

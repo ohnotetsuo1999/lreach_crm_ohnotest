@@ -1,18 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
+import { ActionRule, ScenarioActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
 import { Plus, Edit2, Trash2, ToggleLeft, AlertCircle, Target, Zap, Settings } from 'lucide-react'
 import { ActionRuleEditor } from './ActionRuleEditor'
 
 interface ActionRuleManagerProps {
-  actionRules: ActionRule[]
+  actionRules: ScenarioActionRule[]
   tags: Tag[]
   statuses: Status[]
   scenarios: Scenario[]
   templates: Template[]
-  onCreateRule: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onUpdateRule: (ruleId: string, rule: Partial<ActionRule>) => void
+  onCreateRule: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onUpdateRule: (ruleId: string, rule: Partial<ScenarioActionRule>) => void
   onDeleteRule: (ruleId: string) => void
   onToggleRule: (ruleId: string, isActive: boolean) => void
 }
@@ -28,7 +28,7 @@ export function ActionRuleManager({
   onDeleteRule,
   onToggleRule
 }: ActionRuleManagerProps) {
-  const [selectedRule, setSelectedRule] = useState<ActionRule | null>(null)
+  const [selectedRule, setSelectedRule] = useState<ScenarioActionRule | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -38,12 +38,12 @@ export function ActionRuleManager({
     setIsEditorOpen(true)
   }
 
-  const handleEdit = (rule: ActionRule) => {
+  const handleEdit = (rule: ScenarioActionRule) => {
     setSelectedRule(rule)
     setIsEditorOpen(true)
   }
 
-  const handleSave = (ruleData: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = (ruleData: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (selectedRule) {
       onUpdateRule(selectedRule.id, ruleData)
     } else {

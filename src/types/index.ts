@@ -166,6 +166,13 @@ export interface Template {
   lineMessageJson?: string
   createdAt: Date
   updatedAt?: Date
+  scenarioContext?: TemplateUsageContext
+  usageStats?: {
+    usedInScenarios: number
+    totalDeliveries: number
+    lastUsed?: Date
+  }
+  suggestedActionRules?: SuggestedActionRule[]
 }
 
 export interface TemplateFolder {
@@ -224,7 +231,7 @@ export interface ActionRule {
   actionCondition: {
     operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any'
     value: string
-    regex: string
+    regex?: string
   }
   tagActions: TagAction[]
   isActive: boolean
@@ -298,6 +305,13 @@ export interface LineFlexMessage {
   quickReply?: QuickReply
 }
 
+export interface LineImageMessage {
+  type: 'image'
+  originalContentUrl: string
+  previewImageUrl: string
+  quickReply?: QuickReply
+}
+
 export interface FlexContainer {
   type: 'bubble' | 'carousel'
   body?: FlexBox
@@ -342,7 +356,7 @@ export interface QuickReplyItem {
   action: Action
 }
 
-export type LineMessage = LineTextMessage | LineFlexMessage
+export type LineMessage = LineTextMessage | LineFlexMessage | LineImageMessage
 
 // スマートアクションルール推奨用の型
 export interface SuggestedActionRule {

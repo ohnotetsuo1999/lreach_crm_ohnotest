@@ -1,6 +1,6 @@
 'use client'
 
-import { Scenario, TriggerType } from '@/types'
+import { Scenario, PackWithTemplates, TriggerType } from '@/types'
 import { StatusBadge } from './StatusBadge'
 import { formatDistanceToNow } from 'date-fns'
 import { ja } from 'date-fns/locale'
@@ -97,7 +97,10 @@ export function ScenarioCard({
   const [showActions, setShowActions] = useState(false)
 
   const totalPacks = scenario.packs?.length || 0
-  const totalTemplates = scenario.packs?.reduce((sum, pack) => sum + (pack.templates?.length || 0), 0) || 0
+  const totalTemplates = scenario.packs?.reduce((sum, pack) => {
+    const packWithTemplates = pack as PackWithTemplates
+    return sum + (packWithTemplates.templates?.length || 0)
+  }, 0) || 0
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -243,7 +246,7 @@ export function ScenarioCard({
                       {pack.order}
                     </div>
                     <span className="text-gray-600">
-                      {pack.templates?.length || 0}件のメッセージ
+                      {(pack as PackWithTemplates).templates?.length || 0}件のメッセージ
                     </span>
                   </div>
                   {pack.offsetMinutes > 0 && (

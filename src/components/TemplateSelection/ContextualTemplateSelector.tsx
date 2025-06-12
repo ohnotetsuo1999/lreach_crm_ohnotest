@@ -33,13 +33,18 @@ export function ContextualTemplateSelector({
   // コンテキストに基づく推奨テンプレート
   const getRecommendedTemplates = () => {
     return availableTemplates.filter(template => {
+      const templateWithContext = template as Template & { 
+        scenarioContext?: TemplateUsageContext
+        usageStats?: { usedInScenarios: number }
+      }
+      
       // シナリオコンテキストによる推奨
-      if (usageContext.purpose && template.scenarioContext?.purpose === usageContext.purpose) {
+      if (usageContext.purpose && templateWithContext.scenarioContext?.purpose === usageContext.purpose) {
         return true
       }
       
       // 使用頻度による推奨
-      if (template.usageStats && template.usageStats.usedInScenarios > 0) {
+      if (templateWithContext.usageStats && templateWithContext.usageStats.usedInScenarios > 0) {
         return true
       }
       
@@ -54,7 +59,8 @@ export function ContextualTemplateSelector({
       }
       
       if (filter.purpose && filter.purpose.length > 0) {
-        if (!template.scenarioContext?.purpose || !filter.purpose.includes(template.scenarioContext.purpose)) {
+        const templatePurpose = (template as Template & { scenarioContext?: TemplateUsageContext }).scenarioContext?.purpose
+        if (!templatePurpose || !filter.purpose.includes(templatePurpose)) {
           return false
         }
       }
@@ -373,17 +379,22 @@ function TemplateRecommendationCard({ template, onSelect, usageContext }: {
   usageContext: TemplateUsageContext
 }) {
   const getMatchReasons = () => {
+    const templateWithContext = template as Template & { 
+      scenarioContext?: TemplateUsageContext
+      usageStats?: { usedInScenarios: number }
+      suggestedActionRules?: any[]
+    }
     const reasons: string[] = []
     
-    if (template.scenarioContext?.purpose === usageContext.purpose) {
+    if (templateWithContext.scenarioContext?.purpose === usageContext.purpose) {
       reasons.push('目的が一致')
     }
     
-    if (template.usageStats && template.usageStats.usedInScenarios > 0) {
-      reasons.push(`${template.usageStats.usedInScenarios}回使用実績`)
+    if (templateWithContext.usageStats && templateWithContext.usageStats.usedInScenarios > 0) {
+      reasons.push(`${templateWithContext.usageStats.usedInScenarios}回使用実績`)
     }
     
-    if (template.suggestedActionRules && template.suggestedActionRules.length > 0) {
+    if (templateWithContext.suggestedActionRules && templateWithContext.suggestedActionRules.length > 0) {
       reasons.push('アクション設定あり')
     }
     

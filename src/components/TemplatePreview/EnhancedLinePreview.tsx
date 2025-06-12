@@ -1,6 +1,6 @@
 'use client'
 
-import { LineMessage, LineTextMessage, LineFlexMessage, User } from '@/types'
+import { LineMessage, LineTextMessage, LineFlexMessage, LineImageMessage, User, FlexBox, FlexComponent } from '@/types'
 import { MessageCircle, Image, Layout, Send, Users, X, Phone, Calendar } from 'lucide-react'
 import { useState } from 'react'
 
@@ -42,13 +42,15 @@ export function EnhancedLinePreview({
       if (showMockChat) {
         const newMessage = {
           type: 'bot',
-          content: message.type === 'text' ? message.text : message.altText,
+          content: message.type === 'text' ? message.text : 
+                   message.type === 'image' ? '画像が送信されました' :
+                   message.altText || 'メッセージが送信されました',
           time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
         }
         setMockChatHistory(prev => [...prev, newMessage])
       }
     } catch (error) {
-      console.error('Test send failed:', error)
+      // Handle test send error gracefully
       alert('テスト送信に失敗しました')
     } finally {
       setIsSending(false)
@@ -140,7 +142,7 @@ export function EnhancedLinePreview({
     )
   }
 
-  const renderFlexBox = (box: any) => {
+  const renderFlexBox = (box: FlexBox) => {
     if (!box.contents) return null
 
     return (
@@ -158,7 +160,27 @@ export function EnhancedLinePreview({
     )
   }
 
-  const renderFlexComponent = (component: any) => {
+  const renderImageMessage = (imageMessage: LineImageMessage) => {
+    return (
+      <div className="relative mb-2">
+        <div className="bg-white border border-gray-200 rounded-2xl rounded-br-md overflow-hidden shadow-sm max-w-[250px] ml-auto">
+          <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center relative">
+            <Image className="w-12 h-12 text-gray-500" />
+            <div className="absolute inset-0 bg-black bg-opacity-5"></div>
+            <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+              画像
+            </div>
+          </div>
+        </div>
+        {/* メッセージの尻尾 */}
+        <div className="absolute bottom-0 right-0 transform translate-x-1">
+          <div className="w-0 h-0 border-l-4 border-l-white border-t-4 border-t-transparent"></div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderFlexComponent = (component: FlexComponent) => {
     switch (component.type) {
       case 'text':
         return (
@@ -287,6 +309,7 @@ export function EnhancedLinePreview({
                 <div>
                   {message.type === 'text' && renderTextMessage(message)}
                   {message.type === 'flex' && renderFlexMessage(message)}
+                  {message.type === 'image' && renderImageMessage(message)}
                   
                   {/* 配信確認と時刻 */}
                   <div className="flex justify-end items-center text-xs text-gray-400 mt-1">

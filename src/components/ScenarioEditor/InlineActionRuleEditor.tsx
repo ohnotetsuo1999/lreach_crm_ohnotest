@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ActionRule, ActionType, Tag, Status, TagAction } from '@/types'
+import { ActionRule, ScenarioActionRule, ActionType, Tag, Status, TagAction } from '@/types'
 import { ActionRulePresets } from '../QuickActionRules/ActionRulePresets'
 import { ActionRuleGroupDisplay } from '../ActionRules/ActionRuleGroupDisplay'
 import { Plus, Trash2, Save, X, Zap, Target, Sparkles } from 'lucide-react'
@@ -9,11 +9,11 @@ import { Plus, Trash2, Save, X, Zap, Target, Sparkles } from 'lucide-react'
 interface InlineActionRuleEditorProps {
   packId: string
   templateId?: string
-  existingRules: ActionRule[]
+  existingRules: ScenarioActionRule[]
   tags: Tag[]
   statuses: Status[]
-  onCreateRule: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onUpdateRule: (ruleId: string, rule: Partial<ActionRule>) => void
+  onCreateRule: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onUpdateRule: (ruleId: string, rule: Partial<ScenarioActionRule>) => void
   onDeleteRule: (ruleId: string) => void
 }
 
@@ -41,7 +41,7 @@ export function InlineActionRuleEditor({
 
   // このPackまたはTemplateに関連するルールを取得
   const relevantRules = existingRules.filter(rule => 
-    rule.packId === packId || rule.templateId === templateId
+    rule.packTemplateId.includes(packId) || (templateId && rule.packTemplateId.includes(templateId))
   )
 
   const actionTypes = [
@@ -63,19 +63,18 @@ export function InlineActionRuleEditor({
   const handleSaveNewRule = () => {
     if (!newRule.description.trim()) return
 
-    const rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+    const rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+      packTemplateId: templateId ? `${packId}-${templateId}` : packId,
       description: newRule.description,
       actionType: newRule.actionType,
       actionCondition: {
         operator: newRule.condition.operator,
         value: newRule.condition.value,
-        regex: ''
+        regex: undefined
       },
       tagActions: newRule.tagActions,
       isActive: true,
-      priority: 5,
-      packId: packId,
-      templateId: templateId
+      priority: 5
     }
 
     onCreateRule(rule)
@@ -166,7 +165,16 @@ export function InlineActionRuleEditor({
             tags={tags}
             statuses={statuses}
             onCreateRule={(rule) => {
-              onCreateRule(rule)
+              const scenarioRule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+                packTemplateId: templateId ? `${packId}-${templateId}` : packId,
+                actionType: rule.actionType,
+                actionCondition: rule.actionCondition,
+                tagActions: rule.tagActions,
+                isActive: rule.isActive,
+                priority: rule.priority,
+                description: rule.description
+              }
+              onCreateRule(scenarioRule)
               setShowPresets(false)
             }}
           />

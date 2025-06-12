@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { TimelineEditor } from './TimelineEditor'
 import { PackDrawer } from './PackDrawer'
 import { ScenarioActionRulesSummary } from './ScenarioActionRulesSummary'
-import { Scenario, Pack, Template, TriggerType, ActionRule, Tag, Status } from '@/types'
+import { Scenario, Pack, PackWithTemplates, Template, TriggerType, ActionRule, ScenarioActionRule, Tag, Status } from '@/types'
 import { Save, Play, ArrowLeft } from 'lucide-react'
 
 interface ScenarioEditorProps {
@@ -16,11 +16,11 @@ interface ScenarioEditorProps {
   onDeleteTemplate: (templateId: string) => void
   onPreviewScenario: (scenario: Scenario) => void
   onReorderTemplates: (packId: string, templates: Template[]) => void
-  actionRules?: ActionRule[]
+  actionRules?: ScenarioActionRule[]
   tags?: Tag[]
   statuses?: Status[]
-  onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
-  onUpdateActionRule?: (ruleId: string, rule: Partial<ActionRule>) => void
+  onCreateActionRule?: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onUpdateActionRule?: (ruleId: string, rule: Partial<ScenarioActionRule>) => void
   onDeleteActionRule?: (ruleId: string) => void
   templates?: Template[]
   onCreateTemplate?: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
@@ -117,8 +117,7 @@ export function ScenarioEditor({
       scenarioId: scenarioData.id,
       order: scenarioData.packs.length + 1,
       offsetMinutes: 0,
-      createdAt: new Date(),
-      templates: []
+      createdAt: new Date()
     }
 
     setScenarioData({
@@ -360,9 +359,10 @@ export function ScenarioEditor({
           
           // Update the pack with new template
           if (selectedPack) {
-            const updatedPack = {
-              ...selectedPack,
-              templates: [...(selectedPack.templates || []), newTemplate]
+            const packWithTemplates = selectedPack as PackWithTemplates
+            const updatedPack: PackWithTemplates = {
+              ...packWithTemplates,
+              templates: [...(packWithTemplates.templates || []), newTemplate]
             }
             handleSavePack(updatedPack)
           }

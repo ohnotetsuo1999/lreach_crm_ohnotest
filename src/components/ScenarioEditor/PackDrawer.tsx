@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Pack, Template, ActionRule, Tag, Status, PackTemplate, ScenarioActionRule } from '@/types'
+import { Pack, PackWithTemplates, Template, ActionRule, Tag, Status, PackTemplate, ScenarioActionRule } from '@/types'
 import { X, Settings, Plus, Save, Move, ArrowUp, ArrowDown, Target } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { InlineActionRuleEditor } from './InlineActionRuleEditor'
@@ -20,21 +20,23 @@ interface PackDrawerProps {
   onEditTemplate: (template: Template) => void
   onDeleteTemplate: (templateId: string) => void
   onReorderTemplates: (packId: string, templates: Template[]) => void
+  actionRules?: ScenarioActionRule[]
+  tags?: Tag[]
+  statuses?: Status[]
+  onCreateActionRule?: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onUpdateActionRule?: (ruleId: string, rule: Partial<ScenarioActionRule>) => void
+  onDeleteActionRule?: (ruleId: string) => void
+  availableTemplates?: Template[]
+  onCreateTemplate?: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
   // 新しい多対多関係システム用のプロパティ
   packTemplates?: PackTemplate[]
   onAddPackTemplate?: (templateId: string) => void
   onRemovePackTemplate?: (packTemplateId: string) => void
   onReorderPackTemplates?: (reorderedPackTemplates: PackTemplate[]) => void
-  // レガシーのアクションルール（削除予定）
-  actionRules?: ActionRule[]
   // 新しいシナリオ固有のアクションルール
   onUpdateScenarioActionRule?: (packTemplateId: string, actionRule: Partial<ScenarioActionRule>) => void
   onCreateScenarioActionRule?: (packTemplateId: string, actionRule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
   onDeleteScenarioActionRule?: (packTemplateId: string, actionRuleId: string) => void
-  tags?: Tag[]
-  statuses?: Status[]
-  availableTemplates?: Template[]
-  onCreateTemplate?: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
 }
 
 export function PackDrawer({
@@ -60,7 +62,10 @@ export function PackDrawer({
   tags = [],
   statuses = [],
   availableTemplates = [],
-  onCreateTemplate
+  onCreateTemplate,
+  onCreateActionRule,
+  onUpdateActionRule,
+  onDeleteActionRule
 }: PackDrawerProps) {
   const [formData, setFormData] = useState({
     offsetMinutes: 0,
@@ -104,7 +109,9 @@ export function PackDrawer({
   const handleTemplateReorder = (result: DropResult) => {
     if (!result.destination || !pack) return
 
-    const items = Array.from(pack.templates || [])
+    const packWithTemplates = pack as PackWithTemplates
+    const templates = packWithTemplates.templates || []
+    const items: Template[] = Array.from(templates)
     const [reorderedItem] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, reorderedItem)
 
@@ -120,7 +127,8 @@ export function PackDrawer({
   const moveTemplateUp = (index: number) => {
     if (!pack || index === 0) return
     
-    const templates = [...(pack.templates || [])]
+    const packWithTemplates = pack as PackWithTemplates
+    const templates: Template[] = [...(packWithTemplates.templates || [])]
     const temp = templates[index]
     templates[index] = templates[index - 1]
     templates[index - 1] = temp
@@ -135,15 +143,17 @@ export function PackDrawer({
   }
 
   const moveTemplateDown = (index: number) => {
-    if (!pack || index === (pack.templates?.length || 0) - 1) return
+    const packWithTemplates = pack as PackWithTemplates
+    const templates = packWithTemplates.templates || []
+    if (!pack || index === templates.length - 1) return
     
-    const templates = [...(pack.templates || [])]
-    const temp = templates[index]
-    templates[index] = templates[index + 1]
-    templates[index + 1] = temp
+    const templateList = [...templates]
+    const temp = templateList[index]
+    templateList[index] = templateList[index + 1]
+    templateList[index + 1] = temp
     
     // Update order values
-    const reorderedTemplates = templates.map((template, idx) => ({
+    const reorderedTemplates = templateList.map((template, idx) => ({
       ...template,
       order: idx + 1
     }))
@@ -153,9 +163,11 @@ export function PackDrawer({
 
   const handleTemplateCreate = (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (onCreateTemplate) {
+      const packWithTemplates = pack as PackWithTemplates
+      const templates = packWithTemplates?.templates || []
       const newTemplate = {
         ...template,
-        order: (pack?.templates?.length || 0) + 1
+        order: templates.length + 1
       }
       onCreateTemplate(newTemplate)
     }
@@ -163,9 +175,11 @@ export function PackDrawer({
 
   const handleTemplateSelect = (template: Template) => {
     if (onCreateTemplate) {
+      const packWithTemplates = pack as PackWithTemplates
+      const templates = packWithTemplates?.templates || []
       const newTemplate = {
         ...template,
-        order: (pack?.templates?.length || 0) + 1
+        order: templates.length + 1
       }
       onCreateTemplate(newTemplate)
     }
@@ -264,7 +278,7 @@ export function PackDrawer({
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-medium text-gray-900">
-                      メッセージテンプレート（{pack.templates?.length || 0}件）
+                      メッセージテンプレート（{(pack as PackWithTemplates).templates?.length || 0}件）
                     </h3>
                     
                     <div className="flex space-x-2">
@@ -285,7 +299,7 @@ export function PackDrawer({
                     </div>
                   </div>
 
-                  {pack.templates && pack.templates.length > 0 ? (
+                  {(pack as PackWithTemplates).templates && (pack as PackWithTemplates).templates.length > 0 ? (
                     <DragDropContext onDragEnd={handleTemplateReorder}>
                       <Droppable droppableId="templates">
                         {(provided) => (
@@ -294,7 +308,7 @@ export function PackDrawer({
                             ref={provided.innerRef}
                             className="space-y-4"
                           >
-                            {pack.templates.map((template, index) => (
+                            {(pack as PackWithTemplates).templates.map((template: Template, index: number) => (
                               <Draggable key={template.id} draggableId={template.id} index={index}>
                                 {(provided, snapshot) => (
                                   <div
@@ -324,7 +338,7 @@ export function PackDrawer({
                                         </button>
                                         <button
                                           onClick={() => moveTemplateDown(index)}
-                                          disabled={index === (pack.templates?.length || 0) - 1}
+                                          disabled={index === ((pack as PackWithTemplates).templates?.length || 0) - 1}
                                           className="p-1 text-gray-400 hover:text-gray-600 rounded disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-sm"
                                         >
                                           <ArrowDown className="w-3 h-3" />
@@ -423,7 +437,7 @@ export function PackDrawer({
           packId={pack.id}
           onSave={handleTemplateCreate}
           onClose={() => setShowQuickCreator(false)}
-          suggestedOrder={(pack?.templates?.length || 0) + 1}
+          suggestedOrder={((pack as PackWithTemplates)?.templates?.length || 0) + 1}
         />
       )}
     </div>

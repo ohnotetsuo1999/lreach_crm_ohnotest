@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { ActionRule, Tag, Status, Pack } from '@/types'
+import { ScenarioActionRule, Tag, Status, Pack, PackWithTemplates, Template } from '@/types'
 import { ActionRuleGroupDisplay } from '../ActionRules/ActionRuleGroupDisplay'
 import { Zap, Package, FileText, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
 
 interface ScenarioActionRulesSummaryProps {
   packs: Pack[]
-  actionRules: ActionRule[]
+  actionRules: ScenarioActionRule[]
   tags: Tag[]
   statuses: Status[]
   onDeleteRule?: (ruleId: string) => void
@@ -27,18 +27,21 @@ export function ScenarioActionRulesSummary({
   }
 
   // シナリオレベル、Pack、Templateのルールを分類
-  const scenarioRules = actionRules.filter(rule => !rule.packId && !rule.templateId)
-  const packRules = actionRules.filter(rule => rule.packId && !rule.templateId)
-  const templateRules = actionRules.filter(rule => rule.templateId)
+  const scenarioRules = actionRules.filter(rule => !rule.packTemplateId || rule.packTemplateId === 'scenario')
+  const packRules = actionRules.filter(rule => rule.packTemplateId && !rule.packTemplateId.includes('-'))
+  const templateRules = actionRules.filter(rule => rule.packTemplateId && rule.packTemplateId.includes('-'))
 
   // Pack別でグループ化
-  const packGroups = packs.map(pack => ({
-    pack,
-    packRules: packRules.filter(rule => rule.packId === pack.id),
-    templateRules: templateRules.filter(rule => 
-      pack.templates?.some(template => template.id === rule.templateId)
-    )
-  })).filter(group => group.packRules.length > 0 || group.templateRules.length > 0)
+  const packGroups = packs.map(pack => {
+    const packWithTemplates = pack as PackWithTemplates
+    return {
+      pack,
+      packRules: packRules.filter(rule => rule.packTemplateId === pack.id),
+      templateRules: templateRules.filter(rule => 
+        packWithTemplates.templates?.some((template: Template) => rule.packTemplateId === `${pack.id}-${template.id}`)
+      )
+    }
+  }).filter(group => group.packRules.length > 0 || group.templateRules.length > 0)
 
   // 競合や重複の検出
   const getConflicts = () => {
@@ -51,7 +54,7 @@ export function ScenarioActionRulesSummary({
       if (!groups[key]) groups[key] = []
       groups[key].push(rule)
       return groups
-    }, {} as { [key: string]: ActionRule[] })
+    }, {} as { [key: string]: ScenarioActionRule[] })
 
     Object.entries(buttonGroups).forEach(([buttonText, rules]) => {
       if (rules.length > 1) {
@@ -189,9 +192,9 @@ export function ScenarioActionRulesSummary({
                   {/* テンプレート別ルール */}
                   {group.templateRules.length > 0 && (
                     <div>
-                      {group.pack.templates?.map(template => {
+                      {(group.pack as PackWithTemplates).templates?.map((template: Template) => {
                         const templateSpecificRules = group.templateRules.filter(
-                          rule => rule.templateId === template.id
+                          rule => rule.packTemplateId === `${group.pack.id}-${template.id}`
                         )
                         
                         if (templateSpecificRules.length === 0) return null

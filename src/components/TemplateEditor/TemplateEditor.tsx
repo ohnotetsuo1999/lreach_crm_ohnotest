@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { EnhancedLinePreview } from '../TemplatePreview/EnhancedLinePreview'
 import { QuickVarInsert } from './QuickVarInsert'
 import { FlexMessagePreview } from './FlexMessagePreview'
-import { Template, LineMessage, LineTextMessage, LineFlexMessage, ActionRule, Tag, Status } from '@/types'
+import { Template, LineMessage, LineTextMessage, LineFlexMessage, ActionRule, ScenarioActionRule, Tag, Status, User } from '@/types'
 import { 
   Save, 
   Eye, 
@@ -21,11 +21,11 @@ interface TemplateEditorProps {
   template: Template | null
   onSave: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
   onBack: () => void
-  actionRules?: ActionRule[]
+  actionRules?: ScenarioActionRule[]
   tags?: Tag[]
   statuses?: Status[]
-  users?: any[] // テスト送信用ユーザーリスト
-  onCreateActionRule?: (rule: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
+  users?: User[] // テスト送信用ユーザーリスト
+  onCreateActionRule?: (rule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
   onDeleteActionRule?: (ruleId: string) => void
   onTestSend?: (userIds: string[], template: Template) => Promise<void>
 }
@@ -42,7 +42,7 @@ export function TemplateEditor({
   onDeleteActionRule,
   onTestSend
 }: TemplateEditorProps) {
-  const [messageType, setMessageType] = useState<'text' | 'flex'>('text')
+  const [messageType, setMessageType] = useState<'text' | 'flex' | 'image'>('text')
   const [textContent, setTextContent] = useState('')
   const [flexContent, setFlexContent] = useState('')
   const [showPreview, setShowPreview] = useState(true)
@@ -66,7 +66,7 @@ export function TemplateEditor({
           }
         }
       } catch (error) {
-        console.error('Failed to parse template JSON:', error)
+        // Handle JSON parsing error gracefully
       }
     }
   })
@@ -505,7 +505,20 @@ export function TemplateEditor({
                 actionRules={actionRules}
                 tags={tags}
                 statuses={statuses}
-                onCreateRule={onCreateActionRule}
+                onCreateRule={(rule) => {
+                  if (onCreateActionRule) {
+                    const scenarioRule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+                      packTemplateId: 'template-default',
+                      actionType: rule.actionType,
+                      actionCondition: rule.actionCondition,
+                      tagActions: rule.tagActions,
+                      isActive: rule.isActive,
+                      priority: rule.priority,
+                      description: rule.description
+                    }
+                    onCreateActionRule(scenarioRule)
+                  }
+                }}
                 onDeleteRule={onDeleteActionRule!}
               />
             ) : (
@@ -518,7 +531,7 @@ export function TemplateEditor({
                   if (onTestSend && template) {
                     await onTestSend(userIds, template)
                   } else {
-                    console.log('Test send to users:', userIds, 'message:', message)
+                    // TODO: Implement test send functionality
                     alert('テスト送信が実行されました')
                   }
                 }}
