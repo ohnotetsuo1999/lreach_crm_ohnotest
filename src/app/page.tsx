@@ -25,17 +25,21 @@ import {
   DeliveryLog,
   ScenarioActionRule
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send, Package } from 'lucide-react'
 import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { PackManagement } from '@/components/PackManagement/PackManagement'
+import { PackList } from '@/components/PackManagement/PackList'
+import { PackDetail } from '@/components/PackManagement/PackDetail'
 
 export default function LineMarketingApp() {
   // Navigation state
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
+  const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
+  const [packView, setPackView] = useState<'list' | 'detail'>('list')
   const [segmentView, setSegmentView] = useState<'list' | 'builder'>('list')
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null)
   
@@ -420,6 +424,7 @@ export default function LineMarketingApp() {
         type: 'PACK',
         content: '新規登録者向けの基本パック - テンプレートa、る を含む',
         folderId: '2',
+        packId: '1',
         createdAt: new Date('2025-01-15'),
         lineMessageJson: JSON.stringify({
           type: 'text',
@@ -432,6 +437,7 @@ export default function LineMarketingApp() {
         type: 'PACK',
         content: 'セミナー関連のテンプレート一式 - リマインド、ZOOMリンク、アンケート を含む',
         folderId: '5',
+        packId: '2',
         createdAt: new Date('2025-01-10'),
         lineMessageJson: JSON.stringify({
           type: 'text',
@@ -444,6 +450,7 @@ export default function LineMarketingApp() {
         type: 'PACK',
         content: 'キャンペーン告知用のテンプレート集',
         folderId: '6',
+        packId: '3',
         createdAt: new Date('2024-12-20'),
         lineMessageJson: JSON.stringify({
           type: 'text',
@@ -494,6 +501,14 @@ export default function LineMarketingApp() {
         templateIds: ['4', '5', '6', '7'],
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        id: '3',
+        name: 'キャンペーン告知パック',
+        description: 'キャンペーン告知用のテンプレート集',
+        templateIds: ['3', '8'],
+        createdAt: new Date('2024-12-20'),
+        updatedAt: new Date('2024-12-20')
       }
     ]
 
@@ -1050,6 +1065,41 @@ export default function LineMarketingApp() {
     ))
   }
 
+  // Pack handlers
+  const handleCreateTemplatePack = () => {
+    // TODO: Implement pack creation modal
+  }
+
+  const handleEditTemplatePack = (pack: TemplatePack) => {
+    // TODO: Implement pack editing modal
+  }
+
+  const handleDeleteTemplatePack = (packId: string) => {
+    setTemplatePacks(templatePacks.filter(pack => pack.id !== packId))
+  }
+
+  const handleViewPackDetail = (pack: TemplatePack) => {
+    setEditingPack(pack)
+    setPackView('detail')
+  }
+
+  const handleBackToPackList = () => {
+    setEditingPack(null)
+    setPackView('list')
+  }
+
+  const handleUpdateTemplatePack = (packId: string, updates: Partial<TemplatePack>) => {
+    setTemplatePacks(templatePacks.map(pack => 
+      pack.id === packId ? { ...pack, ...updates, updatedAt: new Date() } : pack
+    ))
+  }
+
+  const handleUpdateTemplate = (templateId: string, updates: Partial<Template>) => {
+    setTemplates(templates.map(template => 
+      template.id === templateId ? { ...template, ...updates, updatedAt: new Date() } : template
+    ))
+  }
+
   // Calculate dashboard stats
   const dashboardStats = {
     totalUsers: users.length,
@@ -1254,21 +1304,52 @@ export default function LineMarketingApp() {
               ))
             }}
             onCreatePack={(pack) => {
+              const packId = Date.now().toString()
               const newPack: TemplatePack = {
                 ...pack,
-                id: Date.now().toString(),
+                id: packId,
                 createdAt: new Date(),
                 updatedAt: new Date()
               }
+              
+              // パックタイプのテンプレートも同時に作成
+              const packTemplate: Template = {
+                id: `pack_template_${packId}`,
+                name: pack.name,
+                type: 'PACK',
+                content: pack.description || `パック「${pack.name}」`,
+                packId: packId,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              
               setTemplatePacks([...templatePacks, newPack])
+              setTemplates([...templates, packTemplate])
             }}
             onUpdatePack={(packId, updates) => {
               setTemplatePacks(templatePacks.map(pack => 
                 pack.id === packId ? { ...pack, ...updates, updatedAt: new Date() } : pack
               ))
+              
+              // 対応するパックテンプレートも更新
+              if (updates.name || updates.description) {
+                setTemplates(templates.map(template => 
+                  template.packId === packId ? {
+                    ...template,
+                    name: updates.name || template.name,
+                    content: updates.description || template.content,
+                    updatedAt: new Date()
+                  } : template
+                ))
+              }
             }}
             onDeletePack={(packId) => {
+              // パックと対応するテンプレートを削除
               setTemplatePacks(templatePacks.filter(pack => pack.id !== packId))
+              setTemplates(templates.filter(template => template.packId !== packId))
+            }}
+            onNavigateToPackDetail={(packId) => {
+              // パック詳細表示機能は TemplateDrawer 内で処理されるため、何もしない
             }}
           />
         )

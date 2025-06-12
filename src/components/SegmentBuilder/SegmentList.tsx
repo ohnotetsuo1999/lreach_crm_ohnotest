@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Segment, Tag, Status } from '@/types'
+import { Segment, Tag, Status, User } from '@/types'
 import { 
   Plus, 
   Target, 
@@ -19,6 +19,7 @@ interface SegmentListProps {
   segments: Segment[]
   tags: Tag[]
   statuses: Status[]
+  users?: User[]
   onCreateSegment: () => void
   onEditSegment: (segment: Segment) => void
   onDuplicateSegment: (segment: Segment) => void
@@ -29,6 +30,7 @@ export function SegmentList({
   segments,
   tags,
   statuses,
+  users = [],
   onCreateSegment,
   onEditSegment,
   onDuplicateSegment,
@@ -36,7 +38,40 @@ export function SegmentList({
 }: SegmentListProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Format condition for display
+  // 該当ユーザー数を計算（簡略版）
+  const calculateMatchingUsers = (segment: Segment): number => {
+    try {
+      const parsedFilter = JSON.parse(segment.filterJson)
+      const conditions = parsedFilter.conditions || []
+      
+      if (conditions.length === 0) return 0
+      
+      // 簡単な条件マッチングの実装（実際のプロダクションではより複雑な処理が必要）
+      const matchingUsers = users.filter(user => {
+        return conditions.some((condition: any) => {
+          if (condition.field === 'tags' && condition.operator === 'in') {
+            return user.tags.some(tag => 
+              Array.isArray(condition.value) 
+                ? condition.value.includes(tag.id)
+                : condition.value === tag.id
+            )
+          }
+          if (condition.field === 'createdAt' && condition.operator === 'greater_than') {
+            const conditionDate = new Date(condition.value)
+            return user.createdAt > conditionDate
+          }
+          // 他の条件も必要に応じて追加
+          return false
+        })
+      })
+      
+      return matchingUsers.length
+    } catch {
+      return 0
+    }
+  }
+
+  // Filter segments based on search
   const formatCondition = (condition: any) => {
     const fieldLabels: { [key: string]: string } = {
       'name': 'ユーザー名',
@@ -97,7 +132,8 @@ export function SegmentList({
 
   // Filter segments based on search
   const filteredSegments = segments.filter(segment =>
-    segment.name.toLowerCase().includes(searchQuery.toLowerCase())
+    segment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (segment.memo && segment.memo.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const handleDuplicate = (segment: Segment) => {
@@ -139,7 +175,7 @@ export function SegmentList({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="セグメント名で検索..."
+                    placeholder="セグメント名・メモで検索..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -184,111 +220,126 @@ export function SegmentList({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredSegments.map((segment) => {
-              let conditions = []
-              let logic = 'AND'
-              
-              try {
-                const parsedFilter = JSON.parse(segment.filterJson)
-                conditions = parsedFilter.conditions || []
-                logic = parsedFilter.logic || 'AND'
-              } catch (error) {
-                conditions = []
-              }
-
-              return (
-                <div
-                  key={segment.id}
-                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
-                  onClick={() => onEditSegment(segment)}
-                >
-                  <div className="p-6">
-                    {/* ヘッダー */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
-                          {segment.name}
-                        </h3>
-                        <div className="flex items-center mt-1 text-sm text-gray-500">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {segment.updatedAt.toLocaleDateString('ja-JP')}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    タイトル
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    メモ
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    該当ユーザー数
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    作成日
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    アクション
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredSegments.map((segment) => {
+                  const userCount = calculateMatchingUsers(segment)
+                  
+                  return (
+                    <tr 
+                      key={segment.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => onEditSegment(segment)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Target className="h-5 w-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {segment.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ID: {segment.id}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDuplicate(segment)
-                          }}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="複製"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(segment.id, segment.name)
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="削除"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 条件プレビュー */}
-                    <div className="mb-4">
-                      <div className="flex items-center mb-2">
-                        <Filter className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">条件</span>
-                        {conditions.length > 1 && (
-                          <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                            {logic}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {conditions.length > 0 ? (
-                        <div className="space-y-2">
-                          {conditions.slice(0, 2).map((condition: any, index: number) => (
-                            <div key={index} className="text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-                              {formatCondition(condition)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {segment.memo ? (
+                            <div className="max-w-xs">
+                              <p className="truncate" title={segment.memo}>
+                                {segment.memo}
+                              </p>
                             </div>
-                          ))}
-                          {conditions.length > 2 && (
-                            <div className="text-xs text-gray-500 text-center py-1">
-                              他 {conditions.length - 2} 件の条件...
-                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic">メモなし</span>
                           )}
                         </div>
-                      ) : (
-                        <div className="text-xs text-gray-400 bg-gray-50 px-3 py-2 rounded border">
-                          条件が設定されていません
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 text-gray-400 mr-2" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {userCount.toLocaleString()}
+                          </span>
+                          <span className="text-sm text-gray-500 ml-1">人</span>
                         </div>
-                      )}
-                    </div>
-
-                    {/* フッター */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Users className="w-4 h-4 mr-1" />
-                        <span>{conditions.length}個の条件</span>
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-blue-600 group-hover:text-blue-700 font-medium">
-                        <Edit2 className="w-4 h-4 mr-1" />
-                        編集
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {segment.createdAt.toLocaleDateString('ja-JP')}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {segment.createdAt.toLocaleTimeString('ja-JP', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEditSegment(segment)
+                            }}
+                            className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                            title="編集"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDuplicate(segment)
+                            }}
+                            className="text-gray-600 hover:text-gray-900 inline-flex items-center p-1 rounded hover:bg-gray-100"
+                            title="複製"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(segment.id, segment.name)
+                            }}
+                            className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
     </div>

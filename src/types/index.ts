@@ -160,10 +160,12 @@ export interface Template {
   name: string
   type: 'TEXT' | 'FLEX' | 'IMAGE' | 'PACK'
   content: string
+  notes?: string
   folderId?: string
   packId?: string
   order?: number
   lineMessageJson?: string
+  buttons?: TemplateButton[]
   createdAt: Date
   updatedAt?: Date
   scenarioContext?: TemplateUsageContext
@@ -357,6 +359,18 @@ export interface QuickReplyItem {
 }
 
 export type LineMessage = LineTextMessage | LineFlexMessage | LineImageMessage
+
+// テンプレート用ボタン情報
+export interface TemplateButton {
+  id: string
+  text: string
+  color: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info'
+  action: {
+    type: 'uri' | 'postback' | 'message'
+    data: string
+  }
+  order: number
+}
 
 // スマートアクションルール推奨用の型
 export interface SuggestedActionRule {

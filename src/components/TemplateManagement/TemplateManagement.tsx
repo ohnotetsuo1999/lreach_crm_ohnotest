@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Template, TemplateFolder, TemplatePack, LineMessage } from '@/types'
 import { Plus, Search, Folder, ChevronDown, ChevronRight, FolderOpen, Package, Eye, Settings, X } from 'lucide-react'
 import { TemplateDrawer } from './TemplateDrawer'
 import { PackDrawer } from './PackDrawer'
 import { EnhancedLinePreview } from '../TemplatePreview/EnhancedLinePreview'
+import { PackDetail } from '../PackManagement/PackDetail'
 
 interface TemplateManagementProps {
   templates: Template[]
@@ -21,6 +22,7 @@ interface TemplateManagementProps {
   onUpdatePack: (packId: string, updates: Partial<TemplatePack>) => void
   onDeletePack: (packId: string) => void
   onTestSend?: (userIds: string[], template: Template) => Promise<void>
+  onNavigateToPackDetail?: (packId: string) => void
 }
 
 export function TemplateManagement({
@@ -36,7 +38,8 @@ export function TemplateManagement({
   onCreatePack,
   onUpdatePack,
   onDeletePack,
-  onTestSend
+  onTestSend,
+  onNavigateToPackDetail
 }: TemplateManagementProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<string[]>([])
@@ -55,6 +58,31 @@ export function TemplateManagement({
   const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false)
   const [selectedPack, setSelectedPack] = useState<TemplatePack | null>(null)
   const [isPackDrawerOpen, setIsPackDrawerOpen] = useState(false)
+  const [currentView, setCurrentView] = useState<'list' | 'pack-detail'>('list')
+  const [editingPackFromTemplate, setEditingPackFromTemplate] = useState<TemplatePack | null>(null)
+  const [scrollPosition, setScrollPosition] = useState(0)
+  const [savedState, setSavedState] = useState({
+    searchQuery: '',
+    selectedFolder: null as string | null,
+    expandedFolders: [] as string[]
+  })
+  const mainContentRef = useRef<HTMLDivElement>(null)
+
+  // 状態の復元
+  useEffect(() => {
+    if (currentView === 'list' && (savedState.searchQuery || savedState.selectedFolder || savedState.expandedFolders.length > 0)) {
+      setSearchQuery(savedState.searchQuery)
+      setSelectedFolder(savedState.selectedFolder)
+      setExpandedFolders(savedState.expandedFolders)
+      
+      // スクロール位置を復元
+      setTimeout(() => {
+        if (mainContentRef.current) {
+          mainContentRef.current.scrollTop = scrollPosition
+        }
+      }, 100)
+    }
+  }, [currentView])
 
   // フォルダの展開/折りたたみ  
   const toggleFolder = (folderId: string) => {
@@ -135,13 +163,41 @@ export function TemplateManagement({
 
   // テンプレート詳細編集
   const handleOpenTemplateDrawer = (template: Template) => {
-    setSelectedTemplate(template)
-    setIsTemplateDrawerOpen(true)
+    if (template.type === 'PACK' && template.packId) {
+      // 現在の状態を保存
+      setSavedState({
+        searchQuery,
+        selectedFolder,
+        expandedFolders
+      })
+      
+      // スクロール位置を保存
+      if (mainContentRef.current) {
+        setScrollPosition(mainContentRef.current.scrollTop)
+      }
+      
+      // パックタイプの場合はパック詳細画面を表示
+      const pack = templatePacks.find(p => p.id === template.packId)
+      if (pack) {
+        setEditingPackFromTemplate(pack)
+        setCurrentView('pack-detail')
+      }
+    } else {
+      // 通常のテンプレートの場合はドロワーを表示
+      setSelectedTemplate(template)
+      setIsTemplateDrawerOpen(true)
+    }
   }
 
   const handleCloseTemplateDrawer = () => {
     setSelectedTemplate(null)
     setIsTemplateDrawerOpen(false)
+  }
+
+  const handleBackFromPackDetail = () => {
+    setEditingPackFromTemplate(null)
+    setCurrentView('list')
+    // 状態の復元は useEffect で自動的に行われる
   }
 
   // パック詳細編集
@@ -153,6 +209,28 @@ export function TemplateManagement({
   const handleClosePackDrawer = () => {
     setSelectedPack(null)
     setIsPackDrawerOpen(false)
+  }
+
+  // パック詳細画面の表示
+  if (currentView === 'pack-detail' && editingPackFromTemplate) {
+    return (
+      <PackDetail
+        pack={editingPackFromTemplate}
+        templates={templates}
+        templateFolders={templateFolders}
+        onBack={handleBackFromPackDetail}
+        onUpdatePack={onUpdatePack}
+        onDeletePack={(packId) => {
+          onDeletePack(packId)
+          handleBackFromPackDetail()
+        }}
+        onUpdateTemplate={onUpdateTemplate}
+        onPreviewTemplate={(template) => {
+          setPreviewTemplate(template)
+          setIsPreviewModalOpen(true)
+        }}
+      />
+    )
   }
 
   return (
@@ -264,7 +342,7 @@ export function TemplateManagement({
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div ref={mainContentRef} className="flex-1 overflow-y-auto p-4">
               <TemplateListView 
                 templates={filteredTemplates}
                 templatePacks={templatePacks}
@@ -378,6 +456,12 @@ export function TemplateManagement({
           onSave={onUpdateTemplate}
           onDelete={onDeleteTemplate}
           folders={templateFolders}
+          onNavigateToPackDetail={onNavigateToPackDetail}
+          templatePacks={templatePacks}
+          onUpdatePack={onUpdatePack}
+          onDeletePack={onDeletePack}
+          templates={templates}
+          onUpdateTemplate={onUpdateTemplate}
         />
       )}
 
@@ -670,14 +754,7 @@ function TemplateListView({
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (template.type === 'PACK') {
-                          const pack = templatePacks.find(p => p.name === template.name)
-                          if (pack) onOpenPackDrawer(pack)
-                        } else {
-                          onOpenTemplateDrawer(template)
-                        }
-                      }}
+                      onClick={() => onOpenTemplateDrawer(template)}
                       className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
                       title="詳細設定"
                     >
@@ -707,6 +784,7 @@ function CreateTemplateModal({ onClose, onSubmit, folders, defaultFolderId }: {
     defaultFolderId && defaultFolderId !== 'null' ? defaultFolderId : ''
   )
   const [content, setContent] = useState('')
+  const [notes, setNotes] = useState('')
 
   const generateLineMessageJson = (type: string, content: string) => {
     if (type === 'TEXT') {
@@ -749,6 +827,7 @@ function CreateTemplateModal({ onClose, onSubmit, folders, defaultFolderId }: {
       type,
       folderId: folderId || undefined,
       content: content.trim(),
+      notes: notes.trim() || undefined,
       lineMessageJson: lineMessageJson ?? undefined
     })
     onClose()
@@ -810,6 +889,17 @@ function CreateTemplateModal({ onClose, onSubmit, folders, defaultFolderId }: {
                 placeholder="テンプレートの内容を入力"
                 rows={4}
                 required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">備考（任意）</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="テンプレートの備考やメモを入力"
+                rows={2}
               />
             </div>
             
