@@ -19,12 +19,15 @@ import {
   SegmentFolder,
   Campaign, 
   Scenario, 
+  ScenarioFolder,
   Pack,
   Template, 
   TemplateFolder,
   TemplatePack,
   DeliveryLog,
-  ScenarioActionRule
+  ScenarioActionRule,
+  Broadcast,
+  BroadcastFolder
 } from '@/types'
 import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
@@ -52,12 +55,15 @@ export default function LineMarketingApp() {
   const [segmentFolders, setSegmentFolders] = useState<SegmentFolder[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [scenarios, setScenarios] = useState<Scenario[]>([])
+  const [scenarioFolders, setScenarioFolders] = useState<ScenarioFolder[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([])
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([])
   const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([])
   const [actionRules, setActionRules] = useState<ScenarioActionRule[]>([])
   const [packs, setPacks] = useState<Pack[]>([])
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
+  const [broadcastFolders, setBroadcastFolders] = useState<BroadcastFolder[]>([])
 
   // Initialize data
   useEffect(() => {
@@ -536,6 +542,460 @@ export default function LineMarketingApp() {
           originalContentUrl: 'https://example.com/profile-image.jpg',
           previewImageUrl: 'https://example.com/profile-image-thumb.jpg'
         })
+      },
+      // 追加のダミーテンプレート（スクロールテスト用）
+      {
+        id: '14',
+        name: '新年挨拶メッセージ',
+        type: 'TEXT',
+        content: '新年あけましておめでとうございます！\n今年もよろしくお願いします。',
+        folderId: '6',
+        createdAt: new Date('2024-12-28'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '新年あけましておめでとうございます！\n今年もよろしくお願いします。'
+        })
+      },
+      {
+        id: '15',
+        name: 'バレンタインキャンペーン告知',
+        type: 'FLEX',
+        content: 'バレンタイン特別企画のお知らせ',
+        folderId: '7',
+        createdAt: new Date('2025-01-25'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'バレンタインキャンペーン',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'バレンタイン特別企画',
+                  weight: 'bold',
+                  size: 'lg',
+                  color: '#D84A75'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '16',
+        name: 'お客様アンケート_満足度調査',
+        type: 'TEXT',
+        content: 'いつもご利用ありがとうございます。\nサービス向上のため、簡単なアンケートにご協力ください。',
+        folderId: '2',
+        createdAt: new Date('2025-01-20'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'いつもご利用ありがとうございます。\nサービス向上のため、簡単なアンケートにご協力ください。'
+        })
+      },
+      {
+        id: '17',
+        name: 'セミナー_AI活用術_申込開始',
+        type: 'FLEX',
+        content: 'AI活用術セミナーの申込み開始のお知らせ',
+        folderId: '5',
+        createdAt: new Date('2025-01-18'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'AI活用術セミナー申込開始',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'AI活用術セミナー',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '18',
+        name: '商品紹介_スマートフォンケース',
+        type: 'IMAGE',
+        content: '新商品のスマートフォンケースの紹介',
+        folderId: '8',
+        createdAt: new Date('2025-01-15'),
+        lineMessageJson: JSON.stringify({
+          type: 'image',
+          originalContentUrl: 'https://example.com/phone-case.jpg',
+          previewImageUrl: 'https://example.com/phone-case-thumb.jpg'
+        })
+      },
+      {
+        id: '19',
+        name: 'お誕生日おめでとうメッセージ',
+        type: 'TEXT',
+        content: 'お誕生日おめでとうございます！\n特別なクーポンをプレゼントします🎂',
+        folderId: '2',
+        createdAt: new Date('2025-01-12'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'お誕生日おめでとうございます！\n特別なクーポンをプレゼントします🎂'
+        })
+      },
+      {
+        id: '20',
+        name: 'フォローアップ_購入後1週間',
+        type: 'TEXT',
+        content: 'ご購入ありがとうございました。\n商品の調子はいかがですか？',
+        folderId: '3',
+        createdAt: new Date('2025-01-10'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'ご購入ありがとうございました。\n商品の調子はいかがですか？'
+        })
+      },
+      {
+        id: '21',
+        name: 'メンテナンス通知_システム更新',
+        type: 'TEXT',
+        content: 'システムメンテナンスのお知らせ\n日時：2025年2月15日 2:00-4:00',
+        folderId: '4',
+        createdAt: new Date('2025-01-08'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'システムメンテナンスのお知らせ\n日時：2025年2月15日 2:00-4:00'
+        })
+      },
+      {
+        id: '22',
+        name: 'キャンペーン_友達紹介',
+        type: 'FLEX',
+        content: '友達紹介キャンペーンのご案内',
+        folderId: '9',
+        createdAt: new Date('2025-01-05'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: '友達紹介キャンペーン',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '友達紹介で特典GET!',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '23',
+        name: 'イベント_春祭り_開催告知',
+        type: 'TEXT',
+        content: '春祭りイベント開催のお知らせ\n3月20日(土) 10:00-16:00',
+        folderId: '10',
+        createdAt: new Date('2025-01-03'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '春祭りイベント開催のお知らせ\n3月20日(土) 10:00-16:00'
+        })
+      },
+      {
+        id: '24',
+        name: 'サポート_よくある質問',
+        type: 'FLEX',
+        content: 'よくある質問への回答集',
+        folderId: '2',
+        createdAt: new Date('2025-01-01'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'よくある質問',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'よくある質問',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '25',
+        name: 'ニュースレター_月刊配信',
+        type: 'TEXT',
+        content: '月刊ニュースレター1月号をお届けします。',
+        folderId: '2',
+        createdAt: new Date('2024-12-30'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '月刊ニュースレター1月号をお届けします。'
+        })
+      },
+      {
+        id: '26',
+        name: 'オンライン説明会_予約開始',
+        type: 'FLEX',
+        content: 'オンライン説明会の予約受付開始',
+        folderId: '5',
+        createdAt: new Date('2024-12-28'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'オンライン説明会予約開始',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'オンライン説明会',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '27',
+        name: 'コミュニティ_参加招待',
+        type: 'TEXT',
+        content: '限定コミュニティへのご招待\nあなただけの特別なご案内です。',
+        folderId: '2',
+        createdAt: new Date('2024-12-25'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '限定コミュニティへのご招待\nあなただけの特別なご案内です。'
+        })
+      },
+      {
+        id: '28',
+        name: 'プレミアム会員_アップグレード案内',
+        type: 'FLEX',
+        content: 'プレミアム会員へのアップグレードのご案内',
+        folderId: '2',
+        createdAt: new Date('2024-12-22'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'プレミアム会員アップグレード',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'プレミアム会員特典',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '29',
+        name: '季節限定_夏のセール前夜祭',
+        type: 'TEXT',
+        content: '夏のセール前夜祭開催！\n明日から3日間限定の特別価格です。',
+        folderId: '3',
+        createdAt: new Date('2024-12-20'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '夏のセール前夜祭開催！\n明日から3日間限定の特別価格です。'
+        })
+      },
+      {
+        id: '30',
+        name: 'フィードバック_サービス改善',
+        type: 'TEXT',
+        content: 'サービス改善のためのフィードバックをお聞かせください。',
+        folderId: '2',
+        createdAt: new Date('2024-12-18'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'サービス改善のためのフィードバックをお聞かせください。'
+        })
+      },
+      {
+        id: '31',
+        name: 'ギフトカード_特別プレゼント',
+        type: 'FLEX',
+        content: '特別なギフトカードプレゼント企画',
+        folderId: '9',
+        createdAt: new Date('2024-12-15'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'ギフトカードプレゼント',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'ギフトカードプレゼント',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '32',
+        name: 'アプリ更新_新機能紹介',
+        type: 'TEXT',
+        content: 'アプリを最新バージョンに更新しました。\n新機能をお試しください！',
+        folderId: '2',
+        createdAt: new Date('2024-12-12'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'アプリを最新バージョンに更新しました。\n新機能をお試しください！'
+        })
+      },
+      {
+        id: '33',
+        name: 'VIP限定_先行販売開始',
+        type: 'TEXT',
+        content: 'VIP会員様限定！\n新商品の先行販売を開始いたします。',
+        folderId: '2',
+        createdAt: new Date('2024-12-10'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'VIP会員様限定！\n新商品の先行販売を開始いたします。'
+        })
+      },
+      {
+        id: '34',
+        name: 'ロイヤルティ_ポイント2倍',
+        type: 'FLEX',
+        content: 'ロイヤルティポイント2倍キャンペーン',
+        folderId: '8',
+        createdAt: new Date('2024-12-08'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: 'ポイント2倍キャンペーン',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'ポイント2倍デー',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '35',
+        name: '年末年始_営業時間変更',
+        type: 'TEXT',
+        content: '年末年始の営業時間変更のお知らせ\n12/29-1/3は短縮営業いたします。',
+        folderId: '4',
+        createdAt: new Date('2024-12-05'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '年末年始の営業時間変更のお知らせ\n12/29-1/3は短縮営業いたします。'
+        })
+      },
+      {
+        id: '36',
+        name: 'ブログ更新_記事紹介',
+        type: 'TEXT',
+        content: '新しいブログ記事を投稿しました。\nぜひお読みください！',
+        folderId: '2',
+        createdAt: new Date('2024-12-03'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: '新しいブログ記事を投稿しました。\nぜひお読みください！'
+        })
+      },
+      {
+        id: '37',
+        name: 'コラボ商品_限定発売',
+        type: 'IMAGE',
+        content: '人気ブランドとのコラボ商品限定発売',
+        folderId: '8',
+        createdAt: new Date('2024-12-01'),
+        lineMessageJson: JSON.stringify({
+          type: 'image',
+          originalContentUrl: 'https://example.com/collab-product.jpg',
+          previewImageUrl: 'https://example.com/collab-product-thumb.jpg'
+        })
+      },
+      {
+        id: '38',
+        name: '週末限定_タイムセール',
+        type: 'FLEX',
+        content: '週末限定のタイムセール開催',
+        folderId: '3',
+        createdAt: new Date('2024-11-29'),
+        lineMessageJson: JSON.stringify({
+          type: 'flex',
+          altText: '週末限定タイムセール',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '週末限定タイムセール',
+                  weight: 'bold'
+                }
+              ]
+            }
+          }
+        })
+      },
+      {
+        id: '39',
+        name: 'カスタマーサクセス_成功事例',
+        type: 'TEXT',
+        content: 'お客様の成功事例をご紹介します。\nあなたのビジネスの参考にしてください。',
+        folderId: '2',
+        createdAt: new Date('2024-11-27'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'お客様の成功事例をご紹介します。\nあなたのビジネスの参考にしてください。'
+        })
+      },
+      {
+        id: '40',
+        name: 'サンクスギビング_感謝メッセージ',
+        type: 'TEXT',
+        content: 'いつもご利用いただき、ありがとうございます。\n心より感謝申し上げます。',
+        createdAt: new Date('2024-11-25'),
+        lineMessageJson: JSON.stringify({
+          type: 'text',
+          text: 'いつもご利用いただき、ありがとうございます。\n心より感謝申し上げます。'
+        })
       }
     ]
 
@@ -566,6 +1026,13 @@ export default function LineMarketingApp() {
       }
     ]
 
+    const mockScenarioFolders: ScenarioFolder[] = [
+      { id: '1', name: 'オンボーディング', description: '新規登録者向けシナリオ', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: 'マーケティング', description: 'マーケティング用シナリオ', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: 'リテンション', description: '顧客維持用シナリオ', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: 'キャンペーン', description: 'キャンペーン関連', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
     const mockScenarios: Scenario[] = [
       {
         id: '1',
@@ -574,6 +1041,7 @@ export default function LineMarketingApp() {
         trigger: 'TAG_ADDED',
         triggerValue: '新規',
         isActive: true,
+        folderId: '1',
         createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
         packs: [
@@ -600,6 +1068,7 @@ export default function LineMarketingApp() {
         trigger: 'SCHEDULE',
         triggerValue: '2024-03-01 10:00',
         isActive: true,
+        folderId: '4',
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
         packs: [
@@ -618,6 +1087,7 @@ export default function LineMarketingApp() {
         name: 'VIP限定オファー',
         trigger: 'MANUAL',
         isActive: false,
+        folderId: '2',
         createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
         packs: [
@@ -781,8 +1251,61 @@ export default function LineMarketingApp() {
         updatedAt: new Date()
       }
     ]
+
+    const mockBroadcastFolders: BroadcastFolder[] = [
+      { id: '1', name: 'お知らせ', description: 'お知らせ配信', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: 'プロモーション', description: 'プロモーション配信', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: 'セール', description: 'セール告知', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: 'リマインダー', description: 'リマインダー配信', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
+    const mockBroadcasts: Broadcast[] = [
+      {
+        id: '1',
+        name: '春のセール開始のお知らせ',
+        description: '春のセール開始をお知らせする一斉配信',
+        folderId: '3',
+        targetType: 'ALL',
+        templateId: '1',
+        status: 'COMPLETED',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        sentCount: 150,
+        deliveredCount: 145,
+        openedCount: 98,
+        clickedCount: 23
+      },
+      {
+        id: '2',
+        name: 'VIP会員限定キャンペーン',
+        description: 'VIP会員向けの特別キャンペーン',
+        folderId: '2',
+        targetType: 'TAGS',
+        targetTagIds: ['1'],
+        templateId: '2',
+        status: 'SCHEDULED',
+        scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: '3',
+        name: '新商品のご案内',
+        description: '新商品発売のお知らせ',
+        folderId: '1',
+        targetType: 'SEGMENT',
+        targetSegmentIds: ['1', '3'],
+        templateId: '3',
+        status: 'DRAFT',
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      }
+    ]
     
     setActionRules(mockActionRules)
+    setScenarioFolders(mockScenarioFolders)
+    setBroadcastFolders(mockBroadcastFolders)
+    setBroadcasts(mockBroadcasts)
   }, [])
 
   // Navigation handlers
@@ -1341,6 +1864,7 @@ export default function LineMarketingApp() {
         return (
           <ScenarioList
             scenarios={scenarios}
+            scenarioFolders={scenarioFolders}
             campaigns={campaigns}
             onCreateScenario={handleCreateScenario}
             onEditScenario={handleEditScenario}
@@ -1348,6 +1872,33 @@ export default function LineMarketingApp() {
             onDeleteScenario={handleDeleteScenario}
             onToggleActive={handleToggleActive}
             onViewAnalytics={handleViewAnalytics}
+            onCreateFolder={(folder) => {
+              const newFolder: ScenarioFolder = {
+                ...folder,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setScenarioFolders([...scenarioFolders, newFolder])
+            }}
+            onUpdateFolder={(folderId, updates) => {
+              setScenarioFolders(scenarioFolders.map(folder => 
+                folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+              ))
+            }}
+            onDeleteFolder={(folderId) => {
+              // フォルダ内のシナリオを未分類に移動
+              setScenarios(scenarios.map(scenario => 
+                scenario.folderId === folderId ? { ...scenario, folderId: undefined } : scenario
+              ))
+              // サブフォルダを親フォルダまたは未分類に移動
+              const folderToDelete = scenarioFolders.find(f => f.id === folderId)
+              setScenarioFolders(scenarioFolders.filter(folder => folder.id !== folderId).map(folder =>
+                folder.parentId === folderId 
+                  ? { ...folder, parentId: folderToDelete?.parentId }
+                  : folder
+              ))
+            }}
           />
         )
         
@@ -1468,11 +2019,73 @@ export default function LineMarketingApp() {
           <BroadcastPage
             users={users}
             segments={segments}
+            segmentFolders={segmentFolders}
             templates={templates}
+            templateFolders={templateFolders}
             tags={tags}
+            tagFolders={tagFolders}
             statuses={statuses}
+            broadcasts={broadcasts}
+            broadcastFolders={broadcastFolders}
             onSend={(broadcastData) => {
               // TODO: Implement broadcast sending
+            }}
+            onCreateFolder={(folder) => {
+              const newFolder: BroadcastFolder = {
+                ...folder,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setBroadcastFolders([...broadcastFolders, newFolder])
+            }}
+            onUpdateFolder={(folderId, updates) => {
+              setBroadcastFolders(broadcastFolders.map(folder => 
+                folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+              ))
+            }}
+            onDeleteFolder={(folderId) => {
+              // フォルダ内の一斉配信を未分類に移動
+              setBroadcasts(broadcasts.map(broadcast => 
+                broadcast.folderId === folderId ? { ...broadcast, folderId: undefined } : broadcast
+              ))
+              // サブフォルダを親フォルダまたは未分類に移動
+              const folderToDelete = broadcastFolders.find(f => f.id === folderId)
+              setBroadcastFolders(broadcastFolders.filter(folder => folder.id !== folderId).map(folder =>
+                folder.parentId === folderId 
+                  ? { ...folder, parentId: folderToDelete?.parentId }
+                  : folder
+              ))
+            }}
+            onCreateBroadcast={() => {
+              // TODO: Implement broadcast creation
+            }}
+            onEditBroadcast={(broadcast) => {
+              // TODO: Implement broadcast editing
+            }}
+            onDuplicateBroadcast={(broadcast) => {
+              const duplicatedBroadcast: Broadcast = {
+                ...broadcast,
+                id: Date.now().toString(),
+                name: `${broadcast.name} (コピー)`,
+                status: 'DRAFT',
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setBroadcasts([...broadcasts, duplicatedBroadcast])
+            }}
+            onDeleteBroadcast={(broadcastId) => {
+              setBroadcasts(broadcasts.filter(b => b.id !== broadcastId))
+            }}
+            onToggleBroadcast={(broadcastId, isActive) => {
+              setBroadcasts(broadcasts.map(broadcast => 
+                broadcast.id === broadcastId 
+                  ? { ...broadcast, status: isActive ? 'SCHEDULED' : 'DRAFT', updatedAt: new Date() }
+                  : broadcast
+              ))
+            }}
+            onViewAnalytics={(broadcastId) => {
+              // TODO: Implement analytics view
             }}
           />
         )

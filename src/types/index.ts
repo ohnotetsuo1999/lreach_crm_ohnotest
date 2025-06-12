@@ -89,9 +89,19 @@ export interface Scenario {
   trigger: TriggerType
   triggerValue?: string
   isActive: boolean
+  folderId?: string
   createdAt: Date
   updatedAt: Date
   packs: Pack[]
+}
+
+export interface ScenarioFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 // Packと関連するテンプレート情報を含む拡張Pack
@@ -127,7 +137,7 @@ export interface PackTemplate {
 export interface ScenarioActionRule {
   id: string
   packTemplateId: string // PackTemplateのID
-  actionType: ActionType
+  actionType: UserActionType
   actionCondition: {
     operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any'
     value: string
@@ -220,14 +230,14 @@ export interface DeliveryLog {
   actions?: UserAction[]
 }
 
-export type ActionType = 'URL_CLICK' | 'BUTTON_CLICK' | 'IMAGE_CLICK' | 'TEXT_SELECT' | 'MESSAGE_SHARE' | 'REPLY' | 'REACTION' | 'POSTBACK' | 'LOCATION_SHARE' | 'CONTACT_SHARE' | 'CUSTOM'
+export type UserActionType = 'URL_CLICK' | 'BUTTON_CLICK' | 'IMAGE_CLICK' | 'TEXT_SELECT' | 'MESSAGE_SHARE' | 'REPLY' | 'REACTION' | 'POSTBACK' | 'LOCATION_SHARE' | 'CONTACT_SHARE' | 'CUSTOM'
 
 export interface UserAction {
   id: string
   userId: string
   templateId: string
   deliveryLogId: string
-  actionType: ActionType
+  actionType: UserActionType
   actionValue: string // URL, button text, postback data, etc.
   metadata?: Record<string, any> // Additional data like coordinates, custom fields
   timestamp: Date
@@ -239,7 +249,7 @@ export interface ActionRule {
   templateId?: string // If null, applies to all templates
   scenarioId?: string // If null, applies to all scenarios
   packId?: string // If null, applies to all packs
-  actionType: ActionType
+  actionType: UserActionType
   actionCondition: {
     operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any'
     value: string
@@ -262,6 +272,108 @@ export interface TagAction {
     ifNotHasTag?: string[]
     ifStatus?: string
   }
+}
+
+export interface Broadcast {
+  id: string
+  name: string
+  description?: string
+  folderId?: string
+  targetType: 'ALL' | 'SEGMENT' | 'TAGS'
+  targetSegmentIds?: string[]
+  targetTagIds?: string[]
+  templateId: string
+  scheduledAt?: Date
+  sentAt?: Date
+  status: 'DRAFT' | 'SCHEDULED' | 'SENDING' | 'COMPLETED' | 'FAILED'
+  createdAt: Date
+  updatedAt: Date
+  sentCount?: number
+  deliveredCount?: number
+  openedCount?: number
+  clickedCount?: number
+}
+
+export interface BroadcastFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+// アクション設定関連の型定義
+export interface BroadcastAction {
+  id: string
+  type: ActionType
+  trigger?: ActionTrigger
+  payload?: ActionPayload
+  condition?: ActionCondition
+  order?: number
+  delayMinutes?: number
+  isActive?: boolean
+  subActions?: SubAction[]
+  level?: number
+  parentId?: string
+}
+
+export interface SubAction {
+  id: string
+  type: 'CONDITIONAL' | 'ACTION'
+  delayMinutes?: number
+  condition?: {
+    type: 'has' | 'not_has'
+    tagIds: string[]
+  }
+  thenActions?: BroadcastAction[]
+  elseActions?: BroadcastAction[]
+  action?: BroadcastAction
+}
+
+export type ActionType = 
+  | 'ADD_TAG'           // タグを追加
+  | 'REMOVE_TAG'        // タグを削除
+  | 'CHANGE_STATUS'     // ステータス変更
+  | 'SEND_MESSAGE'      // メッセージ送信
+  | 'WAIT'              // 待機
+  | 'CONDITIONAL'       // 条件分岐
+
+export interface ActionTrigger {
+  type: ActionTriggerType
+  condition?: TriggerCondition
+  delayMinutes?: number
+}
+
+export type ActionTriggerType = 
+  | 'URL_CLICK'         // URL クリック
+  | 'BUTTON_CLICK'      // ボタン クリック
+  | 'MESSAGE_OPEN'      // メッセージ開封
+  | 'MESSAGE_REPLY'     // メッセージ返信
+  | 'TIME_DELAY'        // 時間経過
+  | 'IMMEDIATE'         // 即座に実行
+
+export interface TriggerCondition {
+  operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'greater_than' | 'less_than' | 'any'
+  value?: string | number
+  targetUrl?: string
+  buttonText?: string
+}
+
+export interface ActionPayload {
+  tagIds?: string[]
+  statusId?: string
+  templateId?: string
+  message?: string
+  waitMinutes?: number
+  conditions?: ActionCondition[]
+}
+
+export interface ActionCondition {
+  type: 'HAS_TAG' | 'NOT_HAS_TAG' | 'STATUS_IS' | 'STATUS_NOT' | 'CUSTOM'
+  tagIds?: string[]
+  statusIds?: string[]
+  customCondition?: string
 }
 
 export type TriggerType = 
@@ -385,7 +497,7 @@ export interface TemplateButton {
 // スマートアクションルール推奨用の型
 export interface SuggestedActionRule {
   id: string
-  actionType: ActionType
+  actionType: UserActionType
   triggerElement: string // ボタンテキスト、URL等
   suggestedTagActions: TagAction[]
   confidence: number // 0-1の推奨度
