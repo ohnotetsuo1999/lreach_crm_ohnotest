@@ -56,7 +56,17 @@ export interface Segment {
   id: string
   name: string
   memo?: string
+  folderId?: string
   filterJson: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface SegmentFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
   createdAt: Date
   updatedAt: Date
 }

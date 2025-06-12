@@ -16,6 +16,7 @@ import {
   TagFolder,
   Status, 
   Segment, 
+  SegmentFolder,
   Campaign, 
   Scenario, 
   Pack,
@@ -25,8 +26,7 @@ import {
   DeliveryLog,
   ScenarioActionRule
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Zap, Tags, Send, Package } from 'lucide-react'
-import { ActionRuleManager } from '@/components/ActionRules/ActionRuleManager'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { PackManagement } from '@/components/PackManagement/PackManagement'
@@ -35,7 +35,7 @@ import { PackDetail } from '@/components/PackManagement/PackDetail'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'action-rules' | 'broadcast'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -49,6 +49,7 @@ export default function LineMarketingApp() {
   const [tagFolders, setTagFolders] = useState<TagFolder[]>([])
   const [statuses, setStatuses] = useState<Status[]>([])
   const [segments, setSegments] = useState<Segment[]>([])
+  const [segmentFolders, setSegmentFolders] = useState<SegmentFolder[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
@@ -184,10 +185,20 @@ export default function LineMarketingApp() {
       }
     ]
 
+    const mockSegmentFolders: SegmentFolder[] = [
+      { id: '1', name: '顧客ランク', description: '顧客ランク別のセグメント', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: 'エンゲージメント', description: '行動別のセグメント', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: '新規ユーザー', description: '新規登録者のセグメント', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: 'アクティブユーザー', description: 'アクティブユーザーのセグメント', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '5', name: 'キャンペーン', description: 'キャンペーン関連のセグメント', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
     const mockSegments: Segment[] = [
       {
         id: '1',
         name: 'VIPユーザー',
+        memo: '高価値顧客向けの特別セグメント',
+        folderId: '1',
         filterJson: JSON.stringify({
           conditions: [
             { field: 'tags', operator: 'in', value: ['1'], logic: undefined }
@@ -200,6 +211,8 @@ export default function LineMarketingApp() {
       {
         id: '2',
         name: '新規登録者（過去7日）',
+        memo: 'ウェルカムメッセージ配信対象',
+        folderId: '3',
         filterJson: JSON.stringify({
           conditions: [
             { field: 'createdAt', operator: 'greater_than', value: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), logic: undefined }
@@ -207,6 +220,47 @@ export default function LineMarketingApp() {
           logic: 'AND'
         }),
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        name: 'アクティブユーザー',
+        memo: '過去30日にアクティビティがあるユーザー',
+        folderId: '4',
+        filterJson: JSON.stringify({
+          conditions: [
+            { field: 'lastActivity', operator: 'greater_than', value: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), logic: undefined }
+          ],
+          logic: 'AND'
+        }),
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '4',
+        name: '休眠ユーザー',
+        memo: '60日以上アクティビティがないユーザー',
+        filterJson: JSON.stringify({
+          conditions: [
+            { field: 'lastActivity', operator: 'less_than', value: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), logic: undefined }
+          ],
+          logic: 'AND'
+        }),
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '5',
+        name: 'キャンペーン参加者',
+        memo: '春のキャンペーンに参加したユーザー',
+        folderId: '5',
+        filterJson: JSON.stringify({
+          conditions: [
+            { field: 'tags', operator: 'in', value: ['campaign_2024_spring'], logic: undefined }
+          ],
+          logic: 'AND'
+        }),
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         updatedAt: new Date()
       }
     ]
@@ -653,6 +707,7 @@ export default function LineMarketingApp() {
     setStatuses(mockStatuses)
     setUsers(mockUsers)
     setSegments(mockSegments)
+    setSegmentFolders(mockSegmentFolders)
     setScenarios(mockScenarios)
     setTemplates(mockTemplates)
     setTemplateFolders(mockTemplateFolders)
@@ -1121,7 +1176,6 @@ export default function LineMarketingApp() {
     { id: 'broadcast', label: '一斉配信', icon: Send },
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
     { id: 'tags', label: 'タグ管理', icon: Tags },
-    { id: 'action-rules', label: 'アクションルール', icon: Zap },
     { id: 'reports', label: 'レポート', icon: BarChart3 }
   ] as const
 
@@ -1230,6 +1284,7 @@ export default function LineMarketingApp() {
               </div>
               <SegmentBuilder
                 segments={segments}
+                segmentFolders={segmentFolders}
                 users={users}
                 tags={tags}
                 statuses={statuses}
@@ -1244,12 +1299,41 @@ export default function LineMarketingApp() {
         return (
           <SegmentList
             segments={segments}
+            segmentFolders={segmentFolders}
             tags={tags}
             statuses={statuses}
+            users={users}
             onCreateSegment={handleCreateSegment}
             onEditSegment={handleEditSegment}
             onDuplicateSegment={handleDuplicateSegment}
             onDeleteSegment={handleDeleteSegment}
+            onCreateFolder={(folder) => {
+              const newFolder: SegmentFolder = {
+                ...folder,
+                id: Date.now().toString(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setSegmentFolders([...segmentFolders, newFolder])
+            }}
+            onUpdateFolder={(folderId, updates) => {
+              setSegmentFolders(segmentFolders.map(folder => 
+                folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+              ))
+            }}
+            onDeleteFolder={(folderId) => {
+              // フォルダ内のセグメントを未分類に移動
+              setSegments(segments.map(segment => 
+                segment.folderId === folderId ? { ...segment, folderId: undefined } : segment
+              ))
+              // サブフォルダを親フォルダまたは未分類に移動
+              const folderToDelete = segmentFolders.find(f => f.id === folderId)
+              setSegmentFolders(segmentFolders.filter(folder => folder.id !== folderId).map(folder =>
+                folder.parentId === folderId 
+                  ? { ...folder, parentId: folderToDelete?.parentId }
+                  : folder
+              ))
+            }}
           />
         )
         
@@ -1288,6 +1372,16 @@ export default function LineMarketingApp() {
             }}
             onDeleteTemplate={(templateId) => {
               setTemplates(templates.filter(template => template.id !== templateId))
+            }}
+            onDuplicateTemplate={(template) => {
+              const duplicatedTemplate: Template = {
+                ...template,
+                id: Date.now().toString(),
+                name: `${template.name} (コピー)`,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setTemplates([...templates, duplicatedTemplate])
             }}
             onCreateFolder={(folder) => {
               const newFolder: TemplateFolder = {
@@ -1366,21 +1460,6 @@ export default function LineMarketingApp() {
             onUpdateFolder={handleUpdateFolder}
             onDeleteFolder={handleDeleteFolder}
             onMoveTag={handleMoveTag}
-          />
-        )
-        
-      case 'action-rules':
-        return (
-          <ActionRuleManager
-            actionRules={actionRules}
-            tags={tags}
-            statuses={statuses}
-            scenarios={scenarios}
-            templates={templates}
-            onCreateRule={handleCreateActionRule}
-            onUpdateRule={handleUpdateActionRule}
-            onDeleteRule={handleDeleteActionRule}
-            onToggleRule={handleToggleActionRule}
           />
         )
         

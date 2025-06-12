@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Tag, TagFolder } from '@/types'
-import { Plus, Search, Folder, Edit2, Trash2, ChevronDown, ChevronRight, Move, Grid3X3, List, FolderOpen, Eye, EyeOff, Filter } from 'lucide-react'
+import { Plus, Search, Folder, Edit2, Trash2, ChevronDown, ChevronRight, Move, Grid3X3, List, FolderOpen, Eye, EyeOff, Filter, Copy } from 'lucide-react'
 
 interface TagManagementProps {
   tags: Tag[]
@@ -35,7 +35,7 @@ export function TagManagement({
   const [editingFolder, setEditingFolder] = useState<TagFolder | null>(null)
   const [draggedTag, setDraggedTag] = useState<string | null>(null)
   const [draggedFolder, setDraggedFolder] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
   const [showEmptyFolders, setShowEmptyFolders] = useState(true)
   const [selectedTagType, setSelectedTagType] = useState<'ALL' | 'MANUAL' | 'AUTOMATIC' | 'BEHAVIORAL'>('ALL')
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
@@ -348,6 +348,7 @@ export function TagManagement({
                   tags={filteredTags}
                   tagFolders={tagFolders}
                   onEditTag={setEditingTag}
+                  onDeleteTag={onDeleteTag}
                   getTagColor={getTagColorByName}
                 />
               )}
@@ -647,13 +648,21 @@ function TagListView({
   tags, 
   tagFolders,
   onEditTag, 
+  onDeleteTag,
   getTagColor
 }: {
   tags: Tag[]
   tagFolders: TagFolder[]
   onEditTag: (tag: Tag) => void
+  onDeleteTag: (tagId: string) => void
   getTagColor: (tagName: string) => string
 }) {
+  const handleDelete = (tag: Tag) => {
+    if (confirm(`タグ「${tag.name}」を削除しますか？`)) {
+      onDeleteTag(tag.id)
+    }
+  }
+
   if (tags.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -715,13 +724,22 @@ function TagListView({
                     {tag.createdAt.toLocaleDateString('ja-JP')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => onEditTag(tag)}
-                      className="text-blue-600 hover:text-blue-900 inline-flex items-center"
-                    >
-                      <Edit2 className="w-4 h-4 mr-1" />
-                      編集
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => onEditTag(tag)}
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                        title="編集"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tag)}
+                        className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                        title="削除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

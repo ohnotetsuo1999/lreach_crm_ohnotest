@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { ConditionBuilder } from './ConditionBuilder'
 import { PreviewCount } from './PreviewCount'
-import { SegmentFilter, Segment, User, Tag, Status } from '@/types'
+import { SegmentFilter, Segment, SegmentFolder, User, Tag, Status } from '@/types'
 import { Save, Filter, Plus } from 'lucide-react'
 
 interface SegmentBuilderProps {
   segments: Segment[]
+  segmentFolders: SegmentFolder[]
   users: User[]
   tags: Tag[]
   statuses: Status[]
@@ -18,6 +19,7 @@ interface SegmentBuilderProps {
 
 export function SegmentBuilder({
   segments,
+  segmentFolders,
   users,
   tags,
   statuses,
@@ -27,6 +29,7 @@ export function SegmentBuilder({
 }: SegmentBuilderProps) {
   const [segmentName, setSegmentName] = useState('')
   const [segmentMemo, setSegmentMemo] = useState('')
+  const [folderId, setFolderId] = useState<string>('')
   const [filter, setFilter] = useState<SegmentFilter>({
     conditions: [],
     logic: 'AND'
@@ -41,6 +44,7 @@ export function SegmentBuilder({
         setFilter(loadedFilter)
         setSegmentName(editingSegment.name)
         setSegmentMemo(editingSegment.memo || '')
+        setFolderId(editingSegment.folderId || '')
         setSelectedSegment(editingSegment)
       } catch (error) {
         console.error('Failed to load editing segment:', error)
@@ -48,6 +52,7 @@ export function SegmentBuilder({
         setFilter({ conditions: [], logic: 'AND' })
         setSegmentName('')
         setSegmentMemo('')
+        setFolderId('')
         setSelectedSegment(null)
       }
     } else {
@@ -55,6 +60,7 @@ export function SegmentBuilder({
       setFilter({ conditions: [], logic: 'AND' })
       setSegmentName('')
       setSegmentMemo('')
+      setFolderId('')
       setSelectedSegment(null)
     }
   }, [editingSegment])
@@ -73,6 +79,7 @@ export function SegmentBuilder({
     onSaveSegment({
       name: segmentName,
       memo: segmentMemo.trim() || undefined,
+      folderId: folderId || undefined,
       filterJson: JSON.stringify(filter)
     })
 
@@ -140,6 +147,23 @@ export function SegmentBuilder({
                       <p className="mt-2 text-sm text-gray-600">
                         わかりやすい名前をつけて、後で簡単に見つけられるようにしましょう
                       </p>
+                    </div>
+
+                    {/* フォルダ選択 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        フォルダ
+                      </label>
+                      <select
+                        value={folderId}
+                        onChange={(e) => setFolderId(e.target.value)}
+                        className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      >
+                        <option value="">未分類</option>
+                        {segmentFolders.map((folder) => (
+                          <option key={folder.id} value={folder.id}>{folder.name}</option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* メモ */}

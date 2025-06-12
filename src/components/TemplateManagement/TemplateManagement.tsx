@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Template, TemplateFolder, TemplatePack, LineMessage } from '@/types'
-import { Plus, Search, Folder, ChevronDown, ChevronRight, FolderOpen, Package, Eye, Settings, X } from 'lucide-react'
+import { Plus, Search, Folder, ChevronDown, ChevronRight, FolderOpen, Package, Eye, X, Copy, Edit2 } from 'lucide-react'
 import { TemplateDrawer } from './TemplateDrawer'
 import { PackDrawer } from './PackDrawer'
 import { EnhancedLinePreview } from '../TemplatePreview/EnhancedLinePreview'
@@ -16,6 +16,7 @@ interface TemplateManagementProps {
   onCreateTemplate: (template: Omit<Template, 'id' | 'createdAt'>) => void
   onUpdateTemplate: (templateId: string, updates: Partial<Template>) => void
   onDeleteTemplate: (templateId: string) => void
+  onDuplicateTemplate: (template: Template) => void
   onCreateFolder: (folder: Omit<TemplateFolder, 'id' | 'createdAt' | 'updatedAt'>) => void
   onUpdateFolder: (folderId: string, updates: Partial<TemplateFolder>) => void
   onCreatePack: (pack: Omit<TemplatePack, 'id' | 'createdAt' | 'updatedAt'>) => void
@@ -33,6 +34,7 @@ export function TemplateManagement({
   onCreateTemplate,
   onUpdateTemplate,
   onDeleteTemplate,
+  onDuplicateTemplate,
   onCreateFolder,
   onUpdateFolder,
   onCreatePack,
@@ -348,6 +350,7 @@ export function TemplateManagement({
                 templatePacks={templatePacks}
                 onOpenTemplateDrawer={handleOpenTemplateDrawer}
                 onOpenPackDrawer={handleOpenPackDrawer}
+                onDuplicateTemplate={onDuplicateTemplate}
                 onPreviewTemplate={(template) => {
                   setPreviewTemplate(template)
                   setIsPreviewModalOpen(true)
@@ -671,12 +674,14 @@ function TemplateListView({
   templatePacks,
   onOpenTemplateDrawer,
   onOpenPackDrawer,
+  onDuplicateTemplate,
   onPreviewTemplate
 }: {
   templates: Template[]
   templatePacks: TemplatePack[]
   onOpenTemplateDrawer: (template: Template) => void
   onOpenPackDrawer: (pack: TemplatePack) => void
+  onDuplicateTemplate: (template: Template) => void
   onPreviewTemplate: (template: Template) => void
 }) {
   if (templates.length === 0) {
@@ -754,11 +759,18 @@ function TemplateListView({
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => onDuplicateTemplate(template)}
+                      className="text-green-600 hover:text-green-900 inline-flex items-center p-1 rounded hover:bg-green-100"
+                      title="複製"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => onOpenTemplateDrawer(template)}
                       className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
-                      title="詳細設定"
+                      title="編集"
                     >
-                      <Settings className="w-4 h-4" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   </div>
                 </td>
