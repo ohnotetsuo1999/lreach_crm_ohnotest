@@ -6,7 +6,7 @@ import { UserManagement } from '@/components/UserManagement/UserManagement'
 import { SegmentBuilder } from '@/components/SegmentBuilder/SegmentBuilder'
 import { SegmentList } from '@/components/SegmentBuilder/SegmentList'
 import { ScenarioList } from '@/components/ScenarioList/ScenarioList'
-import { ScenarioEditor } from '@/components/ScenarioEditor/ScenarioEditor'
+import { NewScenarioEditor } from '@/components/ScenarioEditor/NewScenarioEditor'
 import { TemplateEditor } from '@/components/TemplateEditor/TemplateEditor'
 import { TagManagement } from '@/components/TagManagement/TagManagement'
 import { TemplateManagement } from '@/components/TemplateManagement/TemplateManagement'
@@ -1705,22 +1705,15 @@ export default function LineMarketingApp() {
   const renderMainContent = () => {
     if (activeTab === 'scenarios' && currentView === 'edit') {
       return (
-        <ScenarioEditor
+        <NewScenarioEditor
           scenario={editingItem as Scenario}
+          templates={templates}
+          templateFolders={templateFolders}
+          tags={tags}
+          tagFolders={tagFolders}
+          statuses={statuses}
           onSave={handleSaveScenario}
           onBack={handleBack}
-          onAddTemplate={handleAddTemplate}
-          onEditTemplate={handleEditTemplate}
-          onDeleteTemplate={handleDeleteTemplate}
-          onPreviewScenario={handlePreviewScenario}
-          onReorderTemplates={handleReorderTemplates}
-          actionRules={actionRules}
-          tags={tags}
-          statuses={statuses}
-          onCreateActionRule={handleCreateActionRule}
-          onUpdateActionRule={handleUpdateActionRule}
-          onDeleteActionRule={handleDeleteActionRule}
-          templates={templates}
           onCreateTemplate={(template) => {
             const newTemplate = {
               ...template,
