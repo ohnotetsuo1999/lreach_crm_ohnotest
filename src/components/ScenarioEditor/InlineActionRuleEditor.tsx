@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ActionRule, ScenarioActionRule, ActionType, Tag, Status, TagAction } from '@/types'
+import { ActionRule, ScenarioActionRule, UserActionType, Tag, Status, TagAction } from '@/types'
 import { ActionRulePresets } from '../QuickActionRules/ActionRulePresets'
 import { ActionRuleGroupDisplay } from '../ActionRules/ActionRuleGroupDisplay'
 import { Plus, Trash2, Save, X, Zap, Target, Sparkles } from 'lucide-react'
@@ -31,7 +31,7 @@ export function InlineActionRuleEditor({
   const [showPresets, setShowPresets] = useState(false)
   const [newRule, setNewRule] = useState({
     description: '',
-    actionType: 'URL_CLICK' as ActionType,
+    actionType: 'URL_CLICK' as UserActionType,
     condition: {
       operator: 'contains' as 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any',
       value: ''
@@ -211,7 +211,7 @@ export function InlineActionRuleEditor({
                 </label>
                 <select
                   value={newRule.actionType}
-                  onChange={(e) => setNewRule({ ...newRule, actionType: e.target.value as ActionType })}
+                  onChange={(e) => setNewRule({ ...newRule, actionType: e.target.value as UserActionType })}
                   className="block w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                 >
                   {actionTypes.map((type) => (

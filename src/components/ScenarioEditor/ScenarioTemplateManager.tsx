@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Template, PackTemplate, ScenarioActionRule, ActionType, TagAction, Tag, Status, LineMessage } from '@/types'
+import { Template, PackTemplate, ScenarioActionRule, UserActionType, TagAction, Tag, Status, LineMessage } from '@/types'
 import { Plus, Search, X, Eye, Settings, Move, Trash2, AlertCircle, Target, Users } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { EnhancedLinePreview } from '../TemplatePreview/EnhancedLinePreview'
@@ -341,7 +341,7 @@ function ActionRuleManager({
 
   // テンプレートから自動検出できるアクション要素
   const detectActionElements = () => {
-    const elements: { type: ActionType; value: string; description: string }[] = []
+    const elements: { type: UserActionType; value: string; description: string }[] = []
     
     try {
       if (template.lineMessageJson) {
@@ -566,13 +566,13 @@ function ActionRuleCreateForm({
   onCancel
 }: {
   packTemplate: PackTemplate
-  actionElements: { type: ActionType; value: string; description: string }[]
+  actionElements: { type: UserActionType; value: string; description: string }[]
   tags: Tag[]
   statuses: Status[]
   onSubmit: (actionRule: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
 }) {
-  const [actionType, setActionType] = useState<ActionType>('BUTTON_CLICK')
+  const [actionType, setActionType] = useState<UserActionType>('BUTTON_CLICK')
   const [actionValue, setActionValue] = useState('')
   const [selectedTagId, setSelectedTagId] = useState(tags[0]?.id || '')
   const [actionOperation, setActionOperation] = useState<'ADD_TAG' | 'REMOVE_TAG' | 'SET_STATUS'>('ADD_TAG')
@@ -609,7 +609,7 @@ function ActionRuleCreateForm({
           </label>
           <select
             value={actionType}
-            onChange={(e) => setActionType(e.target.value as ActionType)}
+            onChange={(e) => setActionType(e.target.value as UserActionType)}
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
           >
             <option value="BUTTON_CLICK">ボタンクリック</option>

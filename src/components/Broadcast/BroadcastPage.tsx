@@ -7,7 +7,7 @@ import {
   Send, Users, Target, FileText, Clock, CheckCircle, AlertCircle, Calendar, Plus, MoreHorizontal, Edit,
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, ChevronUp, Edit2, Copy, Trash2, Play, Pause, BarChart3,
   Settings, Tag as TagIcon, MessageSquare, GitBranch, Zap, ExternalLink, MousePointer, ArrowUp, ArrowDown, Timer, 
-  Layers, Split, Link, Eye
+  Eye
 } from 'lucide-react'
 
 
@@ -690,7 +690,7 @@ export function BroadcastPage({
             <ScheduleSelection
               scheduleType={broadcastData.scheduleType}
               scheduledAt={broadcastData.scheduledAt}
-              onChange={(scheduleType, scheduledAt) => 
+              onChange={(scheduleType: 'immediate' | 'scheduled', scheduledAt?: Date) => 
                 setBroadcastData({ ...broadcastData, scheduleType, scheduledAt })
               }
             />
@@ -702,8 +702,8 @@ export function BroadcastPage({
               userCount={getTargetUserCount()}
               segments={segments}
               templates={templates}
-              onChange={(title, description) => 
-                setBroadcastData({ ...broadcastData, title, description })
+              onChange={(title: string, description?: string) => 
+                setBroadcastData({ ...broadcastData, title, description: description || '' })
               }
             />
           )}
@@ -1429,7 +1429,7 @@ function TargetSelection({
           selectedSegmentId={targetValue}
           segments={segments}
           segmentFolders={segmentFolders}
-          onChange={(segmentId) => onChange('segment', segmentId)}
+          onChange={(segmentId: string) => onChange('segment', segmentId)}
           onBack={() => onChange('all')}
           onNext={() => {/* Navigation will be handled by main buttons */}}
           isNextDisabled={!targetValue}
@@ -2054,11 +2054,11 @@ function ActionCard({
         return actionTags.length > 0 ? actionTags.join(', ') : '未設定'
       
       case 'CHANGE_STATUS':
-        const status = statuses.find(s => s.id === action.payload.statusId)
+        const status = statuses.find(s => s.id === action.payload?.statusId)
         return status ? status.label : '未設定'
       
       case 'SEND_MESSAGE':
-        const template = templates.find(t => t.id === action.payload.templateId)
+        const template = templates.find(t => t.id === action.payload?.templateId)
         return template ? template.name : '未設定'
       
       
@@ -2134,7 +2134,7 @@ function ActionCard({
       modifiers.push(`${action.delayMinutes}分待機`)
     }
     if (action.condition) {
-      const conditionText = action.condition.type === 'has' ? '持っている場合' : '持っていない場合'
+      const conditionText = action.condition.type === 'HAS_TAG' ? '持っている場合' : '持っていない場合'
       modifiers.push(`条件: タグを${conditionText}`)
     }
     return modifiers
@@ -2270,10 +2270,39 @@ function ActionCard({
           <SubActionList 
             subActions={action.subActions}
             actionTypes={actionTypes}
+            triggerTypes={triggerTypes}
             templates={templates}
             tags={tags}
+            tagFolders={tagFolders}
             statuses={statuses}
             onUpdate={(subActions) => onUpdate({ subActions })}
+            onEditSubAction={(subActionId, conditionType, actionType) => {
+              setEditingSubActionId(subActionId)
+              setEditingConditionType(conditionType)
+              setShowSubActionModal(true)
+              setSubActionType(actionType)
+            }}
+            onDeleteConditionalAction={(subActionId, conditionType, actionId) => {
+              // Handle deletion of conditional actions
+              const updatedSubActions = action.subActions?.map(sub => {
+                if (sub.id === subActionId) {
+                  if (conditionType === 'then') {
+                    return {
+                      ...sub,
+                      thenActions: sub.thenActions?.filter(ta => ta.id !== actionId)
+                    }
+                  } else {
+                    return {
+                      ...sub,
+                      elseActions: sub.elseActions?.filter(ea => ea.id !== actionId)
+                    }
+                  }
+                }
+                return sub
+              })
+              onUpdate({ subActions: updatedSubActions })
+            }}
+            selectedTemplateId={action.payload?.templateId}
           />
         </div>
       )}
@@ -2287,8 +2316,8 @@ function ActionCard({
           tags={tags}
           tagFolders={tagFolders}
           statuses={statuses}
-          editingSubActionId={editingSubActionId}
-          editingConditionType={editingConditionType}
+          editingSubActionId={editingSubActionId || undefined}
+          editingConditionType={editingConditionType || undefined}
           onClose={() => {
             setShowSubActionModal(false)
             setSubActionType(null)
@@ -2494,8 +2523,9 @@ function ActionDetailPanel({
             value={action.trigger?.condition?.targetUrl || ''}
             onChange={(e) => onUpdate({
               trigger: {
+                type: 'URL_CLICK',
                 ...action.trigger,
-                condition: { ...action.trigger.condition, targetUrl: e.target.value }
+                condition: { operator: 'equals', ...action.trigger?.condition, targetUrl: e.target.value }
               }
             })}
             className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -2512,8 +2542,9 @@ function ActionDetailPanel({
             value={action.trigger?.condition?.buttonText || ''}
             onChange={(e) => onUpdate({
               trigger: {
+                type: 'BUTTON_CLICK',
                 ...action.trigger,
-                condition: { ...action.trigger.condition, buttonText: e.target.value }
+                condition: { operator: 'equals', ...action.trigger?.condition, buttonText: e.target.value }
               }
             })}
             className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -2531,6 +2562,7 @@ function ActionDetailPanel({
             value={action.trigger?.delayMinutes || ''}
             onChange={(e) => onUpdate({
               trigger: {
+                type: 'URL_CLICK',
                 ...action.trigger,
                 delayMinutes: parseInt(e.target.value) || 0
               }
@@ -3364,7 +3396,7 @@ function SegmentSelector({ selectedSegmentId, segments, segmentFolders, onChange
   const rootFolders = buildFolderHierarchy(segmentFolders || [])
 
   // フィルタリング
-  const filteredSegments = segments.filter(segment => {
+  const filteredSegments = segments.filter((segment: Segment) => {
     const matchesSearch = segment.name.toLowerCase().includes(searchQuery.toLowerCase())
     
     let matchesFolder = true
@@ -3378,7 +3410,7 @@ function SegmentSelector({ selectedSegmentId, segments, segmentFolders, onChange
   })
 
   const getSegmentCount = (folderId: string): number => {
-    return segments.filter(segment => segment.folderId === folderId).length
+    return segments.filter((segment: Segment) => segment.folderId === folderId).length
   }
 
   const renderFolder = (folder: any, level: number = 0) => {
@@ -3473,7 +3505,7 @@ function SegmentSelector({ selectedSegmentId, segments, segmentFolders, onChange
                       <FolderOpen className="w-3 h-3 mr-1.5 text-gray-500" />
                       <span className="font-medium text-xs">未分類</span>
                     </div>
-                    <span className="text-xs text-gray-500">{segments.filter(s => !s.folderId).length}</span>
+                    <span className="text-xs text-gray-500">{segments.filter((s: Segment) => !s.folderId).length}</span>
                   </div>
 
                   {/* フォルダツリー */}
@@ -3491,7 +3523,7 @@ function SegmentSelector({ selectedSegmentId, segments, segmentFolders, onChange
                   <h4 className="font-medium text-gray-900 text-sm">
                     {selectedFolder === null ? 'すべてのセグメント' : 
                      selectedFolder === 'null' ? '未分類のセグメント' :
-                     segmentFolders?.find(f => f.id === selectedFolder)?.name || 'セグメント'}
+                     segmentFolders?.find((f: SegmentFolder) => f.id === selectedFolder)?.name || 'セグメント'}
                   </h4>
                   {/* 検索 */}
                   <div className="relative">
@@ -3574,17 +3606,27 @@ function SegmentSelector({ selectedSegmentId, segments, segmentFolders, onChange
 function SubActionList({
   subActions,
   actionTypes,
+  triggerTypes,
   templates,
   tags,
+  tagFolders,
   statuses,
-  onUpdate
+  onUpdate,
+  onEditSubAction,
+  onDeleteConditionalAction,
+  selectedTemplateId
 }: {
   subActions: SubAction[]
   actionTypes: any[]
+  triggerTypes: any[]
   templates: Template[]
   tags: Tag[]
+  tagFolders: TagFolder[]
   statuses: Status[]
   onUpdate: (subActions: SubAction[]) => void
+  onEditSubAction?: (subActionId: string, conditionType: 'then' | 'else', actionType: 'CONDITIONAL' | 'ACTION') => void
+  onDeleteConditionalAction?: (subActionId: string, conditionType: 'then' | 'else', actionId: string) => void
+  selectedTemplateId?: string
 }) {
   const removeSubAction = (id: string) => {
     onUpdate(subActions.filter(sa => sa.id !== id))
@@ -3605,11 +3647,16 @@ function SubActionList({
             subAction={subAction}
             index={index}
             actionTypes={actionTypes}
+            triggerTypes={triggerTypes}
             templates={templates}
             tags={tags}
+            tagFolders={tagFolders}
             statuses={statuses}
             onUpdate={(updates) => updateSubAction(subAction.id, updates)}
             onRemove={() => removeSubAction(subAction.id)}
+            onEditSubAction={onEditSubAction}
+            onDeleteConditionalAction={onDeleteConditionalAction}
+            selectedTemplateId={selectedTemplateId}
           />
         </div>
       ))}
@@ -3622,20 +3669,30 @@ function SubActionCard({
   subAction,
   index,
   actionTypes,
+  triggerTypes,
   templates,
   tags,
+  tagFolders,
   statuses,
   onUpdate,
-  onRemove
+  onRemove,
+  onEditSubAction,
+  onDeleteConditionalAction,
+  selectedTemplateId
 }: {
   subAction: SubAction
   index: number
   actionTypes: any[]
+  triggerTypes: any[]
   templates: Template[]
   tags: Tag[]
+  tagFolders: TagFolder[]
   statuses: Status[]
   onUpdate: (updates: Partial<SubAction>) => void
   onRemove: () => void
+  onEditSubAction?: (subActionId: string, conditionType: 'then' | 'else', actionType: 'CONDITIONAL' | 'ACTION') => void
+  onDeleteConditionalAction?: (subActionId: string, conditionType: 'then' | 'else', actionId: string) => void
+  selectedTemplateId?: string
 }) {
   const getSubActionIcon = () => {
     switch (subAction.type) {
@@ -3693,10 +3750,7 @@ function SubActionCard({
               <div className="text-xs font-medium text-green-700">条件を満たす場合:</div>
               <button
                 onClick={() => {
-                  setEditingSubActionId(subAction.id)
-                  setEditingConditionType('then')
-                  setShowSubActionModal(true)
-                  setSubActionType('ACTION')
+                  onEditSubAction?.(subAction.id, 'then', 'ACTION')
                 }}
                 className="text-xs text-green-600 hover:text-green-800 flex items-center"
               >
@@ -3710,26 +3764,31 @@ function SubActionCard({
                   key={`then-${idx}`}
                   action={action}
                   index={idx}
-                  onEdit={(action) => {
-                    // TODO: Implement editing existing conditional actions
-                    console.log('Edit action:', action)
+                  actionTypes={actionTypes}
+                  triggerTypes={triggerTypes}
+                  templates={templates}
+                  tags={tags}
+                  tagFolders={tagFolders}
+                  statuses={statuses}
+                  onUpdate={(updates) => {
+                    // TODO: Implement updating conditional actions
+                    console.log('Update action:', updates)
                   }}
-                  onDelete={(actionId) => {
-                    const updatedSubActions = broadcastData.actions.map(a => ({
-                      ...a,
-                      subActions: a.subActions?.map(sub => {
-                        if (sub.id === subAction.id) {
-                          return {
-                            ...sub,
-                            thenActions: sub.thenActions?.filter(ta => ta.id !== actionId)
-                          }
-                        }
-                        return sub
-                      })
-                    }))
-                    setBroadcastData({ ...broadcastData, actions: updatedSubActions })
+                  onRemove={() => {
+                    onDeleteConditionalAction?.(subAction.id, 'then', action.id)
                   }}
-                  selectedTemplateId={broadcastData.templateId}
+                  onDuplicate={() => {
+                    // TODO: Implement duplicating conditional actions
+                    console.log('Duplicate action:', action)
+                  }}
+                  onMoveUp={() => {
+                    // TODO: Implement moving conditional actions up
+                    console.log('Move up action:', action)
+                  }}
+                  onMoveDown={() => {
+                    // TODO: Implement moving conditional actions down
+                    console.log('Move down action:', action)
+                  }}
                 />
               ))
             ) : (
@@ -3743,10 +3802,7 @@ function SubActionCard({
               <div className="text-xs font-medium text-red-700">条件を満たさない場合:</div>
               <button
                 onClick={() => {
-                  setEditingSubActionId(subAction.id)
-                  setEditingConditionType('else')
-                  setShowSubActionModal(true)
-                  setSubActionType('ACTION')
+                  onEditSubAction?.(subAction.id, 'else', 'ACTION')
                 }}
                 className="text-xs text-red-600 hover:text-red-800 flex items-center"
               >
@@ -3760,26 +3816,31 @@ function SubActionCard({
                   key={`else-${idx}`}
                   action={action}
                   index={idx}
-                  onEdit={(action) => {
-                    // TODO: Implement editing existing conditional actions
-                    console.log('Edit action:', action)
+                  actionTypes={actionTypes}
+                  triggerTypes={triggerTypes}
+                  templates={templates}
+                  tags={tags}
+                  tagFolders={tagFolders}
+                  statuses={statuses}
+                  onUpdate={(updates) => {
+                    // TODO: Implement updating conditional actions
+                    console.log('Update action:', updates)
                   }}
-                  onDelete={(actionId) => {
-                    const updatedSubActions = broadcastData.actions.map(a => ({
-                      ...a,
-                      subActions: a.subActions?.map(sub => {
-                        if (sub.id === subAction.id) {
-                          return {
-                            ...sub,
-                            elseActions: sub.elseActions?.filter(ea => ea.id !== actionId)
-                          }
-                        }
-                        return sub
-                      })
-                    }))
-                    setBroadcastData({ ...broadcastData, actions: updatedSubActions })
+                  onRemove={() => {
+                    onDeleteConditionalAction?.(subAction.id, 'else', action.id)
                   }}
-                  selectedTemplateId={broadcastData.templateId}
+                  onDuplicate={() => {
+                    // TODO: Implement duplicating conditional actions
+                    console.log('Duplicate action:', action)
+                  }}
+                  onMoveUp={() => {
+                    // TODO: Implement moving conditional actions up
+                    console.log('Move up action:', action)
+                  }}
+                  onMoveDown={() => {
+                    // TODO: Implement moving conditional actions down
+                    console.log('Move down action:', action)
+                  }}
                 />
               ))
             ) : (

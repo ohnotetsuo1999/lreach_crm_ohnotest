@@ -29,14 +29,10 @@ export interface Tag {
   createdAt: Date
 }
 
-export interface TagFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+// Import common types
+import { BaseFolder } from './common'
+
+export interface TagFolder extends BaseFolder {}
 
 export interface Status {
   id: string
@@ -62,14 +58,7 @@ export interface Segment {
   updatedAt: Date
 }
 
-export interface SegmentFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+export interface SegmentFolder extends BaseFolder {}
 
 export interface Campaign {
   id: string
@@ -121,14 +110,7 @@ export interface ReservationReminder {
   updatedAt: Date
 }
 
-export interface ReminderFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+export interface ReminderFolder extends BaseFolder {}
 
 export interface ReminderEventSettings {
   eventType: 'reservation' | 'birthday' | 'anniversary' | 'contract_expiry' | 'custom'
@@ -162,14 +144,7 @@ export interface ReminderTemplate {
   actions: BroadcastAction[]
 }
 
-export interface ScenarioFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+export interface ScenarioFolder extends BaseFolder {}
 
 // Packと関連するテンプレート情報を含む拡張Pack
 export interface PackWithTemplates extends Pack {
@@ -297,14 +272,7 @@ export interface Template {
   suggestedActionRules?: SuggestedActionRule[]
 }
 
-export interface TemplateFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+export interface TemplateFolder extends BaseFolder {}
 
 export interface TemplatePack {
   id: string
@@ -394,14 +362,7 @@ export interface Broadcast {
   clickedCount?: number
 }
 
-export interface BroadcastFolder {
-  id: string
-  name: string
-  description?: string
-  parentId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+export interface BroadcastFolder extends BaseFolder {}
 
 // アクション設定関連の型定義
 export interface BroadcastAction {

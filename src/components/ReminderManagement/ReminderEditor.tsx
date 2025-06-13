@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { 
   ReservationReminder, 
   ReminderTemplate,
@@ -22,8 +21,20 @@ import {
   Save, ArrowLeft, Plus, Clock, Calendar, Bell, 
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
   MessageSquare, Trash2, Eye, ArrowUp, ArrowDown,
-  Settings, ChevronUp
+  ChevronUp
 } from 'lucide-react'
+import { 
+  Modal,
+  Button,
+  IconButton,
+  FormField,
+  Input,
+  Select,
+  Textarea,
+  Checkbox,
+  FormActions,
+  FormGroup
+} from '@/components/Common'
 
 interface ReminderEditorProps {
   reminder: ReservationReminder | null
@@ -257,20 +268,14 @@ export function ReminderEditor({
     const uncategorizedTemplates = getTemplatesInFolder(null)
     const filteredTemplates = getFilteredTemplates()
 
-    return createPortal(
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-3/4 flex flex-col">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">テンプレートを選択</h2>
-            <button
-              onClick={() => setShowTemplateModal(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="flex flex-1 overflow-hidden">
+    return (
+      <Modal
+        isOpen={true}
+        onClose={() => setShowTemplateModal(false)}
+        title="テンプレートを選択"
+        size="xl"
+      >
+        <div className="flex flex-1 overflow-hidden h-96">
             {/* Folder sidebar */}
             <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
               <div className="p-4">
@@ -344,9 +349,9 @@ export function ReminderEditor({
                             <p className="text-sm text-gray-600 line-clamp-2">{template.content}</p>
                           </div>
                           <div className="ml-4">
-                            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                            <Button size="sm">
                               追加
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -360,10 +365,8 @@ export function ReminderEditor({
                 )}
               </div>
             </div>
-          </div>
         </div>
-      </div>,
-      document.body
+      </Modal>
     )
   }
 
@@ -374,96 +377,80 @@ export function ReminderEditor({
 
     const timingConfig = template.timingConfig
 
-    return createPortal(
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-96 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">リマインダー設定</h3>
-            <button
-              onClick={() => setEditingTimingTemplateId(null)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ×
-            </button>
-          </div>
+    return (
+      <Modal
+        isOpen={true}
+        onClose={() => setEditingTimingTemplateId(null)}
+        title="リマインダー設定"
+      >
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                予約からの時間
-              </label>
-              <div className="grid gap-3 grid-cols-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">値</label>
-                  <input
+            <FormField label="予約からの時間">
+              <FormGroup columns={3}>
+                <FormField label="値">
+                  <Input
                     type="number"
-                    value={timingConfig.delayValue}
+                    value={timingConfig.delayValue.toString()}
                     onChange={(e) => updateTemplateTimingConfig(template.id, 'delayValue', parseInt(e.target.value) || 0)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
+                    min={0}
                   />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">単位</label>
-                  <select
+                </FormField>
+                <FormField label="単位">
+                  <Select
                     value={timingConfig.delayUnit}
                     onChange={(e) => updateTemplateTimingConfig(template.id, 'delayUnit', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="minutes">分</option>
-                    <option value="hours">時間</option>
-                    <option value="days">日</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">方向</label>
-                  <select
+                    options={[
+                      { value: 'minutes', label: '分' },
+                      { value: 'hours', label: '時間' },
+                      { value: 'days', label: '日' }
+                    ]}
+                  />
+                </FormField>
+                <FormField label="方向">
+                  <Select
                     value={timingConfig.delayDirection}
                     onChange={(e) => updateTemplateTimingConfig(template.id, 'delayDirection', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="before">前</option>
-                    <option value="after">後</option>
-                  </select>
-                </div>
-              </div>
+                    options={[
+                      { value: 'before', label: '前' },
+                      { value: 'after', label: '後' }
+                    ]}
+                  />
+                </FormField>
+              </FormGroup>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
                 <p className="text-xs text-blue-800">
                   最大7日間（10080分）まで設定可能です
                 </p>
               </div>
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">実行条件</label>
-              <select
+            <FormField label="実行条件">
+              <Select
                 value={timingConfig.condition?.type || 'always'}
                 onChange={(e) => updateTemplateTimingConfig(template.id, 'condition', {
                   ...timingConfig.condition,
                   type: e.target.value
                 })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="always">常に実行</option>
-                <option value="tag_exists">指定タグが存在する場合</option>
-                <option value="tag_not_exists">指定タグが存在しない場合</option>
-                <option value="status_is">ステータスが指定と一致する場合</option>
-                <option value="custom">カスタム条件</option>
-              </select>
-            </div>
+                options={[
+                  { value: 'always', label: '常に実行' },
+                  { value: 'tag_exists', label: '指定タグが存在する場合' },
+                  { value: 'tag_not_exists', label: '指定タグが存在しない場合' },
+                  { value: 'status_is', label: 'ステータスが指定と一致する場合' },
+                  { value: 'custom', label: 'カスタム条件' }
+                ]}
+              />
+            </FormField>
           </div>
 
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
+          <FormActions className="mt-6">
+            <Button
+              variant="outline"
               onClick={() => setEditingTimingTemplateId(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               閉じる
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body
+            </Button>
+          </FormActions>
+      </Modal>
     )
   }
 
@@ -474,12 +461,12 @@ export function ReminderEditor({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button
+          <IconButton
+            icon={ArrowLeft}
             onClick={onBack}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+            variant="ghost"
+            size="lg"
+          />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               {reminder ? 'リマインダー編集' : '新規リマインダー作成'}
@@ -491,23 +478,22 @@ export function ReminderEditor({
         </div>
 
         <div className="flex space-x-3">
-          <button
+          <Button
+            variant="outline"
+            icon={Eye}
             onClick={() => {/* TODO: Preview */}}
             disabled={!isComplete}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Eye className="w-4 h-4 mr-2" />
             プレビュー
-          </button>
+          </Button>
           
-          <button
+          <Button
+            icon={Save}
             onClick={handleSave}
             disabled={!isComplete}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4 mr-2" />
             保存
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -515,68 +501,46 @@ export function ReminderEditor({
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">基本設定</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              リマインダー名 *
-            </label>
-            <input
-              type="text"
+        <FormGroup columns={2}>
+          <FormField label="リマインダー名" required>
+            <Input
               value={reminderData.name}
               onChange={(e) => setReminderData({ ...reminderData, name: e.target.value })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="例: 予約前日リマインダー"
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              説明
-            </label>
-            <input
-              type="text"
+          <FormField label="説明">
+            <Input
               value={reminderData.description || ''}
               onChange={(e) => setReminderData({ ...reminderData, description: e.target.value })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="リマインダーの説明"
             />
-          </div>
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              フォルダ
-            </label>
-            <select
+          <FormField label="フォルダ">
+            <Select
               value={reminderData.folderId || ''}
               onChange={(e) => setReminderData({ ...reminderData, folderId: e.target.value || undefined })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">フォルダを選択（任意）</option>
-              {reminderFolders.map(folder => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              options={[
+                { value: '', label: 'フォルダを選択（任意）' },
+                ...reminderFolders.map(folder => ({
+                  value: folder.id,
+                  label: folder.name
+                }))
+              ]}
+            />
+          </FormField>
 
-          <div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={reminderData.isActive}
-                onChange={(e) => setReminderData({ ...reminderData, isActive: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label className="ml-2 block text-sm font-medium text-gray-700">
-                作成後すぐにアクティブにする
-              </label>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              アクティブなリマインダーは条件に応じて自動実行されます
-            </p>
-          </div>
-        </div>
+          <FormField label="">
+            <Checkbox
+              checked={reminderData.isActive}
+              onChange={(e) => setReminderData({ ...reminderData, isActive: e.target.checked })}
+              label="作成後すぐにアクティブにする"
+              description="アクティブなリマインダーは条件に応じて自動実行されます"
+            />
+          </FormField>
+        </FormGroup>
       </div>
 
       {/* Reminder Settings */}
@@ -584,26 +548,24 @@ export function ReminderEditor({
         <h2 className="text-lg font-semibold text-gray-900 mb-4">リマインダー設定</h2>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">リマインダータイプ</label>
-            <select
+          <FormField label="リマインダータイプ">
+            <Select
               value={reminderData.reminderType}
               onChange={(e) => setReminderData({
                 ...reminderData,
                 reminderType: e.target.value as 'reservation' | 'user_field' | 'custom_date'
               })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="reservation">予約日時基準</option>
-              <option value="user_field">ユーザー日付フィールド基準</option>
-              <option value="custom_date">カスタム日付基準</option>
-            </select>
-          </div>
+              options={[
+                { value: 'reservation', label: '予約日時基準' },
+                { value: 'user_field', label: 'ユーザー日付フィールド基準' },
+                { value: 'custom_date', label: 'カスタム日付基準' }
+              ]}
+            />
+          </FormField>
 
           {reminderData.reminderType === 'user_field' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ユーザー日付フィールド</label>
-              <select
+            <FormField label="ユーザー日付フィールド">
+              <Select
                 value={reminderData.reminderSettings.userDateField || ''}
                 onChange={(e) => setReminderData({
                   ...reminderData,
@@ -612,18 +574,18 @@ export function ReminderEditor({
                     userDateField: e.target.value
                   }
                 })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">フィールドを選択</option>
-                <option value="birthday">誕生日</option>
-                <option value="anniversary">記念日</option>
-                <option value="contractExpiry">契約期限</option>
-                <option value="subscriptionRenewal">サブスク更新日</option>
-                <option value="lastPurchaseDate">最終購入日</option>
-                <option value="customDate1">カスタム日付1</option>
-                <option value="customDate2">カスタム日付2</option>
-              </select>
-            </div>
+                options={[
+                  { value: '', label: 'フィールドを選択' },
+                  { value: 'birthday', label: '誕生日' },
+                  { value: 'anniversary', label: '記念日' },
+                  { value: 'contractExpiry', label: '契約期限' },
+                  { value: 'subscriptionRenewal', label: 'サブスク更新日' },
+                  { value: 'lastPurchaseDate', label: '最終購入日' },
+                  { value: 'customDate1', label: 'カスタム日付1' },
+                  { value: 'customDate2', label: 'カスタム日付2' }
+                ]}
+              />
+            </FormField>
           )}
         </div>
       </div>
@@ -633,9 +595,8 @@ export function ReminderEditor({
         <h2 className="text-lg font-semibold text-gray-900 mb-4">イベント設定</h2>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">イベントタイプ</label>
-            <select
+          <FormField label="イベントタイプ">
+            <Select
               value={reminderData.eventSettings.eventType}
               onChange={(e) => setReminderData({
                 ...reminderData,
@@ -644,23 +605,19 @@ export function ReminderEditor({
                   eventType: e.target.value as 'reservation' | 'birthday' | 'anniversary' | 'contract_expiry' | 'custom'
                 }
               })}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="reservation">予約</option>
-              <option value="birthday">誕生日</option>
-              <option value="anniversary">記念日</option>
-              <option value="contract_expiry">契約期限</option>
-              <option value="custom">カスタム</option>
-            </select>
-          </div>
+              options={[
+                { value: 'reservation', label: '予約' },
+                { value: 'birthday', label: '誕生日' },
+                { value: 'anniversary', label: '記念日' },
+                { value: 'contract_expiry', label: '契約期限' },
+                { value: 'custom', label: 'カスタム' }
+              ]}
+            />
+          </FormField>
 
           {reminderData.eventSettings.eventType !== 'reservation' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                イベント名
-              </label>
-              <input
-                type="text"
+            <FormField label="イベント名">
+              <Input
                 value={reminderData.eventSettings.eventName || ''}
                 onChange={(e) => setReminderData({
                   ...reminderData,
@@ -669,19 +626,14 @@ export function ReminderEditor({
                     eventName: e.target.value
                   }
                 })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="例: お客様の誕生日"
               />
-            </div>
+            </FormField>
           )}
 
           {reminderData.eventSettings.eventType === 'custom' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                カスタムフィールド
-              </label>
-              <input
-                type="text"
+            <FormField label="カスタムフィールド">
+              <Input
                 value={reminderData.eventSettings.customField || ''}
                 onChange={(e) => setReminderData({
                   ...reminderData,
@@ -690,10 +642,9 @@ export function ReminderEditor({
                     customField: e.target.value
                   }
                 })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="フィールド名を入力"
               />
-            </div>
+            </FormField>
           )}
 
           <div>
@@ -711,7 +662,8 @@ export function ReminderEditor({
                          condition.type === 'tag_based' ? 'タグ基準' :
                          condition.type === 'status_based' ? 'ステータス基準' : condition.type}
                       </span>
-                      <button
+                      <IconButton
+                        icon={Trash2}
                         onClick={() => {
                           setReminderData({
                             ...reminderData,
@@ -721,10 +673,9 @@ export function ReminderEditor({
                             }
                           })
                         }}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        variant="ghost"
+                        size="sm"
+                      />
                     </div>
                   ))}
                 </div>
@@ -733,7 +684,9 @@ export function ReminderEditor({
                   トリガー条件が設定されていません
                 </p>
               )}
-              <button
+              <Button
+                variant="outline"
+                icon={Plus}
                 onClick={() => {
                   const newCondition: ReminderTriggerCondition = {
                     id: `condition_${Date.now()}`,
@@ -756,11 +709,10 @@ export function ReminderEditor({
                     }
                   })
                 }}
-                className="w-full mt-3 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                className="w-full mt-3"
               >
-                <Plus className="w-4 h-4 inline mr-2" />
                 条件を追加
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -773,13 +725,12 @@ export function ReminderEditor({
             <h2 className="text-lg font-semibold text-gray-900">リマインダーフロー</h2>
             <p className="text-sm text-gray-600">時系列順にリマインダーテンプレートを設定</p>
           </div>
-          <button
+          <Button
+            icon={Plus}
             onClick={() => setShowTemplateModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
           >
-            <Plus className="w-4 h-4 mr-2" />
             テンプレートを追加
-          </button>
+          </Button>
         </div>
 
         {reminderTemplates.length > 0 ? (
@@ -825,73 +776,73 @@ export function ReminderEditor({
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center space-x-1 mr-2">
                         <label className="text-xs text-gray-500">予約の</label>
-                        <input
+                        <Input
                           type="number"
-                          value={reminderTemplate.timingConfig.delayValue}
+                          value={reminderTemplate.timingConfig.delayValue.toString()}
                           onChange={(e) => updateTemplateTimingConfig(reminderTemplate.id, 'delayValue', parseInt(e.target.value) || 0)}
-                          className="w-12 px-1 py-1 text-xs border border-gray-300 rounded"
-                          min="0"
+                          className="w-12 px-1 py-1 text-xs"
+                          min={0}
                         />
-                        <select
+                        <Select
                           value={reminderTemplate.timingConfig.delayUnit}
                           onChange={(e) => updateTemplateTimingConfig(reminderTemplate.id, 'delayUnit', e.target.value)}
-                          className="text-xs border border-gray-300 rounded px-1 py-1"
-                        >
-                          <option value="minutes">分</option>
-                          <option value="hours">時間</option>
-                          <option value="days">日</option>
-                        </select>
-                        <select
+                          className="text-xs px-1 py-1"
+                          options={[
+                            { value: 'minutes', label: '分' },
+                            { value: 'hours', label: '時間' },
+                            { value: 'days', label: '日' }
+                          ]}
+                        />
+                        <Select
                           value={reminderTemplate.timingConfig.delayDirection}
                           onChange={(e) => updateTemplateTimingConfig(reminderTemplate.id, 'delayDirection', e.target.value)}
-                          className="text-xs border border-gray-300 rounded px-1 py-1"
-                        >
-                          <option value="before">前</option>
-                          <option value="after">後</option>
-                        </select>
-                        <button
+                          className="text-xs px-1 py-1"
+                          options={[
+                            { value: 'before', label: '前' },
+                            { value: 'after', label: '後' }
+                          ]}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => setEditingTimingTemplateId(reminderTemplate.id)}
-                          className="text-xs text-blue-600 hover:text-blue-800"
+                          className="text-xs"
                         >
                           詳細
-                        </button>
+                        </Button>
                       </div>
                       
                       {index > 0 && (
-                        <button
+                        <IconButton
+                          icon={ArrowUp}
                           onClick={() => moveTemplate(index, index - 1)}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                        >
-                          <ArrowUp className="w-4 h-4" />
-                        </button>
+                          variant="ghost"
+                          size="sm"
+                        />
                       )}
                       
                       {index < reminderTemplates.length - 1 && (
-                        <button
+                        <IconButton
+                          icon={ArrowDown}
                           onClick={() => moveTemplate(index, index + 1)}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                        >
-                          <ArrowDown className="w-4 h-4" />
-                        </button>
+                          variant="ghost"
+                          size="sm"
+                        />
                       )}
 
-                      <button
+                      <IconButton
+                        icon={expandedTemplates.has(reminderTemplate.id) ? ChevronUp : ChevronDown}
                         onClick={() => toggleTemplateExpanded(reminderTemplate.id)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      >
-                        {expandedTemplates.has(reminderTemplate.id) ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </button>
+                        variant="ghost"
+                        size="sm"
+                      />
 
-                      <button
+                      <IconButton
+                        icon={Trash2}
                         onClick={() => removeTemplate(reminderTemplate.id)}
-                        className="p-1 text-red-400 hover:text-red-600 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        variant="ghost"
+                        size="sm"
+                      />
                     </div>
                   </div>
 
@@ -917,13 +868,12 @@ export function ReminderEditor({
             <p className="text-sm text-gray-500 mb-4">
               リマインダーを作成するにはテンプレートを追加してください
             </p>
-            <button
+            <Button
+              icon={Plus}
               onClick={() => setShowTemplateModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
             >
-              <Plus className="w-4 h-4 mr-2" />
               最初のテンプレートを追加
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -2557,11 +2557,12 @@ export function NewScenarioEditor({
                   <TagSelector
                     tags={tags}
                     tagFolders={tagFolders}
-                    selectedTagId={timingConfig.condition?.tagIds?.[0] || null}
-                    onChange={(tagId) => updateTemplateTimingConfig(template.id, 'condition', {
+                    selectedTagIds={timingConfig.condition?.tagIds || []}
+                    onChange={(tagIds) => updateTemplateTimingConfig(template.id, 'condition', {
                       ...timingConfig.condition,
-                      tagIds: tagId ? [tagId] : []
+                      tagIds: tagIds
                     })}
+                    multiple={false}
                   />
                 </div>
               </div>
@@ -3012,11 +3013,12 @@ export function NewScenarioEditor({
                 <TagSelector
                   tags={tags}
                   tagFolders={tagFolders}
-                  selectedTagId={scenarioData.triggerTagId || null}
-                  onChange={(tagId) => setScenarioData({ 
+                  selectedTagIds={scenarioData.triggerTagId ? [scenarioData.triggerTagId] : []}
+                  onChange={(tagIds) => setScenarioData({ 
                     ...scenarioData, 
-                    triggerTagId: tagId || undefined 
+                    triggerTagId: tagIds[0] || undefined 
                   })}
+                  multiple={false}
                 />
               </div>
             </div>

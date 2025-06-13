@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ActionRule, ScenarioActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
+import { ActionRule, ScenarioActionRule, TagAction, UserActionType, Tag, Status, Scenario, Template } from '@/types'
 import { X, Plus, Trash2, AlertCircle, Target, HelpCircle } from 'lucide-react'
 
 interface ActionRuleEditorProps {
@@ -27,7 +27,7 @@ export function ActionRuleEditor({
 }: ActionRuleEditorProps) {
   const [formData, setFormData] = useState({
     description: '',
-    actionType: 'URL_CLICK' as ActionType,
+    actionType: 'URL_CLICK' as UserActionType,
     actionCondition: {
       operator: 'contains' as 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'any',
       value: '',
@@ -80,7 +80,7 @@ export function ActionRuleEditor({
     setErrors({})
   }, [rule])
 
-  const actionTypes: { value: ActionType; label: string; description: string }[] = [
+  const actionTypes: { value: UserActionType; label: string; description: string }[] = [
     {
       value: 'URL_CLICK',
       label: 'URLクリック',
@@ -301,7 +301,7 @@ export function ActionRuleEditor({
                     </label>
                     <select
                       value={formData.actionType}
-                      onChange={(e) => setFormData({ ...formData, actionType: e.target.value as ActionType })}
+                      onChange={(e) => setFormData({ ...formData, actionType: e.target.value as UserActionType })}
                       className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
                     >
                       {actionTypes.map((type) => (
