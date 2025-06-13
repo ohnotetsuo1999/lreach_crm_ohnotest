@@ -116,6 +116,8 @@ export interface ReminderEventSettings {
   eventType: 'reservation' | 'birthday' | 'anniversary' | 'contract_expiry' | 'custom'
   eventName?: string
   customField?: string
+  eventId?: string // 特定のイベントに紐付ける場合のイベントID
+  eventData?: any // 選択されたイベントの詳細データ
   triggerConditions: ReminderTriggerCondition[]
 }
 
@@ -218,6 +220,7 @@ export interface ReminderConfiguration {
 export interface TemplateTimingConfig {
   delayValue: number
   delayUnit: 'minutes' | 'hours' | 'days'
+  delayDirection?: 'before' | 'after' // オプショナルにして既存コードとの互換性を保つ
   condition?: TemplateExecutionCondition
 }
 
@@ -231,9 +234,18 @@ export interface ReminderTimingConfig {
 
 // Template execution condition
 export interface TemplateExecutionCondition {
-  type: 'always' | 'tag_exists' | 'tag_not_exists' | 'status_is' | 'custom'
+  type: 'always' | 'tag_exists' | 'tag_not_exists' | 'status_is' | 'status_not' | 'date_range' | 'user_segment' | 'custom'
+  tagId?: string
+  statusId?: string
   tagIds?: string[]
   statusIds?: string[]
+  startDate?: string
+  endDate?: string
+  segmentType?: string
+  minAge?: number
+  maxAge?: number
+  gender?: string
+  location?: string
   customCondition?: string
 }
 

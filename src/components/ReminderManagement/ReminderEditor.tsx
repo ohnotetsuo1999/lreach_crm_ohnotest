@@ -982,7 +982,7 @@ function EventSearchSection({ eventType, selectedEventId, onEventSelect }: Event
       const filtered = query 
         ? allEvents.filter(event => 
             event.name.toLowerCase().includes(query.toLowerCase()) ||
-            (event.customer && event.customer.toLowerCase().includes(query.toLowerCase()))
+            ('customer' in event && event.customer && event.customer.toLowerCase().includes(query.toLowerCase()))
           )
         : allEvents
       setEvents(filtered)
@@ -1047,10 +1047,10 @@ function EventSearchSection({ eventType, selectedEventId, onEventSelect }: Event
               <div>
                 <h4 className="text-sm font-medium text-green-800">{selectedEvent.name}</h4>
                 <p className="text-xs text-green-600">
-                  {eventType === 'birthday' && `生年月日: ${selectedEvent.date} (${selectedEvent.age}歳)`}
-                  {eventType === 'anniversary' && `記念日: ${selectedEvent.date} (${selectedEvent.years}年)`}
-                  {eventType === 'contract_expiry' && `期限: ${selectedEvent.expiryDate}`}
-                  {selectedEvent.customer && ` - ${selectedEvent.customer}`}
+                  {eventType === 'birthday' && `生年月日: ${selectedEvent.date} (${'age' in selectedEvent ? selectedEvent.age : 0}歳)`}
+                  {eventType === 'anniversary' && `記念日: ${selectedEvent.date} (${'years' in selectedEvent ? selectedEvent.years : 0}年)`}
+                  {eventType === 'contract_expiry' && `期限: ${'expiryDate' in selectedEvent ? selectedEvent.expiryDate : ''}`}
+                  {'customer' in selectedEvent && selectedEvent.customer && ` - ${selectedEvent.customer}`}
                 </p>
               </div>
               <Button
@@ -1087,10 +1087,10 @@ function EventSearchSection({ eventType, selectedEventId, onEventSelect }: Event
                       <div>
                         <h4 className="text-sm font-medium text-gray-900">{event.name}</h4>
                         <p className="text-xs text-gray-500">
-                          {eventType === 'birthday' && `生年月日: ${event.date} (${event.age}歳)`}
-                          {eventType === 'anniversary' && `記念日: ${event.date} (${event.years}年)`}
-                          {eventType === 'contract_expiry' && `期限: ${event.expiryDate}`}
-                          {event.customer && ` - ${event.customer}`}
+                          {eventType === 'birthday' && `生年月日: ${event.date} (${'age' in event ? event.age : 0}歳)`}
+                          {eventType === 'anniversary' && `記念日: ${event.date} (${'years' in event ? event.years : 0}年)`}
+                          {eventType === 'contract_expiry' && `期限: ${'expiryDate' in event ? event.expiryDate : ''}`}
+                          {'customer' in event && event.customer && ` - ${event.customer}`}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -1188,7 +1188,7 @@ function TemplateConditionDetail({ template, condition, tags, statuses, onCondit
                 { value: '', label: 'ステータスを選択' },
                 ...statuses.map(status => ({
                   value: status.id,
-                  label: status.name
+                  label: status.label
                 }))
               ]}
             />
@@ -1368,11 +1368,11 @@ function getConditionSummary(condition: any, tags: Tag[], statuses: Status[]): s
     
     case 'status_is':
       const isStatus = statuses.find(s => s.id === condition.statusId)
-      return `ステータスが「${isStatus?.name || '未選択'}」の場合に送信されます。`
+      return `ステータスが「${isStatus?.label || '未選択'}」の場合に送信されます。`
     
     case 'status_not':
       const notStatus = statuses.find(s => s.id === condition.statusId)
-      return `ステータスが「${notStatus?.name || '未選択'}」以外の場合に送信されます。`
+      return `ステータスが「${notStatus?.label || '未選択'}」以外の場合に送信されます。`
     
     case 'date_range':
       if (condition.startDate && condition.endDate) {
