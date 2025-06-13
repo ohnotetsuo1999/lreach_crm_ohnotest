@@ -687,7 +687,7 @@ function TemplateListView({
   if (templates.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <div className="text-lg font-medium mb-2">テンプレートがありません</div>
+        <div className="text-lg font-medium mb-2">テンプレートがありません。</div>
         <div className="text-sm">新しいテンプレートを作成してください</div>
       </div>
     )
