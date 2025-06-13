@@ -27,18 +27,22 @@ import {
   DeliveryLog,
   ScenarioActionRule,
   Broadcast,
-  BroadcastFolder
+  BroadcastFolder,
+  ReservationReminder,
+  ReminderFolder
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package, Bell } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { PackManagement } from '@/components/PackManagement/PackManagement'
 import { PackList } from '@/components/PackManagement/PackList'
 import { PackDetail } from '@/components/PackManagement/PackDetail'
+import { ReminderList } from '@/components/ReminderManagement/ReminderList'
+import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -64,6 +68,9 @@ export default function LineMarketingApp() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
   const [broadcastFolders, setBroadcastFolders] = useState<BroadcastFolder[]>([])
+  const [reminders, setReminders] = useState<ReservationReminder[]>([])
+  const [reminderFolders, setReminderFolders] = useState<ReminderFolder[]>([])
+  const [editingReminder, setEditingReminder] = useState<ReservationReminder | null>(null)
 
   // Initialize data
   useEffect(() => {
@@ -1301,11 +1308,138 @@ export default function LineMarketingApp() {
         updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
       }
     ]
+
+    const mockReminderFolders: ReminderFolder[] = [
+      { id: '1', name: '予約関連', description: '予約に関するリマインダー', createdAt: new Date(), updatedAt: new Date() },
+      { id: '2', name: 'イベント', description: 'イベント関連のリマインダー', createdAt: new Date(), updatedAt: new Date() },
+      { id: '3', name: '契約・更新', description: '契約更新関連のリマインダー', parentId: '2', createdAt: new Date(), updatedAt: new Date() },
+      { id: '4', name: 'プロモーション', description: 'プロモーション関連のリマインダー', createdAt: new Date(), updatedAt: new Date() }
+    ]
+
+    const mockReminders: ReservationReminder[] = [
+      {
+        id: '1',
+        name: '予約前日リマインダー',
+        description: '予約の前日にリマインドメッセージを送信',
+        folderId: '1',
+        isActive: true,
+        reminderType: 'reservation',
+        reminderSettings: {
+          type: 'reservation',
+          offsetValue: 1,
+          offsetUnit: 'days',
+          offsetDirection: 'before'
+        },
+        eventSettings: {
+          eventType: 'reservation',
+          triggerConditions: []
+        },
+        templates: [
+          {
+            id: 'rt1',
+            templateId: '4',
+            template: mockTemplates[3], // お知リマインド_明日
+            order: 0,
+            timingConfig: {
+              delayValue: 1,
+              delayUnit: 'days',
+              delayDirection: 'before'
+            },
+            actions: []
+          }
+        ],
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '2',
+        name: '予約当日リマインダー',
+        description: '予約当日の朝にリマインドメッセージを送信',
+        isActive: true,
+        reminderType: 'reservation',
+        reminderSettings: {
+          type: 'reservation',
+          offsetValue: 2,
+          offsetUnit: 'hours',
+          offsetDirection: 'before'
+        },
+        eventSettings: {
+          eventType: 'reservation',
+          triggerConditions: []
+        },
+        templates: [
+          {
+            id: 'rt2',
+            templateId: '5',
+            template: mockTemplates[4], // 当日_ZOOMリンク(9:40配信)
+            order: 0,
+            timingConfig: {
+              delayValue: 2,
+              delayUnit: 'hours',
+              delayDirection: 'before'
+            },
+            actions: []
+          },
+          {
+            id: 'rt3',
+            templateId: '6',
+            template: mockTemplates[5], // 開始10分後_ZOOMリンク(10:10配信)
+            order: 1,
+            timingConfig: {
+              delayValue: 10,
+              delayUnit: 'minutes',
+              delayDirection: 'after'
+            },
+            actions: []
+          }
+        ],
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      },
+      {
+        id: '3',
+        name: '誕生日リマインダー',
+        description: 'ユーザーの誕生日にお祝いメッセージを送信',
+        folderId: '2',
+        isActive: false,
+        reminderType: 'user_field',
+        reminderSettings: {
+          type: 'user_field',
+          offsetValue: 0,
+          offsetUnit: 'days',
+          offsetDirection: 'before',
+          userDateField: 'birthday'
+        },
+        eventSettings: {
+          eventType: 'birthday',
+          eventName: 'お客様の誕生日',
+          triggerConditions: []
+        },
+        templates: [
+          {
+            id: 'rt4',
+            templateId: '19',
+            template: mockTemplates[18], // お誕生日おめでとうメッセージ
+            order: 0,
+            timingConfig: {
+              delayValue: 0,
+              delayUnit: 'days',
+              delayDirection: 'before'
+            },
+            actions: []
+          }
+        ],
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      }
+    ]
     
     setActionRules(mockActionRules)
     setScenarioFolders(mockScenarioFolders)
     setBroadcastFolders(mockBroadcastFolders)
     setBroadcasts(mockBroadcasts)
+    setReminders(mockReminders)
+    setReminderFolders(mockReminderFolders)
   }, [])
 
   // Navigation handlers
@@ -1313,6 +1447,7 @@ export default function LineMarketingApp() {
     setActiveTab(tab)
     setCurrentView('list')
     setEditingItem(null)
+    setEditingReminder(null)
     if (tab === 'segments') {
       setSegmentView('list')
       setEditingSegment(null)
@@ -1678,6 +1813,89 @@ export default function LineMarketingApp() {
     ))
   }
 
+  // Reminder handlers
+  const handleCreateReminder = () => {
+    setEditingReminder(null)
+    setCurrentView('edit')
+  }
+
+  const handleEditReminder = (reminder: ReservationReminder) => {
+    setEditingReminder(reminder)
+    setCurrentView('edit')
+  }
+
+  const handleSaveReminder = (reminder: ReservationReminder) => {
+    if (reminder.id && reminders.find(r => r.id === reminder.id)) {
+      setReminders(reminders.map(r => r.id === reminder.id ? reminder : r))
+    } else {
+      const newReminder = {
+        ...reminder,
+        id: `reminder_${Date.now()}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      setReminders([...reminders, newReminder])
+    }
+    setCurrentView('list')
+    setEditingReminder(null)
+  }
+
+  const handleDuplicateReminder = (reminder: ReservationReminder) => {
+    const duplicatedReminder: ReservationReminder = {
+      ...reminder,
+      id: `reminder_${Date.now()}`,
+      name: `${reminder.name} (コピー)`,
+      isActive: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setReminders([...reminders, duplicatedReminder])
+  }
+
+  const handleDeleteReminder = (reminderId: string) => {
+    setReminders(reminders.filter(r => r.id !== reminderId))
+  }
+
+  const handleToggleReminderActive = (reminderId: string, isActive: boolean) => {
+    setReminders(reminders.map(r => 
+      r.id === reminderId ? { ...r, isActive, updatedAt: new Date() } : r
+    ))
+  }
+
+  const handleViewReminderAnalytics = (reminderId: string) => {
+    // TODO: Implement analytics view
+  }
+
+  const handleCreateReminderFolder = (folder: Omit<ReminderFolder, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newFolder: ReminderFolder = {
+      ...folder,
+      id: `reminder_folder_${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setReminderFolders([...reminderFolders, newFolder])
+  }
+
+  const handleUpdateReminderFolder = (folderId: string, updates: Partial<ReminderFolder>) => {
+    setReminderFolders(reminderFolders.map(folder => 
+      folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+    ))
+  }
+
+  const handleDeleteReminderFolder = (folderId: string) => {
+    // Move reminders in this folder to uncategorized
+    setReminders(reminders.map(reminder => 
+      reminder.folderId === folderId ? { ...reminder, folderId: undefined } : reminder
+    ))
+    // Remove subfolders or move them to parent
+    const folderToDelete = reminderFolders.find(f => f.id === folderId)
+    setReminderFolders(reminderFolders.filter(folder => folder.id !== folderId).map(folder =>
+      folder.parentId === folderId 
+        ? { ...folder, parentId: folderToDelete?.parentId }
+        : folder
+    ))
+  }
+
   // Calculate dashboard stats
   const dashboardStats = {
     totalUsers: users.length,
@@ -1697,6 +1915,7 @@ export default function LineMarketingApp() {
     { id: 'segments', label: 'セグメント', icon: Target },
     { id: 'scenarios', label: 'シナリオ', icon: List },
     { id: 'broadcast', label: '一斉配信', icon: Send },
+    { id: 'reminders', label: 'リマインダー', icon: Bell },
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
     { id: 'tags', label: 'タグ管理', icon: Tags },
     { id: 'reports', label: 'レポート', icon: BarChart3 }
@@ -1712,6 +1931,9 @@ export default function LineMarketingApp() {
           tags={tags}
           tagFolders={tagFolders}
           statuses={statuses}
+          segments={segments}
+          segmentFolders={segmentFolders}
+          users={users}
           onSave={handleSaveScenario}
           onBack={handleBack}
           onCreateTemplate={(template) => {
@@ -2085,6 +2307,68 @@ export default function LineMarketingApp() {
         
       case 'reports':
         return <Reports />
+        
+      case 'reminders':
+        if (currentView === 'edit') {
+          return (
+            <ReminderEditor
+              reminder={editingReminder}
+              templates={templates}
+              templateFolders={templateFolders}
+              reminderFolders={reminderFolders}
+              tags={tags}
+              tagFolders={tagFolders}
+              statuses={statuses}
+              users={users}
+              onSave={handleSaveReminder}
+              onBack={() => setCurrentView('list')}
+              onCreateTemplate={(template) => {
+                const newTemplate = {
+                  ...template,
+                  id: `template_${Date.now()}`,
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                }
+                setTemplates([...templates, newTemplate])
+              }}
+            />
+          )
+        }
+        return (
+          <ReminderList
+            reminders={reminders}
+            reminderFolders={reminderFolders}
+            users={users}
+            onCreateReminder={handleCreateReminder}
+            onEditReminder={handleEditReminder}
+            onDuplicateReminder={(reminder) => {
+              const duplicatedReminder = {
+                ...reminder,
+                id: `reminder_${Date.now()}`,
+                name: `${reminder.name} (コピー)`,
+                isActive: false,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
+              setReminders([...reminders, duplicatedReminder])
+            }}
+            onDeleteReminder={(reminderId) => {
+              setReminders(reminders.filter(r => r.id !== reminderId))
+            }}
+            onToggleActive={(reminderId, isActive) => {
+              setReminders(reminders.map(r => 
+                r.id === reminderId ? { ...r, isActive, updatedAt: new Date() } : r
+              ))
+            }}
+            onViewAnalytics={(reminderId) => {
+              // TODO: Implement analytics view for reminders
+              console.log('View analytics for reminder:', reminderId)
+            }}
+            onCreateFolder={handleCreateReminderFolder}
+            onUpdateFolder={handleUpdateReminderFolder}
+            onDeleteFolder={handleDeleteReminderFolder}
+          />
+        )
         
       default:
         return <div>Unknown tab</div>

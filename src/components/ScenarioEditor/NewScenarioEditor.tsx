@@ -13,14 +13,18 @@ import {
   BroadcastAction, 
   ActionType,
   ActionTriggerType,
-  SubAction 
+  SubAction,
+  Segment,
+  SegmentFolder,
+  User,
+  TemplateTimingConfig
 } from '@/types'
 import { 
   Save, Play, ArrowLeft, Plus, MoreHorizontal, Edit, 
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
   Clock, Zap, Target, MessageSquare, GitBranch, MousePointer, 
   Timer, Settings, Copy, Trash2, Eye, ArrowUp, ArrowDown,
-  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText
+  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText, UserPlus
 } from 'lucide-react'
 
 interface NewScenarioEditorProps {
@@ -30,6 +34,9 @@ interface NewScenarioEditorProps {
   tags: Tag[]
   tagFolders: TagFolder[]
   statuses: Status[]
+  segments: Segment[]
+  segmentFolders: SegmentFolder[]
+  users: User[]
   onSave: (scenario: Scenario) => void
   onBack: () => void
   onCreateTemplate: (template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void
@@ -42,6 +49,7 @@ interface ScenarioTemplate {
   order: number
   delayMinutes: number
   actions: BroadcastAction[]
+  timingConfig?: TemplateTimingConfig
 }
 
 export function NewScenarioEditor({
@@ -51,6 +59,9 @@ export function NewScenarioEditor({
   tags,
   tagFolders,
   statuses,
+  segments,
+  segmentFolders,
+  users,
   onSave,
   onBack,
   onCreateTemplate
@@ -61,7 +72,18 @@ export function NewScenarioEditor({
     trigger: (scenario?.trigger || 'MANUAL') as TriggerType,
     triggerValue: scenario?.triggerValue || '',
     isActive: scenario?.isActive || false,
-    folderId: scenario?.folderId || undefined
+    folderId: scenario?.folderId || undefined,
+    // Target settings
+    targetType: 'all' as 'all' | 'segment',
+    targetSegmentId: undefined as string | undefined,
+    // Schedule settings
+    scheduleType: 'immediate' as 'immediate' | 'scheduled',
+    scheduledAt: undefined as Date | undefined,
+    // Execution timing settings
+    executionTiming: 'manual' as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added',
+    executionDelay: 0, // minutes
+    // Advanced timing settings
+    triggerTagId: undefined as string | undefined
   })
   
   // Template management
@@ -80,6 +102,8 @@ export function NewScenarioEditor({
   const [showSubActionMenu, setShowSubActionMenu] = useState(false)
   const [editingSubActionId, setEditingSubActionId] = useState<string | null>(null)
   const [editingConditionType, setEditingConditionType] = useState<'then' | 'else'>('then')
+  const [editingTimingTemplateId, setEditingTimingTemplateId] = useState<string | null>(null)
+  const [showTimingModal, setShowTimingModal] = useState(false)
 
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -146,6 +170,7 @@ export function NewScenarioEditor({
   }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
     const buildFolderHierarchy = (folders: TagFolder[], parentId: string | null = null): any[] => {
       if (!folders || !Array.isArray(folders)) return []
@@ -162,7 +187,13 @@ export function NewScenarioEditor({
     }
 
     const getFilteredTags = (): Tag[] => {
-      if (!searchQuery) return tags || []
+      if (!searchQuery) {
+        // フォルダが選択されている場合は、そのフォルダのタグのみ表示
+        if (selectedFolderId !== null) {
+          return getTagsInFolder(selectedFolderId === 'uncategorized' ? null : selectedFolderId)
+        }
+        return tags || []
+      }
       return (tags || []).filter(tag => 
         tag.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -244,7 +275,7 @@ export function NewScenarioEditor({
     const filteredTags = getFilteredTags()
 
     return (
-      <div className="max-h-64 overflow-y-auto">
+      <div className="max-h-80 flex flex-col">
         <div className="p-3 border-b border-gray-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -256,62 +287,121 @@ export function NewScenarioEditor({
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
+          {selectedTagIds.length > 0 && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-1">選択済み: {selectedTagIds.length}個</div>
+              <div className="flex flex-wrap gap-1">
+                {selectedTagIds.slice(0, 3).map(tagId => {
+                  const tag = (tags || []).find(t => t.id === tagId)
+                  return tag ? (
+                    <span
+                      key={tagId}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {tag.name}
+                    </span>
+                  ) : null
+                })}
+                {selectedTagIds.length > 3 && (
+                  <span className="text-xs text-gray-500">...他{selectedTagIds.length - 3}個</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-3">
-          {searchQuery ? (
-            filteredTags.length > 0 ? (
-              filteredTags.map(tag => (
-                <label
-                  key={tag.id}
-                  className="flex items-center py-2 px-2 hover:bg-gray-50 cursor-pointer rounded"
-                >
-                  <input
-                    type={multiple ? "checkbox" : "radio"}
-                    name={multiple ? undefined : "tag-selector"}
-                    checked={selectedTagIds.includes(tag.id)}
-                    onChange={(e) => {
-                      if (multiple) {
-                        if (e.target.checked) {
-                          onChange([...selectedTagIds, tag.id])
-                        } else {
-                          onChange(selectedTagIds.filter(id => id !== tag.id))
-                        }
-                      } else {
-                        onChange([tag.id])
-                      }
-                    }}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
-                  />
-                  <span className="text-sm text-gray-700">{tag.name}</span>
-                  {tag.type && (
-                    <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                      tag.type === 'MANUAL' ? 'bg-blue-100 text-blue-800' :
-                      tag.type === 'AUTOMATIC' ? 'bg-green-100 text-green-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      {tag.type === 'MANUAL' ? '手動' : tag.type === 'AUTOMATIC' ? '自動' : '行動'}
-                    </span>
-                  )}
-                </label>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <TagIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm">検索結果がありません</p>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left sidebar - フォルダ一覧 */}
+          <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">フォルダ</h3>
+              <div
+                className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mb-1 ${
+                  selectedFolderId === null ? 'bg-blue-50 text-blue-700' : ''
+                }`}
+                onClick={() => setSelectedFolderId(null)}
+              >
+                <Folder className="w-4 h-4 mr-2" />
+                <span className="text-sm">すべて</span>
+                <span className="ml-auto text-xs text-gray-500">{tags.length}</span>
               </div>
-            )
-          ) : (
-            <div className="space-y-1">
               {folderHierarchy.map(folder => renderFolder(folder))}
               
-              {uncategorizedTags.length > 0 && (
-                <div className="pt-2">
-                  <div className="text-xs font-medium text-gray-500 mb-2">未分類</div>
-                  {uncategorizedTags.map(tag => (
+              {getTagsInFolder(null).length > 0 && (
+                <div
+                  className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mt-2 ${
+                    selectedFolderId === 'uncategorized' ? 'bg-blue-50 text-blue-700' : ''
+                  }`}
+                  onClick={() => setSelectedFolderId('uncategorized')}
+                >
+                  <Folder className="w-4 h-4 mr-2 text-gray-400" />
+                  <span className="text-sm text-gray-600">未分類</span>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {getTagsInFolder(null).length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right content - タグ一覧 */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {searchQuery ? (
+                filteredTags.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredTags.map(tag => (
+                      <label
+                        key={tag.id}
+                        className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                      >
+                        <input
+                          type={multiple ? "checkbox" : "radio"}
+                          name={multiple ? undefined : "tag-selector"}
+                          checked={selectedTagIds.includes(tag.id)}
+                          onChange={(e) => {
+                            if (multiple) {
+                              if (e.target.checked) {
+                                onChange([...selectedTagIds, tag.id])
+                              } else {
+                                onChange(selectedTagIds.filter(id => id !== tag.id))
+                              }
+                            } else {
+                              onChange([tag.id])
+                            }
+                          }}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{tag.name}</div>
+                          {tag.note && (
+                            <div className="text-xs text-gray-500 mt-0.5">{tag.note}</div>
+                          )}
+                        </div>
+                        {tag.type && (
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                            tag.type === 'MANUAL' ? 'bg-blue-100 text-blue-800' :
+                            tag.type === 'AUTOMATIC' ? 'bg-green-100 text-green-800' :
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {tag.type === 'MANUAL' ? '手動' : tag.type === 'AUTOMATIC' ? '自動' : '行動'}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <TagIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">検索結果がありません</p>
+                  </div>
+                )
+              ) : (
+                <div className="space-y-2">
+                  {filteredTags.map(tag => (
                     <label
                       key={tag.id}
-                      className="flex items-center py-1 px-2 hover:bg-gray-50 cursor-pointer rounded"
+                      className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
                     >
                       <input
                         type={multiple ? "checkbox" : "radio"}
@@ -328,27 +418,51 @@ export function NewScenarioEditor({
                             onChange([tag.id])
                           }
                         }}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2"
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
                       />
-                      <span className="text-sm text-gray-700">{tag.name}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{tag.name}</div>
+                        {tag.note && (
+                          <div className="text-xs text-gray-500 mt-0.5">{tag.note}</div>
+                        )}
+                      </div>
+                      {tag.type && (
+                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                          tag.type === 'MANUAL' ? 'bg-blue-100 text-blue-800' :
+                          tag.type === 'AUTOMATIC' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {tag.type === 'MANUAL' ? '手動' : tag.type === 'AUTOMATIC' ? '自動' : '行動'}
+                        </span>
+                      )}
                     </label>
                   ))}
                 </div>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* 選択済みタグ表示 */}
+        {/* 選択済みタグ表示 - フッター */}
         {selectedTagIds.length > 0 && (
           <div className="bg-blue-50 border-t border-blue-200 p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <TagIcon className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">
-                選択済み ({selectedTagIds.length})
-              </span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <TagIcon className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">
+                  選択済み ({selectedTagIds.length})
+                </span>
+              </div>
+              {multiple && (
+                <button
+                  onClick={() => onChange([])}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  すべて解除
+                </button>
+              )}
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
               {selectedTagIds.map(tagId => {
                 const tag = (tags || []).find(t => t.id === tagId)
                 return tag ? (
@@ -357,16 +471,275 @@ export function NewScenarioEditor({
                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                   >
                     {tag.name}
-                    <button
-                      onClick={() => onChange(selectedTagIds.filter(id => id !== tagId))}
-                      className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600"
-                    >
-                      ×
-                    </button>
+                    {multiple && (
+                      <button
+                        onClick={() => onChange(selectedTagIds.filter(id => id !== tagId))}
+                        className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600"
+                      >
+                        ×
+                      </button>
+                    )}
                   </span>
                 ) : null
               })}
             </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Template selector with folder hierarchy
+  function TemplateSelector({
+    templates, templateFolders, selectedTemplateId, onChange
+  }: {
+    templates: Template[], templateFolders: TemplateFolder[], selectedTemplateId: string | null
+    onChange: (templateId: string | null) => void
+  }) {
+    const [searchQuery, setSearchQuery] = useState('')
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+
+    const buildTemplateFolderHierarchy = (folders: TemplateFolder[], parentId: string | null = null): any[] => {
+      if (!folders || !Array.isArray(folders)) return []
+      const filtered = folders.filter(folder => folder.parentId === parentId)
+      return filtered.map(folder => ({
+        ...folder,
+        children: buildTemplateFolderHierarchy(folders, folder.id)
+      }))
+    }
+
+    const getTemplatesInFolder = (folderId: string | null): Template[] => {
+      if (!templates || !Array.isArray(templates)) return []
+      return templates.filter(template => template.folderId === folderId)
+    }
+
+    const getFilteredTemplates = (): Template[] => {
+      if (!searchQuery) {
+        // フォルダが選択されている場合は、そのフォルダのテンプレートのみ表示
+        if (selectedFolderId !== null) {
+          return getTemplatesInFolder(selectedFolderId === 'uncategorized' ? null : selectedFolderId)
+        }
+        return templates || []
+      }
+      return (templates || []).filter(template => 
+        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    const renderFolder = (folder: any, level: number = 0) => (
+      <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
+        <div
+          className={`flex items-center justify-between py-2 px-3 hover:bg-gray-50 cursor-pointer rounded ${
+            selectedFolderId === folder.id ? 'bg-blue-50 text-blue-700' : ''
+          }`}
+          onClick={() => {
+            setSelectedFolderId(selectedFolderId === folder.id ? null : folder.id)
+            const newExpanded = new Set(expandedFolders)
+            if (expandedFolders.has(folder.id)) {
+              newExpanded.delete(folder.id)
+            } else {
+              newExpanded.add(folder.id)
+            }
+            setExpandedFolders(newExpanded)
+          }}
+        >
+          <div className="flex items-center space-x-2">
+            {expandedFolders.has(folder.id) ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+            {expandedFolders.has(folder.id) ? (
+              <FolderOpen className="w-4 h-4" />
+            ) : (
+              <Folder className="w-4 h-4" />
+            )}
+            <span className="text-sm font-medium">{folder.name}</span>
+          </div>
+          <span className="text-xs text-gray-500">
+            {(getTemplatesInFolder(folder.id) || []).length}
+          </span>
+        </div>
+        {expandedFolders.has(folder.id) && folder.children.map((child: any) => renderFolder(child, level + 1))}
+      </div>
+    )
+
+    const folderHierarchy = buildTemplateFolderHierarchy(templateFolders || [])
+    const uncategorizedTemplates = getTemplatesInFolder(null)
+    const filteredTemplates = getFilteredTemplates()
+
+    return (
+      <div className="max-h-80 flex flex-col">
+        <div className="p-3 border-b border-gray-200">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="テンプレートを検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          {selectedTemplateId && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-1">選択済み</div>
+              {(() => {
+                const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+                return selectedTemplate ? (
+                  <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <MessageSquare className="w-3 h-3 mr-1" />
+                    {selectedTemplate.name}
+                  </div>
+                ) : null
+              })()} 
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left sidebar - フォルダ一覧 */}
+          <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">フォルダ</h3>
+              <div
+                className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mb-1 ${
+                  selectedFolderId === null ? 'bg-blue-50 text-blue-700' : ''
+                }`}
+                onClick={() => setSelectedFolderId(null)}
+              >
+                <Folder className="w-4 h-4 mr-2" />
+                <span className="text-sm">すべて</span>
+                <span className="ml-auto text-xs text-gray-500">{templates.length}</span>
+              </div>
+              {folderHierarchy.map(folder => renderFolder(folder))}
+              
+              {getTemplatesInFolder(null).length > 0 && (
+                <div
+                  className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mt-2 ${
+                    selectedFolderId === 'uncategorized' ? 'bg-blue-50 text-blue-700' : ''
+                  }`}
+                  onClick={() => setSelectedFolderId('uncategorized')}
+                >
+                  <Folder className="w-4 h-4 mr-2 text-gray-400" />
+                  <span className="text-sm text-gray-600">未分類</span>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {getTemplatesInFolder(null).length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right content - テンプレート一覧 */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {searchQuery ? (
+                filteredTemplates.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredTemplates.map(template => (
+                      <label
+                        key={template.id}
+                        className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                      >
+                        <input
+                          type="radio"
+                          name="template-selector"
+                          checked={selectedTemplateId === template.id}
+                          onChange={() => onChange(template.id)}
+                          className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">{template.name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">{template.content}</div>
+                        </div>
+                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                          template.type === 'TEXT' ? 'bg-blue-100 text-blue-800' :
+                          template.type === 'FLEX' ? 'bg-green-100 text-green-800' :
+                          template.type === 'IMAGE' ? 'bg-purple-100 text-purple-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          {template.type}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">検索結果がありません</p>
+                  </div>
+                )
+              ) : (
+                <div className="space-y-2">
+                  {filteredTemplates.map(template => (
+                    <label
+                      key={template.id}
+                      className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                    >
+                      <input
+                        type="radio"
+                        name="template-selector"
+                        checked={selectedTemplateId === template.id}
+                        onChange={() => onChange(template.id)}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{template.content}</div>
+                      </div>
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                        template.type === 'TEXT' ? 'bg-blue-100 text-blue-800' :
+                        template.type === 'FLEX' ? 'bg-green-100 text-green-800' :
+                        template.type === 'IMAGE' ? 'bg-purple-100 text-purple-800' :
+                        'bg-orange-100 text-orange-800'
+                      }`}>
+                        {template.type}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 選択済みテンプレート表示 - フッター */}
+        {selectedTemplateId && (
+          <div className="bg-blue-50 border-t border-blue-200 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">選択済みテンプレート</span>
+              </div>
+              <button
+                onClick={() => onChange(null)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                解除
+              </button>
+            </div>
+            {(() => {
+              const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+              return selectedTemplate ? (
+                <div className="flex items-center space-x-2 p-2 bg-blue-100 rounded">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-blue-900">{selectedTemplate.name}</div>
+                    <div className="text-xs text-blue-700 truncate">{selectedTemplate.content}</div>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    selectedTemplate.type === 'TEXT' ? 'bg-blue-200 text-blue-900' :
+                    selectedTemplate.type === 'FLEX' ? 'bg-green-200 text-green-900' :
+                    selectedTemplate.type === 'IMAGE' ? 'bg-purple-200 text-purple-900' :
+                    'bg-orange-200 text-orange-900'
+                  }`}>
+                    {selectedTemplate.type}
+                  </span>
+                </div>
+              ) : null
+            })()}
           </div>
         )}
       </div>
@@ -381,14 +754,47 @@ export function NewScenarioEditor({
     onChange: (statusId: string | null) => void
   }) {
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
-    const filteredStatuses = statuses.filter(status =>
-      status.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      status.code.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    // Create status categories for better organization
+    const statusCategories = [
+      { id: 'active', name: 'アクティブ', codes: ['lead', 'prospect', 'customer'] },
+      { id: 'inactive', name: '非アクティブ', codes: ['churned'] },
+      { id: 'other', name: 'その他', codes: [] }
+    ]
+
+    const getFilteredStatuses = (): Status[] => {
+      let filtered = statuses
+      
+      // Filter by category if selected
+      if (selectedCategoryId !== null) {
+        const category = statusCategories.find(cat => cat.id === selectedCategoryId)
+        if (category) {
+          if (category.id === 'other') {
+            // "その他" category includes statuses not in other categories
+            const knownCodes = statusCategories.flatMap(cat => cat.codes)
+            filtered = statuses.filter(status => !knownCodes.includes(status.code))
+          } else {
+            filtered = statuses.filter(status => category.codes.includes(status.code))
+          }
+        }
+      }
+      
+      // Filter by search query
+      if (searchQuery) {
+        filtered = filtered.filter(status =>
+          status.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          status.code.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      }
+      
+      return filtered
+    }
+
+    const filteredStatuses = getFilteredStatuses()
 
     return (
-      <div className="max-h-64 overflow-y-auto">
+      <div className="max-h-80 flex flex-col">
         <div className="p-3 border-b border-gray-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -400,39 +806,380 @@ export function NewScenarioEditor({
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-        </div>
-
-        <div className="p-3">
-          {filteredStatuses.length > 0 ? (
-            <div className="space-y-1">
-              {filteredStatuses.map(status => (
-                <label
-                  key={status.id}
-                  className="flex items-center py-2 px-2 hover:bg-gray-50 cursor-pointer rounded"
-                >
-                  <input
-                    type="radio"
-                    name="status-selector"
-                    checked={selectedStatusId === status.id}
-                    onChange={() => onChange(status.id)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">{status.label}</div>
-                    <div className="text-xs text-gray-500">{status.code}</div>
+          {selectedStatusId && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-1">選択済み</div>
+              {(() => {
+                const selectedStatus = statuses.find(s => s.id === selectedStatusId)
+                return selectedStatus ? (
+                  <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                    <Target className="w-3 h-3 mr-1" />
+                    {selectedStatus.label}
                   </div>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Target className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm">
-                {searchQuery ? '検索結果がありません' : 'ステータスがありません'}
-              </p>
+                ) : null
+              })()}
             </div>
           )}
         </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left sidebar - カテゴリ一覧 */}
+          <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">カテゴリ</h3>
+              <div
+                className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mb-1 ${
+                  selectedCategoryId === null ? 'bg-blue-50 text-blue-700' : ''
+                }`}
+                onClick={() => setSelectedCategoryId(null)}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                <span className="text-sm">すべて</span>
+                <span className="ml-auto text-xs text-gray-500">{statuses.length}</span>
+              </div>
+              
+              {statusCategories.map(category => {
+                const categoryStatuses = category.id === 'other' 
+                  ? statuses.filter(status => !statusCategories.flatMap(cat => cat.codes).includes(status.code))
+                  : statuses.filter(status => category.codes.includes(status.code))
+                
+                return (
+                  <div
+                    key={category.id}
+                    className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mb-1 ${
+                      selectedCategoryId === category.id ? 'bg-blue-50 text-blue-700' : ''
+                    }`}
+                    onClick={() => setSelectedCategoryId(selectedCategoryId === category.id ? null : category.id)}
+                  >
+                    <div className={`w-3 h-3 rounded-full mr-2 ${
+                      category.id === 'active' ? 'bg-green-400' :
+                      category.id === 'inactive' ? 'bg-red-400' :
+                      'bg-gray-400'
+                    }`}></div>
+                    <span className="text-sm">{category.name}</span>
+                    <span className="ml-auto text-xs text-gray-500">{categoryStatuses.length}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Right content - ステータス一覧 */}
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {filteredStatuses.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredStatuses.map(status => (
+                    <label
+                      key={status.id}
+                      className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                    >
+                      <input
+                        type="radio"
+                        name="status-selector"
+                        checked={selectedStatusId === status.id}
+                        onChange={() => onChange(status.id)}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                      />
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="flex-shrink-0">
+                          <div className={`w-3 h-3 rounded-full ${
+                            status.code === 'lead' ? 'bg-yellow-400' :
+                            status.code === 'prospect' ? 'bg-blue-400' :
+                            status.code === 'customer' ? 'bg-green-400' :
+                            status.code === 'churned' ? 'bg-red-400' :
+                            'bg-gray-400'
+                          }`}></div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{status.label}</div>
+                          <div className="text-xs text-gray-500 font-mono">{status.code}</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Target className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm">
+                    {searchQuery ? '検索結果がありません' : 'ステータスがありません'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 選択済みステータス表示 - フッター */}
+        {selectedStatusId && (
+          <div className="bg-green-50 border-t border-green-200 p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Target className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-900">選択済みステータス</span>
+              </div>
+              <button
+                onClick={() => onChange(null)}
+                className="text-xs text-green-600 hover:text-green-800"
+              >
+                解除
+              </button>
+            </div>
+            {(() => {
+              const selectedStatus = statuses.find(s => s.id === selectedStatusId)
+              return selectedStatus ? (
+                <div className="mt-2 flex items-center space-x-2 p-2 bg-green-100 rounded">
+                  <div className={`w-3 h-3 rounded-full ${
+                    selectedStatus.code === 'lead' ? 'bg-yellow-400' :
+                    selectedStatus.code === 'prospect' ? 'bg-blue-400' :
+                    selectedStatus.code === 'customer' ? 'bg-green-400' :
+                    selectedStatus.code === 'churned' ? 'bg-red-400' :
+                    'bg-gray-400'
+                  }`}></div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-green-900">{selectedStatus.label}</div>
+                    <div className="text-xs text-green-700 font-mono">{selectedStatus.code}</div>
+                  </div>
+                </div>
+              ) : null
+            })()}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Segment selector with folder hierarchy
+  function SegmentSelector({
+    segments, segmentFolders, selectedSegmentId, onChange
+  }: {
+    segments: Segment[], segmentFolders: SegmentFolder[], selectedSegmentId: string | null
+    onChange: (segmentId: string | null) => void
+  }) {
+    const [searchQuery, setSearchQuery] = useState('')
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+
+    const buildSegmentFolderHierarchy = (folders: SegmentFolder[], parentId: string | null = null): any[] => {
+      if (!folders || !Array.isArray(folders)) return []
+      const filtered = folders.filter(folder => folder.parentId === parentId)
+      return filtered.map(folder => ({
+        ...folder,
+        children: buildSegmentFolderHierarchy(folders, folder.id)
+      }))
+    }
+
+    const getSegmentsInFolder = (folderId: string | null): Segment[] => {
+      if (!segments || !Array.isArray(segments)) return []
+      return segments.filter(segment => segment.folderId === folderId)
+    }
+
+    const getFilteredSegments = (): Segment[] => {
+      if (!searchQuery) {
+        if (selectedFolderId !== null) {
+          return getSegmentsInFolder(selectedFolderId === 'uncategorized' ? null : selectedFolderId)
+        }
+        return segments || []
+      }
+      return (segments || []).filter(segment => 
+        segment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (segment.memo && segment.memo.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    }
+
+    const renderFolder = (folder: any, level: number = 0) => (
+      <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
+        <div
+          className={`flex items-center justify-between py-2 px-3 hover:bg-gray-50 cursor-pointer rounded ${
+            selectedFolderId === folder.id ? 'bg-blue-50 text-blue-700' : ''
+          }`}
+          onClick={() => {
+            setSelectedFolderId(selectedFolderId === folder.id ? null : folder.id)
+            const newExpanded = new Set(expandedFolders)
+            if (expandedFolders.has(folder.id)) {
+              newExpanded.delete(folder.id)
+            } else {
+              newExpanded.add(folder.id)
+            }
+            setExpandedFolders(newExpanded)
+          }}
+        >
+          <div className="flex items-center space-x-2">
+            {expandedFolders.has(folder.id) ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+            {expandedFolders.has(folder.id) ? (
+              <FolderOpen className="w-4 h-4" />
+            ) : (
+              <Folder className="w-4 h-4" />
+            )}
+            <span className="text-sm font-medium">{folder.name}</span>
+          </div>
+          <span className="text-xs text-gray-500">
+            {(getSegmentsInFolder(folder.id) || []).length}
+          </span>
+        </div>
+        {expandedFolders.has(folder.id) && folder.children.map((child: any) => renderFolder(child, level + 1))}
+      </div>
+    )
+
+    const folderHierarchy = buildSegmentFolderHierarchy(segmentFolders || [])
+    const filteredSegments = getFilteredSegments()
+
+    return (
+      <div className="max-h-80 flex flex-col">
+        <div className="p-3 border-b border-gray-200">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="セグメントを検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          {selectedSegmentId && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-1">選択済み</div>
+              {(() => {
+                const selectedSegment = segments.find(s => s.id === selectedSegmentId)
+                return selectedSegment ? (
+                  <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <Target className="w-3 h-3 mr-1" />
+                    {selectedSegment.name}
+                  </div>
+                ) : null
+              })()} 
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">フォルダ</h3>
+              <div
+                className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mb-1 ${
+                  selectedFolderId === null ? 'bg-blue-50 text-blue-700' : ''
+                }`}
+                onClick={() => setSelectedFolderId(null)}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                <span className="text-sm">すべて</span>
+                <span className="ml-auto text-xs text-gray-500">{segments.length}</span>
+              </div>
+              {folderHierarchy.map(folder => renderFolder(folder))}
+              
+              {getSegmentsInFolder(null).length > 0 && (
+                <div
+                  className={`flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded mt-2 ${
+                    selectedFolderId === 'uncategorized' ? 'bg-blue-50 text-blue-700' : ''
+                  }`}
+                  onClick={() => setSelectedFolderId('uncategorized')}
+                >
+                  <Folder className="w-4 h-4 mr-2 text-gray-400" />
+                  <span className="text-sm text-gray-600">未分類</span>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {getSegmentsInFolder(null).length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {searchQuery ? (
+                filteredSegments.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredSegments.map(segment => (
+                      <label
+                        key={segment.id}
+                        className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                      >
+                        <input
+                          type="radio"
+                          name="segment-selector"
+                          checked={selectedSegmentId === segment.id}
+                          onChange={() => onChange(segment.id)}
+                          className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">{segment.name}</div>
+                          {segment.memo && (
+                            <div className="text-xs text-gray-500 mt-0.5">{segment.memo}</div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Target className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">検索結果がありません</p>
+                  </div>
+                )
+              ) : (
+                <div className="space-y-2">
+                  {filteredSegments.map(segment => (
+                    <label
+                      key={segment.id}
+                      className="flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer rounded border border-gray-200"
+                    >
+                      <input
+                        type="radio"
+                        name="segment-selector"
+                        checked={selectedSegmentId === segment.id}
+                        onChange={() => onChange(segment.id)}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900">{segment.name}</div>
+                        {segment.memo && (
+                          <div className="text-xs text-gray-500 mt-0.5">{segment.memo}</div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {selectedSegmentId && (
+          <div className="bg-blue-50 border-t border-blue-200 p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Target className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">選択済みセグメント</span>
+              </div>
+              <button
+                onClick={() => onChange(null)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                解除
+              </button>
+            </div>
+            {(() => {
+              const selectedSegment = segments.find(s => s.id === selectedSegmentId)
+              return selectedSegment ? (
+                <div className="mt-2 flex items-center space-x-2 p-2 bg-blue-100 rounded">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-blue-900">{selectedSegment.name}</div>
+                    {selectedSegment.memo && (
+                      <div className="text-xs text-blue-700 truncate">{selectedSegment.memo}</div>
+                    )}
+                  </div>
+                </div>
+              ) : null
+            })()} 
+          </div>
+        )}
       </div>
     )
   }
@@ -1079,16 +1826,14 @@ export function NewScenarioEditor({
                 {selectedActionType === 'SEND_MESSAGE' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">送信テンプレート</label>
-                    <select
-                      value={actionConfig.templateId || ''}
-                      onChange={(e) => setActionConfig({...actionConfig, templateId: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">テンプレートを選択</option>
-                      {templates.map(template => (
-                        <option key={template.id} value={template.id}>{template.name}</option>
-                      ))}
-                    </select>
+                    <div className="border border-gray-300 rounded-md">
+                      <TemplateSelector
+                        templates={templates}
+                        templateFolders={templateFolders}
+                        selectedTemplateId={actionConfig.templateId || null}
+                        onChange={(templateId) => setActionConfig({...actionConfig, templateId})}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1368,16 +2113,14 @@ export function NewScenarioEditor({
                 ) : actionType === 'SEND_MESSAGE' ? (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">送信テンプレート</label>
-                    <select
-                      value={actionConfig.templateId || ''}
-                      onChange={(e) => setActionConfig({ ...actionConfig, templateId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="">選択してください</option>
-                      {templates.map(template => (
-                        <option key={template.id} value={template.id}>{template.name}</option>
-                      ))}
-                    </select>
+                    <div className="border border-gray-300 rounded-md">
+                      <TemplateSelector
+                        templates={templates}
+                        templateFolders={templateFolders}
+                        selectedTemplateId={actionConfig.templateId || null}
+                        onChange={(templateId) => setActionConfig({ ...actionConfig, templateId })}
+                      />
+                    </div>
                   </div>
                 ) : actionType === 'CHANGE_STATUS' ? (
                   <div>
@@ -1648,6 +2391,31 @@ export function NewScenarioEditor({
     ))
   }
 
+  const updateTemplateTimingConfig = (templateId: string, field: string, value: any) => {
+    setScenarioTemplates(scenarioTemplates.map(template => {
+      if (template.id === templateId) {
+        const currentConfig = template.timingConfig || {
+          delayValue: template.delayMinutes,
+          delayUnit: 'minutes' as 'minutes' | 'hours' | 'days'
+        }
+        
+        const updatedConfig = { ...currentConfig, [field]: value }
+        
+        // Update delayMinutes based on timing config
+        const delayMultiplier = updatedConfig.delayUnit === 'hours' ? 60 : 
+                               updatedConfig.delayUnit === 'days' ? 1440 : 1
+        const delayMinutes = updatedConfig.delayValue * delayMultiplier
+        
+        return {
+          ...template,
+          timingConfig: updatedConfig,
+          delayMinutes
+        }
+      }
+      return template
+    }))
+  }
+
   const toggleTemplateExpanded = (templateId: string) => {
     const newExpanded = new Set(expandedTemplates)
     if (expandedTemplates.has(templateId)) {
@@ -1693,10 +2461,160 @@ export function NewScenarioEditor({
       folderId: scenarioData.folderId,
       createdAt: scenario?.createdAt || new Date(),
       updatedAt: new Date(),
-      packs
+      packs,
+      // Target settings
+      targetType: scenarioData.targetType,
+      targetSegmentId: scenarioData.targetSegmentId,
+      // Schedule settings
+      scheduleType: scenarioData.scheduleType,
+      scheduledAt: scenarioData.scheduledAt,
+      // Execution timing settings
+      executionTiming: scenarioData.executionTiming,
+      executionDelay: scenarioData.executionDelay,
+      // Advanced timing settings
+      triggerTagId: scenarioData.triggerTagId
     }
 
     onSave(savedScenario)
+  }
+
+  // Template Timing Configuration Modal
+  function TemplateTimingModal() {
+    const template = scenarioTemplates.find(t => t.id === editingTimingTemplateId)
+    if (!template) return null
+
+    const timingConfig = template.timingConfig || {
+      delayValue: template.delayMinutes,
+      delayUnit: 'minutes' as 'minutes' | 'hours' | 'days'
+    }
+
+    return createPortal(
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-96 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">テンプレート実行タイミング</h3>
+            <button
+              onClick={() => setEditingTimingTemplateId(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                前のテンプレートからの実行間隔
+              </label>
+              <div className="grid gap-3 grid-cols-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">値</label>
+                  <input
+                    type="number"
+                    value={timingConfig.delayValue}
+                    onChange={(e) => updateTemplateTimingConfig(template.id, 'delayValue', parseInt(e.target.value) || 0)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">単位</label>
+                  <select
+                    value={timingConfig.delayUnit}
+                    onChange={(e) => updateTemplateTimingConfig(template.id, 'delayUnit', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="minutes">分</option>
+                    <option value="hours">時間</option>
+                    <option value="days">日</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">実行条件</label>
+              <select
+                value={timingConfig.condition?.type || 'always'}
+                onChange={(e) => updateTemplateTimingConfig(template.id, 'condition', {
+                  ...timingConfig.condition,
+                  type: e.target.value
+                })}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="always">常に実行</option>
+                <option value="tag_exists">指定タグが存在する場合</option>
+                <option value="tag_not_exists">指定タグが存在しない場合</option>
+                <option value="status_is">ステータスが指定と一致する場合</option>
+                <option value="custom">カスタム条件</option>
+              </select>
+            </div>
+
+            {(timingConfig.condition?.type === 'tag_exists' || timingConfig.condition?.type === 'tag_not_exists') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">対象タグ</label>
+                <div className="border border-gray-300 rounded-lg max-h-40 overflow-y-auto">
+                  <TagSelector
+                    tags={tags}
+                    tagFolders={tagFolders}
+                    selectedTagId={timingConfig.condition?.tagIds?.[0] || null}
+                    onChange={(tagId) => updateTemplateTimingConfig(template.id, 'condition', {
+                      ...timingConfig.condition,
+                      tagIds: tagId ? [tagId] : []
+                    })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {timingConfig.condition?.type === 'status_is' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">対象ステータス</label>
+                <select
+                  value={timingConfig.condition?.statusIds?.[0] || ''}
+                  onChange={(e) => updateTemplateTimingConfig(template.id, 'condition', {
+                    ...timingConfig.condition,
+                    statusIds: e.target.value ? [e.target.value] : []
+                  })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">ステータスを選択</option>
+                  {statuses.map(status => (
+                    <option key={status.id} value={status.id}>{status.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {timingConfig.condition?.type === 'custom' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">カスタム条件</label>
+                <textarea
+                  value={timingConfig.condition?.customCondition || ''}
+                  onChange={(e) => updateTemplateTimingConfig(template.id, 'condition', {
+                    ...timingConfig.condition,
+                    customCondition: e.target.value
+                  })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  rows={3}
+                  placeholder="カスタム実行条件を入力..."
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={() => setEditingTimingTemplateId(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )
   }
 
   const isComplete = scenarioData.name.trim() && scenarioTemplates.length > 0
@@ -1825,6 +2743,314 @@ export function NewScenarioEditor({
         </div>
       </div>
 
+      {/* Target Settings */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">配信対象設定</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">配信対象</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="targetType"
+                  value="all"
+                  checked={scenarioData.targetType === 'all'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    targetType: e.target.value as 'all' | 'segment',
+                    targetSegmentId: undefined 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">全ユーザー</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">登録されている全ユーザーに配信</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="targetType"
+                  value="segment"
+                  checked={scenarioData.targetType === 'segment'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    targetType: e.target.value as 'all' | 'segment' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Target className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">セグメント指定</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">条件に合致するユーザーに配信</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {scenarioData.targetType === 'segment' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">対象セグメント</label>
+              <div className="border border-gray-300 rounded-lg">
+                <SegmentSelector
+                  segments={segments}
+                  segmentFolders={segmentFolders}
+                  selectedSegmentId={scenarioData.targetSegmentId || null}
+                  onChange={(segmentId) => setScenarioData({ 
+                    ...scenarioData, 
+                    targetSegmentId: segmentId || undefined 
+                  })}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Schedule Settings */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">スケジュール設定</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">実行タイミング</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="scheduleType"
+                  value="immediate"
+                  checked={scenarioData.scheduleType === 'immediate'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    scheduleType: e.target.value as 'immediate' | 'scheduled',
+                    scheduledAt: undefined 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Zap className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">即座に実行</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">条件が満たされたらすぐに実行</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="scheduleType"
+                  value="scheduled"
+                  checked={scenarioData.scheduleType === 'scheduled'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    scheduleType: e.target.value as 'immediate' | 'scheduled' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">日時指定</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">指定した日時に実行</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {scenarioData.scheduleType === 'scheduled' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">実行日時</label>
+              <input
+                type="datetime-local"
+                value={scenarioData.scheduledAt ? 
+                  new Date(scenarioData.scheduledAt.getTime() - scenarioData.scheduledAt.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : 
+                  ''
+                }
+                onChange={(e) => setScenarioData({ 
+                  ...scenarioData, 
+                  scheduledAt: e.target.value ? new Date(e.target.value) : undefined 
+                })}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Execution Timing Settings */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">実行タイミング詳細</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">実行方式</label>
+            <div className="space-y-3">
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="executionTiming"
+                  value="manual"
+                  checked={scenarioData.executionTiming === 'manual'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionTiming: e.target.value as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">手動実行</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">管理者が手動でシナリオを開始</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="executionTiming"
+                  value="automatic"
+                  checked={scenarioData.executionTiming === 'automatic'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionTiming: e.target.value as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Zap className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">自動実行</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">トリガー条件が満たされたら自動実行</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="executionTiming"
+                  value="time_based"
+                  checked={scenarioData.executionTiming === 'time_based'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionTiming: e.target.value as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <Timer className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">時間ベース</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">指定した遅延時間後に実行</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="executionTiming"
+                  value="friend_added"
+                  checked={scenarioData.executionTiming === 'friend_added'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionTiming: e.target.value as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <UserPlus className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">LINE友達追加時</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">ユーザーがLINE公式アカウントを友達追加した時に実行</p>
+                </div>
+              </label>
+
+              <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="executionTiming"
+                  value="tag_added"
+                  checked={scenarioData.executionTiming === 'tag_added'}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionTiming: e.target.value as 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added' 
+                  })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <div className="ml-3">
+                  <div className="flex items-center">
+                    <TagIcon className="w-4 h-4 mr-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">タグ追加時</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">指定したタグがユーザーに追加された時に実行</p>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          {/* Tag selection for tag_added trigger */}
+          {scenarioData.executionTiming === 'tag_added' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">トリガータグ</label>
+              <div className="border border-gray-300 rounded-lg">
+                <TagSelector
+                  tags={tags}
+                  tagFolders={tagFolders}
+                  selectedTagId={scenarioData.triggerTagId || null}
+                  onChange={(tagId) => setScenarioData({ 
+                    ...scenarioData, 
+                    triggerTagId: tagId || undefined 
+                  })}
+                />
+              </div>
+            </div>
+          )}
+
+
+          {/* Delay settings for time-based and friend_added */}
+          {(scenarioData.executionTiming === 'time_based' || scenarioData.executionTiming === 'friend_added') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">実行遅延時間</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="number"
+                  value={scenarioData.executionDelay}
+                  onChange={(e) => setScenarioData({ 
+                    ...scenarioData, 
+                    executionDelay: parseInt(e.target.value) || 0 
+                  })}
+                  className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  min="0"
+                  placeholder="0"
+                />
+                <span className="text-sm text-gray-600">分後</span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                {scenarioData.executionTiming === 'friend_added' 
+                  ? 'LINE友達追加から実際に実行するまでの遅延時間' 
+                  : 'トリガー条件が満たされてから実際に実行するまでの遅延時間'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Template Flow */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
@@ -1881,15 +3107,29 @@ export function NewScenarioEditor({
                     <div className="flex items-center space-x-2">
                       {index > 0 && (
                         <div className="flex items-center space-x-1 mr-2">
-                          <label className="text-xs text-gray-500">遅延:</label>
+                          <label className="text-xs text-gray-500">間隔:</label>
                           <input
                             type="number"
-                            value={scenarioTemplate.delayMinutes}
-                            onChange={(e) => updateTemplateDelay(scenarioTemplate.id, parseInt(e.target.value) || 0)}
-                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                            value={scenarioTemplate.timingConfig?.delayValue || Math.floor(scenarioTemplate.delayMinutes / (scenarioTemplate.timingConfig?.delayUnit === 'hours' ? 60 : scenarioTemplate.timingConfig?.delayUnit === 'days' ? 1440 : 1)) || 0}
+                            onChange={(e) => updateTemplateTimingConfig(scenarioTemplate.id, 'delayValue', parseInt(e.target.value) || 0)}
+                            className="w-12 px-1 py-1 text-xs border border-gray-300 rounded"
                             min="0"
                           />
-                          <span className="text-xs text-gray-500">分</span>
+                          <select
+                            value={scenarioTemplate.timingConfig?.delayUnit || 'minutes'}
+                            onChange={(e) => updateTemplateTimingConfig(scenarioTemplate.id, 'delayUnit', e.target.value)}
+                            className="text-xs border border-gray-300 rounded px-1 py-1"
+                          >
+                            <option value="minutes">分</option>
+                            <option value="hours">時間</option>
+                            <option value="days">日</option>
+                          </select>
+                          <button
+                            onClick={() => setEditingTimingTemplateId(scenarioTemplate.id)}
+                            className="text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            詳細
+                          </button>
                         </div>
                       )}
                       
@@ -2093,6 +3333,7 @@ export function NewScenarioEditor({
       {/* Modals */}
       {showTemplateModal && <TemplateSelectionModal />}
       {showActionModal && <ActionModal />}
+      {editingTimingTemplateId && <TemplateTimingModal />}
       {showSubActionModal && (
         <SubActionModal
           onClose={() => {

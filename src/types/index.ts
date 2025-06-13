@@ -93,6 +93,73 @@ export interface Scenario {
   createdAt: Date
   updatedAt: Date
   packs: Pack[]
+  // Target settings
+  targetType?: 'all' | 'segment'
+  targetSegmentId?: string
+  // Schedule settings
+  scheduleType?: 'immediate' | 'scheduled'
+  scheduledAt?: Date
+  // Execution timing settings
+  executionTiming?: 'manual' | 'automatic' | 'time_based' | 'friend_added' | 'tag_added'
+  executionDelay?: number // minutes
+  // Advanced timing settings
+  triggerTagId?: string // For tag_added trigger
+}
+
+// Separate interface for reservation reminders
+export interface ReservationReminder {
+  id: string
+  name: string
+  description?: string
+  folderId?: string
+  isActive: boolean
+  reminderType: 'reservation' | 'user_field' | 'custom_date'
+  reminderSettings: ReminderConfiguration
+  eventSettings?: ReminderEventSettings
+  templates: ReminderTemplate[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ReminderFolder {
+  id: string
+  name: string
+  description?: string
+  parentId?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ReminderEventSettings {
+  eventType: 'reservation' | 'birthday' | 'anniversary' | 'contract_expiry' | 'custom'
+  eventName?: string
+  customField?: string
+  triggerConditions: ReminderTriggerCondition[]
+}
+
+export interface ReminderTriggerCondition {
+  id: string
+  type: 'date_based' | 'user_action' | 'tag_based' | 'status_based'
+  condition: {
+    field?: string
+    operator: 'equals' | 'before' | 'after' | 'between' | 'exists' | 'not_exists'
+    value?: any
+    dateOffset?: {
+      value: number
+      unit: 'minutes' | 'hours' | 'days' | 'weeks' | 'months'
+      direction: 'before' | 'after'
+    }
+  }
+  isActive: boolean
+}
+
+export interface ReminderTemplate {
+  id: string
+  templateId: string
+  template: Template
+  order: number
+  timingConfig: ReminderTimingConfig
+  actions: BroadcastAction[]
 }
 
 export interface ScenarioFolder {
@@ -160,6 +227,39 @@ export interface ReminderSettings {
   offsetMinutes: number // Negative for "before", positive for "after"
   offsetType: 'before' | 'after'
   description?: string
+}
+
+// Enhanced reminder configuration for scenarios
+export interface ReminderConfiguration {
+  type: 'reservation' | 'user_field' | 'custom_date'
+  offsetValue: number
+  offsetUnit: 'minutes' | 'hours' | 'days'
+  offsetDirection: 'before' | 'after'
+  reservationField?: string // For reservation type
+  userDateField?: string // For user_field type
+}
+
+// Template timing configuration
+export interface TemplateTimingConfig {
+  delayValue: number
+  delayUnit: 'minutes' | 'hours' | 'days'
+  condition?: TemplateExecutionCondition
+}
+
+// Reminder specific timing configuration
+export interface ReminderTimingConfig {
+  delayValue: number
+  delayUnit: 'minutes' | 'hours' | 'days'
+  delayDirection: 'before' | 'after'
+  condition?: TemplateExecutionCondition
+}
+
+// Template execution condition
+export interface TemplateExecutionCondition {
+  type: 'always' | 'tag_exists' | 'tag_not_exists' | 'status_is' | 'custom'
+  tagIds?: string[]
+  statusIds?: string[]
+  customCondition?: string
 }
 
 export interface Reservation {
