@@ -436,10 +436,24 @@ export function ReminderEditor({
                   { value: 'tag_exists', label: '指定タグが存在する場合' },
                   { value: 'tag_not_exists', label: '指定タグが存在しない場合' },
                   { value: 'status_is', label: 'ステータスが指定と一致する場合' },
+                  { value: 'status_not', label: 'ステータスが指定と一致しない場合' },
+                  { value: 'date_range', label: '日付範囲内の場合' },
+                  { value: 'user_segment', label: 'ユーザーセグメント条件' },
                   { value: 'custom', label: 'カスタム条件' }
                 ]}
               />
             </FormField>
+
+            {/* 条件の詳細設定 */}
+            <TemplateConditionDetail
+              template={template}
+              condition={timingConfig.condition}
+              tags={tags}
+              statuses={statuses}
+              onConditionUpdate={(updatedCondition) => 
+                updateTemplateTimingConfig(template.id, 'condition', updatedCondition)
+              }
+            />
           </div>
 
           <FormActions className="mt-6">
@@ -614,6 +628,23 @@ export function ReminderEditor({
               ]}
             />
           </FormField>
+
+          {/* イベント検索・紐付け機能 */}
+          <EventSearchSection 
+            eventType={reminderData.eventSettings.eventType}
+            selectedEventId={reminderData.eventSettings.eventId}
+            onEventSelect={(eventId, eventData) => {
+              setReminderData({
+                ...reminderData,
+                eventSettings: {
+                  ...reminderData.eventSettings,
+                  eventId: eventId,
+                  eventName: eventData.name,
+                  eventData: eventData
+                }
+              })
+            }}
+          />
 
           {reminderData.eventSettings.eventType !== 'reservation' && (
             <FormField label="イベント名">
@@ -898,4 +929,481 @@ export function ReminderEditor({
       )}
     </div>
   )
+}
+
+// イベント検索・紐付けコンポーネント
+interface EventSearchSectionProps {
+  eventType: 'reservation' | 'birthday' | 'anniversary' | 'contract_expiry' | 'custom'
+  selectedEventId?: string
+  onEventSelect: (eventId: string, eventData: any) => void
+}
+
+function EventSearchSection({ eventType, selectedEventId, onEventSelect }: EventSearchSectionProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showEventList, setShowEventList] = useState(false)
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // イベントタイプに応じたサンプルデータ（実際の実装では API から取得）
+  const getEventsByType = (type: string) => {
+    switch (type) {
+      case 'reservation':
+        return [
+          { id: 'res_1', name: '美容院予約', date: '2024-01-15', customer: '田中さん', type: 'カット&カラー' },
+          { id: 'res_2', name: 'レストラン予約', date: '2024-01-16', customer: '佐藤さん', type: 'ディナー' },
+          { id: 'res_3', name: 'マッサージ予約', date: '2024-01-17', customer: '山田さん', type: '全身マッサージ' }
+        ]
+      case 'birthday':
+        return [
+          { id: 'birth_1', name: '田中太郎さんの誕生日', date: '1990-05-15', age: 33 },
+          { id: 'birth_2', name: '佐藤花子さんの誕生日', date: '1985-08-22', age: 38 },
+          { id: 'birth_3', name: '山田次郎さんの誕生日', date: '1992-12-03', age: 31 }
+        ]
+      case 'anniversary':
+        return [
+          { id: 'anni_1', name: '結婚記念日', date: '2010-06-15', years: 13, customer: '田中夫妻' },
+          { id: 'anni_2', name: '初回来店記念日', date: '2020-03-20', years: 3, customer: '佐藤さん' }
+        ]
+      case 'contract_expiry':
+        return [
+          { id: 'cont_1', name: '年間保守契約', expiryDate: '2024-03-31', customer: 'ABC株式会社' },
+          { id: 'cont_2', name: 'サブスクリプション', expiryDate: '2024-02-28', customer: '個人プラン' }
+        ]
+      default:
+        return []
+    }
+  }
+
+  const searchEvents = async (query: string) => {
+    setLoading(true)
+    // 実際の実装では API を呼び出し
+    setTimeout(() => {
+      const allEvents = getEventsByType(eventType)
+      const filtered = query 
+        ? allEvents.filter(event => 
+            event.name.toLowerCase().includes(query.toLowerCase()) ||
+            (event.customer && event.customer.toLowerCase().includes(query.toLowerCase()))
+          )
+        : allEvents
+      setEvents(filtered)
+      setLoading(false)
+    }, 300)
+  }
+
+  const handleSearch = () => {
+    setShowEventList(true)
+    searchEvents(searchQuery)
+  }
+
+  const selectedEvent = events.find(event => event.id === selectedEventId)
+
+  if (eventType === 'reservation') {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center space-x-2 text-blue-800">
+          <Calendar className="w-4 h-4" />
+          <span className="text-sm font-medium">予約イベントは自動的に連携されます</span>
+        </div>
+        <p className="text-xs text-blue-600 mt-1">
+          システム内のすべての予約に対してこのリマインダーが適用されます
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <FormField label={`${eventType === 'birthday' ? '誕生日' : 
+                     eventType === 'anniversary' ? '記念日' : 
+                     eventType === 'contract_expiry' ? '契約' : 'カスタム'}イベント検索`}>
+      <div className="space-y-3">
+        {/* 検索フィールド */}
+        <div className="flex space-x-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder={`${eventType === 'birthday' ? 'お客様名や誕生日' : 
+                           eventType === 'anniversary' ? '記念日名や顧客名' : 
+                           eventType === 'contract_expiry' ? '契約名や顧客名' : 'イベント名'}で検索...`}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <Button
+            onClick={handleSearch}
+            variant="outline"
+            icon={Search}
+          >
+            検索
+          </Button>
+        </div>
+
+        {/* 選択されたイベント */}
+        {selectedEvent && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-medium text-green-800">{selectedEvent.name}</h4>
+                <p className="text-xs text-green-600">
+                  {eventType === 'birthday' && `生年月日: ${selectedEvent.date} (${selectedEvent.age}歳)`}
+                  {eventType === 'anniversary' && `記念日: ${selectedEvent.date} (${selectedEvent.years}年)`}
+                  {eventType === 'contract_expiry' && `期限: ${selectedEvent.expiryDate}`}
+                  {selectedEvent.customer && ` - ${selectedEvent.customer}`}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEventSelect('', {})}
+              >
+                解除
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 検索結果 */}
+        {showEventList && (
+          <div className="border border-gray-200 rounded-lg max-h-60 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 text-center text-gray-500">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-sm">検索中...</p>
+              </div>
+            ) : events.length > 0 ? (
+              <div className="divide-y divide-gray-200">
+                {events.map((event) => (
+                  <button
+                    key={event.id}
+                    onClick={() => {
+                      onEventSelect(event.id, event)
+                      setShowEventList(false)
+                    }}
+                    className="w-full text-left p-3 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">{event.name}</h4>
+                        <p className="text-xs text-gray-500">
+                          {eventType === 'birthday' && `生年月日: ${event.date} (${event.age}歳)`}
+                          {eventType === 'anniversary' && `記念日: ${event.date} (${event.years}年)`}
+                          {eventType === 'contract_expiry' && `期限: ${event.expiryDate}`}
+                          {event.customer && ` - ${event.customer}`}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                <p className="text-sm">検索結果がありません</p>
+                <p className="text-xs mt-1">別のキーワードで検索してください</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ヘルプテキスト */}
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-xs text-gray-600">
+            💡 特定の{eventType === 'birthday' ? '誕生日' : 
+                     eventType === 'anniversary' ? '記念日' : 
+                     eventType === 'contract_expiry' ? '契約' : 'イベント'}に紐付けることで、
+            よりパーソナライズされたリマインダーを設定できます。
+            イベントを選択しない場合は、該当するすべての{eventType === 'birthday' ? 'お客様の誕生日' : 
+                                                eventType === 'anniversary' ? '記念日' : 
+                                                eventType === 'contract_expiry' ? '契約期限' : 'イベント'}に適用されます。
+          </p>
+        </div>
+      </div>
+    </FormField>
+  )
+}
+
+// テンプレート条件詳細設定コンポーネント
+interface TemplateConditionDetailProps {
+  template: ReminderTemplate
+  condition?: any
+  tags: Tag[]
+  statuses: Status[]
+  onConditionUpdate: (condition: any) => void
+}
+
+function TemplateConditionDetail({ template, condition, tags, statuses, onConditionUpdate }: TemplateConditionDetailProps) {
+  if (!condition || condition.type === 'always') {
+    return null
+  }
+
+  const updateConditionField = (field: string, value: any) => {
+    onConditionUpdate({
+      ...condition,
+      [field]: value
+    })
+  }
+
+  return (
+    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <h4 className="text-sm font-medium text-gray-900 mb-3">条件詳細設定</h4>
+      
+      {/* タグ存在条件 */}
+      {(condition.type === 'tag_exists' || condition.type === 'tag_not_exists') && (
+        <div className="space-y-3">
+          <FormField label="対象タグ">
+            <Select
+              value={condition.tagId || ''}
+              onChange={(e) => updateConditionField('tagId', e.target.value)}
+              options={[
+                { value: '', label: 'タグを選択' },
+                ...tags.map(tag => ({
+                  value: tag.id,
+                  label: tag.name
+                }))
+              ]}
+            />
+          </FormField>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-xs text-blue-800">
+              {condition.type === 'tag_exists' 
+                ? '指定されたタグがユーザーに付与されている場合のみ、このテンプレートが送信されます。'
+                : '指定されたタグがユーザーに付与されていない場合のみ、このテンプレートが送信されます。'
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ステータス条件 */}
+      {(condition.type === 'status_is' || condition.type === 'status_not') && (
+        <div className="space-y-3">
+          <FormField label="対象ステータス">
+            <Select
+              value={condition.statusId || ''}
+              onChange={(e) => updateConditionField('statusId', e.target.value)}
+              options={[
+                { value: '', label: 'ステータスを選択' },
+                ...statuses.map(status => ({
+                  value: status.id,
+                  label: status.name
+                }))
+              ]}
+            />
+          </FormField>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-xs text-blue-800">
+              {condition.type === 'status_is' 
+                ? 'ユーザーのステータスが指定されたステータスと一致する場合のみ、このテンプレートが送信されます。'
+                : 'ユーザーのステータスが指定されたステータスと一致しない場合のみ、このテンプレートが送信されます。'
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 日付範囲条件 */}
+      {condition.type === 'date_range' && (
+        <div className="space-y-3">
+          <FormGroup columns={2}>
+            <FormField label="開始日">
+              <Input
+                type="date"
+                value={condition.startDate || ''}
+                onChange={(e) => updateConditionField('startDate', e.target.value)}
+              />
+            </FormField>
+            <FormField label="終了日">
+              <Input
+                type="date"
+                value={condition.endDate || ''}
+                onChange={(e) => updateConditionField('endDate', e.target.value)}
+              />
+            </FormField>
+          </FormGroup>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-xs text-blue-800">
+              指定された日付範囲内にリマインダーの送信予定日が含まれる場合のみ、このテンプレートが送信されます。
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ユーザーセグメント条件 */}
+      {condition.type === 'user_segment' && (
+        <div className="space-y-3">
+          <FormField label="セグメント条件">
+            <Select
+              value={condition.segmentType || ''}
+              onChange={(e) => updateConditionField('segmentType', e.target.value)}
+              options={[
+                { value: '', label: 'セグメントを選択' },
+                { value: 'new_customer', label: '新規顧客' },
+                { value: 'returning_customer', label: 'リピート顧客' },
+                { value: 'vip_customer', label: 'VIP顧客' },
+                { value: 'inactive_customer', label: '非アクティブ顧客' },
+                { value: 'age_range', label: '年齢範囲' },
+                { value: 'gender', label: '性別' },
+                { value: 'location', label: '地域' }
+              ]}
+            />
+          </FormField>
+
+          {condition.segmentType === 'age_range' && (
+            <FormGroup columns={2}>
+              <FormField label="最小年齢">
+                <Input
+                  type="number"
+                  value={condition.minAge || ''}
+                  onChange={(e) => updateConditionField('minAge', parseInt(e.target.value) || 0)}
+                  placeholder="18"
+                />
+              </FormField>
+              <FormField label="最大年齢">
+                <Input
+                  type="number"
+                  value={condition.maxAge || ''}
+                  onChange={(e) => updateConditionField('maxAge', parseInt(e.target.value) || 0)}
+                  placeholder="65"
+                />
+              </FormField>
+            </FormGroup>
+          )}
+
+          {condition.segmentType === 'gender' && (
+            <FormField label="性別">
+              <Select
+                value={condition.gender || ''}
+                onChange={(e) => updateConditionField('gender', e.target.value)}
+                options={[
+                  { value: '', label: '性別を選択' },
+                  { value: 'male', label: '男性' },
+                  { value: 'female', label: '女性' },
+                  { value: 'other', label: 'その他' }
+                ]}
+              />
+            </FormField>
+          )}
+
+          {condition.segmentType === 'location' && (
+            <FormField label="地域">
+              <Input
+                value={condition.location || ''}
+                onChange={(e) => updateConditionField('location', e.target.value)}
+                placeholder="例: 東京都, 関東地方"
+              />
+            </FormField>
+          )}
+
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-xs text-blue-800">
+              指定されたユーザーセグメントに該当するユーザーのみに、このテンプレートが送信されます。
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* カスタム条件 */}
+      {condition.type === 'custom' && (
+        <div className="space-y-3">
+          <FormField label="条件式">
+            <Textarea
+              value={condition.customCondition || ''}
+              onChange={(e) => updateConditionField('customCondition', e.target.value)}
+              placeholder="例: user.totalPurchases > 10000 AND user.lastPurchaseDate > '2023-01-01'"
+              rows={3}
+            />
+          </FormField>
+          
+          <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+            <h5 className="text-xs font-medium text-yellow-800 mb-1">利用可能な変数：</h5>
+            <ul className="text-xs text-yellow-700 space-y-1">
+              <li>• <code>user.name</code> - ユーザー名</li>
+              <li>• <code>user.email</code> - メールアドレス</li>
+              <li>• <code>user.totalPurchases</code> - 総購入額</li>
+              <li>• <code>user.lastPurchaseDate</code> - 最終購入日</li>
+              <li>• <code>user.registrationDate</code> - 登録日</li>
+              <li>• <code>reservation.date</code> - 予約日時</li>
+              <li>• <code>reservation.service</code> - サービス名</li>
+            </ul>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-xs text-blue-800">
+              JavaScript形式の条件式を記述してください。条件がtrueの場合のみ、このテンプレートが送信されます。
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 条件プレビュー */}
+      <div className="mt-4 p-3 bg-white border border-gray-200 rounded">
+        <h5 className="text-xs font-medium text-gray-900 mb-2">条件サマリー</h5>
+        <p className="text-xs text-gray-600">
+          {getConditionSummary(condition, tags, statuses)}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// 条件サマリーを生成するヘルパー関数
+function getConditionSummary(condition: any, tags: Tag[], statuses: Status[]): string {
+  if (!condition || condition.type === 'always') {
+    return 'このテンプレートは常に送信されます。'
+  }
+
+  switch (condition.type) {
+    case 'tag_exists':
+      const existsTag = tags.find(t => t.id === condition.tagId)
+      return `「${existsTag?.name || '未選択'}」タグが存在する場合に送信されます。`
+    
+    case 'tag_not_exists':
+      const notExistsTag = tags.find(t => t.id === condition.tagId)
+      return `「${notExistsTag?.name || '未選択'}」タグが存在しない場合に送信されます。`
+    
+    case 'status_is':
+      const isStatus = statuses.find(s => s.id === condition.statusId)
+      return `ステータスが「${isStatus?.name || '未選択'}」の場合に送信されます。`
+    
+    case 'status_not':
+      const notStatus = statuses.find(s => s.id === condition.statusId)
+      return `ステータスが「${notStatus?.name || '未選択'}」以外の場合に送信されます。`
+    
+    case 'date_range':
+      if (condition.startDate && condition.endDate) {
+        return `${condition.startDate}から${condition.endDate}の期間内に送信されます。`
+      }
+      return '日付範囲が設定されていません。'
+    
+    case 'user_segment':
+      if (condition.segmentType === 'age_range') {
+        return `年齢が${condition.minAge || 0}歳から${condition.maxAge || 0}歳のユーザーに送信されます。`
+      } else if (condition.segmentType === 'gender') {
+        const genderLabel = condition.gender === 'male' ? '男性' : condition.gender === 'female' ? '女性' : 'その他'
+        return `性別が「${genderLabel}」のユーザーに送信されます。`
+      } else if (condition.segmentType === 'location') {
+        return `地域が「${condition.location || '未設定'}」のユーザーに送信されます。`
+      } else {
+        const segmentLabels: { [key: string]: string } = {
+          new_customer: '新規顧客',
+          returning_customer: 'リピート顧客',
+          vip_customer: 'VIP顧客',
+          inactive_customer: '非アクティブ顧客'
+        }
+        return `「${segmentLabels[condition.segmentType] || condition.segmentType}」セグメントのユーザーに送信されます。`
+      }
+    
+    case 'custom':
+      return condition.customCondition ? 
+        `カスタム条件: ${condition.customCondition}` : 
+        'カスタム条件が設定されていません。'
+    
+    default:
+      return '条件が設定されていません。'
+  }
 }
