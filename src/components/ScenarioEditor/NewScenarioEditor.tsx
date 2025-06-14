@@ -18,8 +18,6 @@ import {
   SegmentFolder,
   User,
   TemplateTimingConfig,
-  Pack,
-  PackTemplate,
   ConditionalLogic,
   ActionTrigger
 } from '@/types'
@@ -28,10 +26,8 @@ import {
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
   Clock, Zap, Target, MessageSquare, GitBranch, MousePointer, 
   Timer, Settings, Copy, Trash2, Eye, ArrowUp, ArrowDown,
-  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText, UserPlus,
-  Package, Layers
+  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText, UserPlus
 } from 'lucide-react'
-import { PackEditor } from '@/components/Common/PackEditor'
 
 interface NewScenarioEditorProps {
   scenario: Scenario | null
@@ -99,11 +95,6 @@ export function NewScenarioEditor({
   const [selectedTemplate, setSelectedTemplate] = useState<ScenarioTemplate | null>(null)
   const [showActionModal, setShowActionModal] = useState(false)
   
-  // Pack management
-  const [scenarioPacks, setScenarioPacks] = useState<Pack[]>([])
-  const [showPackEditor, setShowPackEditor] = useState(false)
-  const [editingPack, setEditingPack] = useState<Pack | null>(null)
-  const [packViewMode, setPackViewMode] = useState<'list' | 'flow'>('list')
   
   // UI state
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set())
@@ -2463,19 +2454,6 @@ export function NewScenarioEditor({
       return
     }
 
-    // Convert scenario templates to packs format for compatibility
-    const packs = scenarioTemplates.map((scenarioTemplate, index) => ({
-      id: scenarioTemplate.id,
-      scenarioId: scenario?.id || '',
-      order: index + 1,
-      offsetMinutes: scenarioTemplate.delayMinutes,
-      createdAt: new Date(),
-      // Store template and actions info in conditionJson for now
-      conditionJson: JSON.stringify({
-        templateId: scenarioTemplate.templateId,
-        actions: scenarioTemplate.actions
-      })
-    }))
 
     const savedScenario: Scenario = {
       id: scenario?.id || Date.now().toString(),
@@ -2488,7 +2466,6 @@ export function NewScenarioEditor({
       folderId: scenarioData.folderId,
       createdAt: scenario?.createdAt || new Date(),
       updatedAt: new Date(),
-      packs,
       // Target settings
       targetType: scenarioData.targetType,
       targetSegmentId: scenarioData.targetSegmentId,
@@ -3182,6 +3159,84 @@ export function NewScenarioEditor({
                         </p>
                       </div>
 
+                      {/* Timing Settings (送信タイミング設定) */}
+                      <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock className="w-4 h-4 text-purple-600" />
+                          <h4 className="text-sm font-medium text-purple-700">送信タイミング設定</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          {/* Scenario Start Time */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              シナリオ開始時
+                            </label>
+                            <input
+                              type="text"
+                              value="即座に送信"
+                              readOnly
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md bg-gray-50"
+                            />
+                          </div>
+                          
+                          {/* Execution Condition */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              実行条件
+                            </label>
+                            <select 
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              defaultValue="always"
+                            >
+                              <option value="always">常に実行</option>
+                              <option value="tag_exists">指定タグが存在する場合</option>
+                              <option value="tag_not_exists">指定タグが存在しない場合</option>
+                              <option value="status_is">ステータスが指定と一致する場合</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        {/* Specific Time Setting */}
+                        <div className="mb-4">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            特定時間指定
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="time"
+                              className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              placeholder="--:--"
+                            />
+                            <span className="text-xs text-gray-500">（空白の場合は上記設定で実行）</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Conditional Branching Settings (条件分岐設定) */}
+                      <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Split className="w-4 h-4 text-yellow-600" />
+                          <h4 className="text-sm font-medium text-yellow-700">条件分岐設定</h4>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            分岐条件タイプ
+                          </label>
+                          <select 
+                            className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            defaultValue="none"
+                          >
+                            <option value="none">条件なし（全員に配信）</option>
+                            <option value="tag">タグによる分岐</option>
+                            <option value="status">ステータスによる分岐</option>
+                            <option value="user_action">ユーザーアクションによる分岐</option>
+                            <option value="time_based">時間による分岐</option>
+                          </select>
+                        </div>
+                      </div>
+
                       {/* Actions */}
                       <div>
                         <div className="flex items-center justify-between mb-3">
@@ -3330,121 +3385,9 @@ export function NewScenarioEditor({
         </div>
       )}
 
-      {/* Pack Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Package className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-gray-900">Pack管理</h2>
-            <span className="text-sm text-gray-500">
-              ({scenarioPacks.length} Pack)
-            </span>
-            <div className="flex items-center gap-2 ml-4">
-              <button
-                onClick={() => setPackViewMode('list')}
-                className={`p-1 rounded ${packViewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-              >
-                <Layers className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPackViewMode('flow')}
-                className={`p-1 rounded ${packViewMode === 'flow' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-              >
-                <GitBranch className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditingPack(null)
-              setShowPackEditor(true)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
-          >
-            <Plus className="w-4 h-4" />
-            Packを追加
-          </button>
-        </div>
-
-        {scenarioPacks.length === 0 ? (
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">まだPackが作成されていません</p>
-            <button
-              onClick={() => {
-                setEditingPack(null)
-                setShowPackEditor(true)
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
-            >
-              <Plus className="w-4 h-4" />
-              最初のPackを作成
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {scenarioPacks
-              .sort((a, b) => a.order - b.order)
-              .map((pack) => (
-                <div key={pack.id} className="border border-gray-200 rounded-lg p-4 bg-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-indigo-500" />
-                        <span className="font-medium">Pack {pack.order + 1}</span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          {pack.packType === 'normal' ? '通常' : 
-                           pack.packType === 'conditional' ? '条件分岐' : 'リマインダー'}
-                        </span>
-                      </div>
-                      {pack.offsetMinutes > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Clock className="w-3 h-3" />
-                          {pack.offsetMinutes}分後
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingPack(pack)
-                          setShowPackEditor(true)
-                        }}
-                        className="p-1 text-gray-400 hover:text-gray-600"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setScenarioPacks(prev => prev.filter(p => p.id !== pack.id))
-                        }}
-                        className="p-1 text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {pack.conditionalLogic && pack.conditionalLogic.conditions.length > 0 && (
-                    <div className="mt-3 pl-7">
-                      <div className="text-xs text-gray-500 mb-2">条件分岐:</div>
-                      {pack.conditionalLogic.conditions.map((branch) => (
-                        <div key={branch.id} className="text-xs text-gray-600 mb-1">
-                          • {branch.name} ({branch.condition.comparison} {branch.condition.tagId ? tags.find(t => t.id === branch.condition.tagId)?.name : String(branch.condition.value || '')})
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
-
       {/* Modals */}
       {showTemplateModal && <TemplateSelectionModal />}
       {showActionModal && <ActionModal />}
-      {editingTimingTemplateId && <TemplateTimingModal />}
       {showSubActionModal && (
         <SubActionModal
           onClose={() => {
@@ -3472,33 +3415,6 @@ export function NewScenarioEditor({
             setEditingConditionType('then')
           }}
         />
-      )}
-      
-      {/* Pack Editor Modal */}
-      {showPackEditor && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <PackEditor
-              pack={editingPack}
-              templates={templates}
-              tags={tags}
-              statuses={statuses}
-              onSave={(pack) => {
-                if (editingPack) {
-                  setScenarioPacks(prev => prev.map(p => p.id === pack.id ? pack : p))
-                } else {
-                  setScenarioPacks(prev => [...prev, pack])
-                }
-                setShowPackEditor(false)
-                setEditingPack(null)
-              }}
-              onCancel={() => {
-                setShowPackEditor(false)
-                setEditingPack(null)
-              }}
-            />
-          </div>
-        </div>
       )}
     </div>
   )

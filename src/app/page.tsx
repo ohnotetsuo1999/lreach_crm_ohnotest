@@ -31,12 +31,9 @@ import {
   ReservationReminder,
   ReminderFolder
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package, Bell, Database, Columns3 } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3 } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
-import { PackManagement } from '@/components/PackManagement/PackManagement'
-import { PackList } from '@/components/PackManagement/PackList'
-import { PackDetail } from '@/components/PackManagement/PackDetail'
 import { ReminderList } from '@/components/ReminderManagement/ReminderList'
 import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 import { SupabaseTest } from '@/components/SupabaseTest/SupabaseTest'
@@ -44,7 +41,7 @@ import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'pack-test' | 'supabase-test' | 'database-schema'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -67,7 +64,6 @@ export default function LineMarketingApp() {
   const [templatePacks, setTemplatePacks] = useState<TemplatePack[]>([])
   const [deliveryLogs, setDeliveryLogs] = useState<DeliveryLog[]>([])
   const [actionRules, setActionRules] = useState<ScenarioActionRule[]>([])
-  const [packs, setPacks] = useState<Pack[]>([])
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
   const [broadcastFolders, setBroadcastFolders] = useState<BroadcastFolder[]>([])
   const [reminders, setReminders] = useState<ReservationReminder[]>([])
@@ -1053,22 +1049,6 @@ export default function LineMarketingApp() {
         folderId: '1',
         createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
-        packs: [
-          {
-            id: '1',
-            scenarioId: '1',
-            order: 1,
-            offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
-          },
-          {
-            id: '2',
-            scenarioId: '1',
-            order: 2,
-            offsetMinutes: 1440, // 24時間後
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
-          }
-        ]
       },
       {
         id: '2',
@@ -1080,15 +1060,6 @@ export default function LineMarketingApp() {
         folderId: '4',
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
-        packs: [
-          {
-            id: '3',
-            scenarioId: '2',
-            order: 1,
-            offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
-          }
-        ]
       },
       {
         id: '3',
@@ -1099,15 +1070,6 @@ export default function LineMarketingApp() {
         folderId: '2',
         createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
-        packs: [
-          {
-            id: '4',
-            scenarioId: '3',
-            order: 1,
-            offsetMinutes: 0,
-            createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
-          }
-        ]
       }
     ]
 
@@ -1654,42 +1616,7 @@ export default function LineMarketingApp() {
     // TODO: Implement scenario preview
   }
   
-  const handleReorderTemplates = (packId: string, templates: Template[]) => {
-    setScenarios(scenarios.map(scenario => ({
-      ...scenario,
-      packs: scenario.packs.map(pack => 
-        pack.id === packId ? { ...pack, templates } : pack
-      )
-    })))
-  }
 
-  // Pack Management handlers
-  const handleCreatePack = (pack: Omit<Pack, 'id' | 'createdAt'>) => {
-    const newPack: Pack = {
-      ...pack,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    }
-    setPacks([...packs, newPack])
-  }
-
-  const handleEditPack = (pack: Pack) => {
-    // TODO: Implement pack editing
-  }
-
-  const handleDeletePack = (packId: string) => {
-    setPacks(packs.filter(p => p.id !== packId))
-  }
-
-  const handleDuplicatePack = (pack: Pack) => {
-    const duplicatedPack: Pack = {
-      ...pack,
-      id: Date.now().toString(),
-      order: pack.order + 1,
-      createdAt: new Date()
-    }
-    setPacks([...packs, duplicatedPack])
-  }
 
 
   // Action Rule handlers
@@ -1919,7 +1846,6 @@ export default function LineMarketingApp() {
     { id: 'broadcast', label: '一斉配信', icon: Send },
     { id: 'reminders', label: 'リマインダー', icon: Bell },
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
-    { id: 'pack-test', label: 'Pack管理テスト', icon: Package },
     { id: 'supabase-test', label: 'Supabaseテスト', icon: Database },
     { id: 'database-schema', label: 'DBスキーマ', icon: Columns3 },
     { id: 'tags', label: 'タグ管理', icon: Tags },
@@ -2307,18 +2233,6 @@ export default function LineMarketingApp() {
             onViewAnalytics={(broadcastId) => {
               // TODO: Implement analytics view
             }}
-          />
-        )
-        
-      case 'pack-test':
-        return (
-          <PackManagement
-            packs={packs}
-            templates={templates}
-            onCreatePack={handleCreatePack}
-            onEditPack={handleEditPack}
-            onDeletePack={handleDeletePack}
-            onDuplicatePack={handleDuplicatePack}
           />
         )
         

@@ -82,7 +82,8 @@ export interface Scenario {
   folderId?: string
   createdAt: Date
   updatedAt: Date
-  packs: Pack[]
+  // Message flow data (stored as JSON)
+  messageFlow?: Record<string, unknown>
   // Target settings
   targetType?: 'all' | 'segment'
   targetSegmentId?: string

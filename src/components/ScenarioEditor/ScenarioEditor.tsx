@@ -54,7 +54,6 @@ export function ScenarioEditor({
       isActive: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-      packs: []
     }
   )
   
@@ -100,10 +99,6 @@ export function ScenarioEditor({
       return
     }
 
-    if (scenarioData.packs.length === 0) {
-      alert('少なくとも1つのPackを作成してください')
-      return
-    }
 
     onSave({
       ...scenarioData,
@@ -111,60 +106,10 @@ export function ScenarioEditor({
     })
   }
 
-  const handleAddPack = () => {
-    const newPack: Pack = {
-      id: `pack_${Date.now()}`,
-      scenarioId: scenarioData.id,
-      order: scenarioData.packs.length + 1,
-      offsetMinutes: 0,
-      createdAt: new Date()
-    }
 
-    setScenarioData({
-      ...scenarioData,
-      packs: [...scenarioData.packs, newPack]
-    })
 
-    setSelectedPack(newPack)
-    setIsPackDrawerOpen(true)
-  }
 
-  const handleEditPack = (pack: Pack) => {
-    setSelectedPack(pack)
-    setIsPackDrawerOpen(true)
-  }
 
-  const handleDeletePack = (packId: string) => {
-    const updatedPacks = scenarioData.packs
-      .filter(pack => pack.id !== packId)
-      .map((pack, index) => ({
-        ...pack,
-        order: index + 1
-      }))
-
-    setScenarioData({
-      ...scenarioData,
-      packs: updatedPacks
-    })
-  }
-
-  const handleUpdatePacks = (packs: Pack[]) => {
-    setScenarioData({
-      ...scenarioData,
-      packs
-    })
-  }
-
-  const handleSavePack = (updatedPack: Pack) => {
-    const updatedPacks = scenarioData.packs.map(pack =>
-      pack.id === updatedPack.id ? updatedPack : pack
-    )
-
-    setScenarioData({
-      ...scenarioData,
-      packs: updatedPacks
-    })
-  }
 
   const getTriggerValuePlaceholder = (trigger: TriggerType) => {
     switch (trigger) {
@@ -183,7 +128,7 @@ export function ScenarioEditor({
     }
   }
 
-  const isComplete = scenarioData.name.trim() && scenarioData.packs.length > 0
+  const isComplete = scenarioData.name.trim()
 
   return (
     <div className="space-y-6">
@@ -304,70 +249,15 @@ export function ScenarioEditor({
         </div>
       </div>
 
-      {/* タイムライン */}
-      <TimelineEditor
-        packs={scenarioData.packs}
-        onUpdatePacks={handleUpdatePacks}
-        onEditPack={handleEditPack}
-        onDeletePack={handleDeletePack}
-        onAddPack={handleAddPack}
-        onPreviewScenario={() => onPreviewScenario(scenarioData)}
-        actionRules={actionRules}
-      />
+      {/* メッセージフロー */}
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+        <div className="text-gray-500 mb-4">
+          <p className="text-lg font-medium">新しいシナリオエディターをご利用ください</p>
+          <p className="text-sm">このページはメッセージフロー機能に置き換えられました。</p>
+        </div>
+      </div>
 
-      {/* アクションルールサマリー */}
-      {actionRules.length > 0 && (
-        <ScenarioActionRulesSummary
-          packs={scenarioData.packs}
-          actionRules={actionRules}
-          tags={tags}
-          statuses={statuses}
-          onDeleteRule={onDeleteActionRule}
-        />
-      )}
 
-      {/* Pack設定ドロワー */}
-      <PackDrawer
-        pack={selectedPack}
-        isOpen={isPackDrawerOpen}
-        onClose={() => setIsPackDrawerOpen(false)}
-        onSave={handleSavePack}
-        onAddTemplate={onAddTemplate}
-        onEditTemplate={onEditTemplate}
-        onDeleteTemplate={onDeleteTemplate}
-        onReorderTemplates={onReorderTemplates}
-        actionRules={actionRules}
-        tags={tags}
-        statuses={statuses}
-        onCreateActionRule={onCreateActionRule}
-        onUpdateActionRule={onUpdateActionRule}
-        onDeleteActionRule={onDeleteActionRule}
-        availableTemplates={templates || []}
-        onCreateTemplate={(template) => {
-          // Create new template and add to pack
-          const newTemplate = {
-            ...template,
-            id: `template_${Date.now()}`,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-          
-          // Add to global templates list
-          if (onCreateTemplate) {
-            onCreateTemplate(template)
-          }
-          
-          // Update the pack with new template
-          if (selectedPack) {
-            const packWithTemplates = selectedPack as PackWithTemplates
-            const updatedPack: PackWithTemplates = {
-              ...packWithTemplates,
-              templates: [...(packWithTemplates.templates || []), newTemplate]
-            }
-            handleSavePack(updatedPack)
-          }
-        }}
-      />
 
       {/* 完了状況 */}
       {!isComplete && (
@@ -376,9 +266,6 @@ export function ScenarioEditor({
           <ul className="text-sm text-yellow-700 space-y-1">
             {!scenarioData.name.trim() && (
               <li>• シナリオ名を入力してください</li>
-            )}
-            {scenarioData.packs.length === 0 && (
-              <li>• 少なくとも1つのPackを作成してください</li>
             )}
           </ul>
         </div>
