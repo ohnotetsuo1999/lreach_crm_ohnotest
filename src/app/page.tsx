@@ -31,7 +31,7 @@ import {
   ReservationReminder,
   ReminderFolder
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package, Bell, Database } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Package, Bell, Database, Columns3 } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { PackManagement } from '@/components/PackManagement/PackManagement'
@@ -40,10 +40,11 @@ import { PackDetail } from '@/components/PackManagement/PackDetail'
 import { ReminderList } from '@/components/ReminderManagement/ReminderList'
 import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 import { SupabaseTest } from '@/components/SupabaseTest/SupabaseTest'
+import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'pack-test' | 'supabase-test'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'pack-test' | 'supabase-test' | 'database-schema'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -1920,6 +1921,7 @@ export default function LineMarketingApp() {
     { id: 'templates', label: 'テンプレート', icon: Settings2 },
     { id: 'pack-test', label: 'Pack管理テスト', icon: Package },
     { id: 'supabase-test', label: 'Supabaseテスト', icon: Database },
+    { id: 'database-schema', label: 'DBスキーマ', icon: Columns3 },
     { id: 'tags', label: 'タグ管理', icon: Tags },
     { id: 'reports', label: 'レポート', icon: BarChart3 }
   ] as const
@@ -2322,6 +2324,9 @@ export default function LineMarketingApp() {
         
       case 'supabase-test':
         return <SupabaseTest />
+        
+      case 'database-schema':
+        return <DatabaseSchema />
         
       case 'reports':
         return <Reports />
