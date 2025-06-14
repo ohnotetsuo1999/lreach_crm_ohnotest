@@ -10,7 +10,7 @@ interface PackTimingEditorProps {
 }
 
 export function PackTimingEditor({ pack, onUpdate }: PackTimingEditorProps) {
-  const [packType, setPackType] = useState<'normal' | 'reminder'>(pack.packType || 'normal')
+  const [packType, setPackType] = useState<'normal' | 'reminder' | 'conditional'>(pack.packType || 'normal')
   const [normalOffset, setNormalOffset] = useState(pack.offsetMinutes)
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(
     pack.reminderSettings || {

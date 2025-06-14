@@ -156,7 +156,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     }
 
     if (condition.field === 'tags') {
-      const selectedTags = Array.isArray(condition.value) ? condition.value : []
+      const selectedTags = Array.isArray(condition.value) ? condition.value.map(String) : []
       const selectedTagObjects = tags.filter(tag => selectedTags.includes(tag.id))
 
       return (
@@ -264,7 +264,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     }
 
     if (condition.field === 'status') {
-      const selectedStatuses = Array.isArray(condition.value) ? condition.value : []
+      const selectedStatuses = Array.isArray(condition.value) ? condition.value.map(String) : []
       const selectedStatusObjects = statuses.filter(status => selectedStatuses.includes(status.id))
 
       return (
@@ -364,7 +364,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     }
 
     if (condition.field === 'address') {
-      const selectedAddresses = Array.isArray(condition.value) ? condition.value : []
+      const selectedAddresses = Array.isArray(condition.value) ? condition.value.map(String) : []
 
       return (
         <div className="space-y-2">
@@ -464,7 +464,9 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     if (['lineFriendAddedAt', 'lastReactionAt', 'lastInflowAt'].includes(condition.field)) {
       if (condition.operator === 'between') {
         // 期間指定の場合
-        const dateRange = typeof condition.value === 'object' && condition.value ? condition.value : { from: '', to: '' }
+        const dateRange = typeof condition.value === 'object' && condition.value && !Array.isArray(condition.value) && 'from' in condition.value 
+          ? condition.value as { from: string; to: string } 
+          : { from: '', to: '' }
         return (
           <div className="space-y-3">
             <div>
@@ -503,7 +505,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
           <div className="space-y-2">
             <input
               type="datetime-local"
-              value={condition.value || ''}
+              value={typeof condition.value === 'string' ? condition.value : ''}
               onChange={(e) => updateCondition(index, { value: e.target.value })}
               className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
             />
@@ -517,7 +519,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
         return (
           <input
             type="datetime-local"
-            value={condition.value}
+            value={typeof condition.value === 'string' ? condition.value : ''}
             onChange={(e) => updateCondition(index, { value: e.target.value })}
             className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
           />
@@ -528,7 +530,9 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     if (condition.field === 'age') {
       if (condition.operator === 'between') {
         // 年齢範囲指定の場合
-        const ageRange = typeof condition.value === 'object' && condition.value ? condition.value : { from: '', to: '' }
+        const ageRange = typeof condition.value === 'object' && condition.value && !Array.isArray(condition.value) && 'from' in condition.value 
+          ? condition.value as { from: string; to: string } 
+          : { from: '', to: '' }
         return (
           <div className="space-y-3">
             <div>
@@ -574,7 +578,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
             type="number"
             min="0"
             max="120"
-            value={condition.value || ''}
+            value={typeof condition.value === 'string' || typeof condition.value === 'number' ? String(condition.value) : ''}
             onChange={(e) => updateCondition(index, { value: e.target.value })}
             className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
             placeholder="年齢を入力"
@@ -586,7 +590,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     return (
       <input
         type="text"
-        value={condition.value}
+        value={String(condition.value || '')}
         onChange={(e) => updateCondition(index, { value: e.target.value })}
         className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
         placeholder="値を入力"
@@ -601,7 +605,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     if (condition.field === 'tags') {
       const tagNames = tags.filter(tag => 
         Array.isArray(condition.value) 
-          ? condition.value.includes(tag.id)
+          ? condition.value.map(String).includes(tag.id)
           : condition.value === tag.id
       ).map(tag => tag.name).join(', ')
       return `${fieldLabel} ${operatorLabel} ${tagNames ? `"${tagNames}"` : '(未選択)'}`
@@ -610,7 +614,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
     if (condition.field === 'status') {
       const statusNames = statuses.filter(status => 
         Array.isArray(condition.value)
-          ? condition.value.includes(status.id)
+          ? condition.value.map(String).includes(status.id)
           : condition.value === status.id
       ).map(status => status.label).join(', ')
       return `${fieldLabel} ${operatorLabel} ${statusNames ? `"${statusNames}"` : '(未選択)'}`
@@ -704,7 +708,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
                               <span className="text-gray-400 italic">値なし</span>
                             ) : condition.field === 'tags' ? (
                               <div className="flex flex-wrap gap-1">
-                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map((tagId: string) => {
+                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map(String).map((tagId: string) => {
                                   const tag = tags.find(t => t.id === tagId)
                                   return tag ? (
                                     <span key={tagId} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
@@ -715,7 +719,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
                               </div>
                             ) : condition.field === 'status' ? (
                               <div className="flex flex-wrap gap-1">
-                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map((statusId: string) => {
+                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map(String).map((statusId: string) => {
                                   const status = statuses.find(s => s.id === statusId)
                                   return status ? (
                                     <span key={statusId} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
@@ -726,7 +730,7 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
                               </div>
                             ) : condition.field === 'address' ? (
                               <div className="flex flex-wrap gap-1">
-                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map((prefecture: string) => (
+                                {(Array.isArray(condition.value) ? condition.value : [condition.value]).map(String).map((prefecture: string) => (
                                   <span key={prefecture} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
                                     {prefecture}
                                   </span>
@@ -736,38 +740,54 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
                               <div className="text-xs">
                                 {condition.field === 'age' ? (
                                   // 年齢範囲の表示
-                                  condition.value.from && condition.value.to ? (
-                                    <>{condition.value.from}歳〜{condition.value.to}歳</>
-                                  ) : condition.value.from ? (
-                                    <>{condition.value.from}歳以上</>
-                                  ) : condition.value.to ? (
-                                    <>{condition.value.to}歳以下</>
-                                  ) : (
-                                    '年齢未設定'
-                                  )
+                                  (() => {
+                                    const ageRange = typeof condition.value === 'object' && condition.value && !Array.isArray(condition.value) && 'from' in condition.value 
+                                      ? condition.value as { from: string; to: string } 
+                                      : { from: '', to: '' }
+                                    return ageRange.from && ageRange.to ? (
+                                      <>{ageRange.from}歳〜{ageRange.to}歳</>
+                                    ) : ageRange.from ? (
+                                      <>{ageRange.from}歳以上</>
+                                    ) : ageRange.to ? (
+                                      <>{ageRange.to}歳以下</>
+                                    ) : (
+                                      '年齢未設定'
+                                    )
+                                  })()
                                 ) : (
                                   // 日付範囲の表示
-                                  condition.value.from && condition.value.to ? (
-                                    <>
-                                      {new Date(condition.value.from).toLocaleString('ja-JP')} ～ <br />
-                                      {new Date(condition.value.to).toLocaleString('ja-JP')}
-                                    </>
-                                  ) : condition.value.from ? (
-                                    <>{new Date(condition.value.from).toLocaleString('ja-JP')} 以降</>
-                                  ) : condition.value.to ? (
-                                    <>{new Date(condition.value.to).toLocaleString('ja-JP')} 以前</>
-                                  ) : (
-                                    '期間未設定'
-                                  )
+                                  (() => {
+                                    const dateRange = typeof condition.value === 'object' && condition.value && !Array.isArray(condition.value) && 'from' in condition.value 
+                                      ? condition.value as { from: string; to: string } 
+                                      : { from: '', to: '' }
+                                    return dateRange.from && dateRange.to ? (
+                                      <>
+                                        {new Date(dateRange.from).toLocaleString('ja-JP')} ～ <br />
+                                        {new Date(dateRange.to).toLocaleString('ja-JP')}
+                                      </>
+                                    ) : dateRange.from ? (
+                                      <>{new Date(dateRange.from).toLocaleString('ja-JP')} 以降</>
+                                    ) : dateRange.to ? (
+                                      <>{new Date(dateRange.to).toLocaleString('ja-JP')} 以前</>
+                                    ) : (
+                                      '期間未設定'
+                                    )
+                                  })()
                                 )}
                               </div>
                             ) : ['before', 'after'].includes(condition.operator) && condition.value ? (
                               <div className="text-xs">
-                                {new Date(condition.value).toLocaleString('ja-JP')} 
+                                {new Date(condition.value as string | number | Date).toLocaleString('ja-JP')} 
                                 {condition.operator === 'before' ? ' 以前' : ' 以降'}
                               </div>
                             ) : (
-                              <span>{condition.value || '(未設定)'}</span>
+                              <span>{
+                                typeof condition.value === 'string' || typeof condition.value === 'number' || typeof condition.value === 'boolean'
+                                  ? condition.value.toString()
+                                  : Array.isArray(condition.value)
+                                  ? condition.value.join(', ')
+                                  : '(未設定)'
+                              }</span>
                             )}
                           </div>
                         </div>

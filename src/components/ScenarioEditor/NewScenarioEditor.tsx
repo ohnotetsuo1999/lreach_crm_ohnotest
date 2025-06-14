@@ -17,15 +17,21 @@ import {
   Segment,
   SegmentFolder,
   User,
-  TemplateTimingConfig
+  TemplateTimingConfig,
+  Pack,
+  PackTemplate,
+  ConditionalLogic,
+  ActionTrigger
 } from '@/types'
 import { 
   Save, Play, ArrowLeft, Plus, MoreHorizontal, Edit, 
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
   Clock, Zap, Target, MessageSquare, GitBranch, MousePointer, 
   Timer, Settings, Copy, Trash2, Eye, ArrowUp, ArrowDown,
-  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText, UserPlus
+  TagIcon, Users, ChevronUp, ExternalLink, Link, Split, FileText, UserPlus,
+  Package, Layers
 } from 'lucide-react'
+import { PackEditor } from '@/components/Common/PackEditor'
 
 interface NewScenarioEditorProps {
   scenario: Scenario | null
@@ -69,6 +75,7 @@ export function NewScenarioEditor({
   // Basic scenario data
   const [scenarioData, setScenarioData] = useState({
     name: scenario?.name || '',
+    description: scenario?.description || '',
     trigger: (scenario?.trigger || 'MANUAL') as TriggerType,
     triggerValue: scenario?.triggerValue || '',
     isActive: scenario?.isActive || false,
@@ -92,6 +99,12 @@ export function NewScenarioEditor({
   const [selectedTemplate, setSelectedTemplate] = useState<ScenarioTemplate | null>(null)
   const [showActionModal, setShowActionModal] = useState(false)
   
+  // Pack management
+  const [scenarioPacks, setScenarioPacks] = useState<Pack[]>([])
+  const [showPackEditor, setShowPackEditor] = useState(false)
+  const [editingPack, setEditingPack] = useState<Pack | null>(null)
+  const [packViewMode, setPackViewMode] = useState<'list' | 'flow'>('list')
+  
   // UI state
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set())
   const [showSubActionModal, setShowSubActionModal] = useState(false)
@@ -107,7 +120,20 @@ export function NewScenarioEditor({
 
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const triggerOptions: { value: TriggerType, label: string, description: string, icon: any }[] = [
+  // 階層構造用の型定義
+  interface FolderHierarchy extends TemplateFolder {
+    children: FolderHierarchy[]
+  }
+
+  interface TagFolderHierarchy extends TagFolder {
+    children: TagFolderHierarchy[]
+  }
+
+  interface SegmentFolderHierarchy extends SegmentFolder {
+    children: SegmentFolderHierarchy[]
+  }
+
+  const triggerOptions: { value: TriggerType, label: string, description: string, icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
     { 
       value: 'MANUAL', 
       label: '手動実行', 
@@ -147,7 +173,7 @@ export function NewScenarioEditor({
   ]
 
   // Template folder hierarchy
-  const buildTemplateFolderHierarchy = (folders: TemplateFolder[], parentId: string | null = null): any[] => {
+  const buildTemplateFolderHierarchy = (folders: TemplateFolder[], parentId: string | null = null): FolderHierarchy[] => {
     if (!folders || !Array.isArray(folders)) return []
     
     const filtered = folders.filter(folder => folder.parentId === parentId)
@@ -172,7 +198,7 @@ export function NewScenarioEditor({
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
-    const buildFolderHierarchy = (folders: TagFolder[], parentId: string | null = null): any[] => {
+    const buildFolderHierarchy = (folders: TagFolder[], parentId: string | null = null): TagFolderHierarchy[] => {
       if (!folders || !Array.isArray(folders)) return []
       const filtered = folders.filter(folder => folder.parentId === parentId)
       return filtered.map(folder => ({
@@ -199,7 +225,7 @@ export function NewScenarioEditor({
       )
     }
 
-    const renderFolder = (folder: any, level: number = 0) => (
+    const renderFolder = (folder: TagFolderHierarchy, level: number = 0) => (
       <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
         <div
           className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 cursor-pointer rounded"
@@ -264,7 +290,7 @@ export function NewScenarioEditor({
                 )}
               </label>
             ))}
-            {folder.children.map((child: any) => renderFolder(child, level + 1))}
+            {folder.children.map((child) => renderFolder(child, level + 1))}
           </div>
         )}
       </div>
@@ -500,7 +526,7 @@ export function NewScenarioEditor({
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
-    const buildTemplateFolderHierarchy = (folders: TemplateFolder[], parentId: string | null = null): any[] => {
+    const buildTemplateFolderHierarchy = (folders: TemplateFolder[], parentId: string | null = null): FolderHierarchy[] => {
       if (!folders || !Array.isArray(folders)) return []
       const filtered = folders.filter(folder => folder.parentId === parentId)
       return filtered.map(folder => ({
@@ -528,7 +554,7 @@ export function NewScenarioEditor({
       )
     }
 
-    const renderFolder = (folder: any, level: number = 0) => (
+    const renderFolder = (folder: FolderHierarchy, level: number = 0) => (
       <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
         <div
           className={`flex items-center justify-between py-2 px-3 hover:bg-gray-50 cursor-pointer rounded ${
@@ -562,7 +588,7 @@ export function NewScenarioEditor({
             {(getTemplatesInFolder(folder.id) || []).length}
           </span>
         </div>
-        {expandedFolders.has(folder.id) && folder.children.map((child: any) => renderFolder(child, level + 1))}
+        {expandedFolders.has(folder.id) && folder.children.map((child) => renderFolder(child, level + 1))}
       </div>
     )
 
@@ -961,7 +987,7 @@ export function NewScenarioEditor({
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
 
-    const buildSegmentFolderHierarchy = (folders: SegmentFolder[], parentId: string | null = null): any[] => {
+    const buildSegmentFolderHierarchy = (folders: SegmentFolder[], parentId: string | null = null): SegmentFolderHierarchy[] => {
       if (!folders || !Array.isArray(folders)) return []
       const filtered = folders.filter(folder => folder.parentId === parentId)
       return filtered.map(folder => ({
@@ -988,7 +1014,7 @@ export function NewScenarioEditor({
       )
     }
 
-    const renderFolder = (folder: any, level: number = 0) => (
+    const renderFolder = (folder: SegmentFolderHierarchy, level: number = 0) => (
       <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
         <div
           className={`flex items-center justify-between py-2 px-3 hover:bg-gray-50 cursor-pointer rounded ${
@@ -1022,7 +1048,7 @@ export function NewScenarioEditor({
             {(getSegmentsInFolder(folder.id) || []).length}
           </span>
         </div>
-        {expandedFolders.has(folder.id) && folder.children.map((child: any) => renderFolder(child, level + 1))}
+        {expandedFolders.has(folder.id) && folder.children.map((child) => renderFolder(child, level + 1))}
       </div>
     )
 
@@ -1200,7 +1226,7 @@ export function NewScenarioEditor({
 
     const folderHierarchy = buildTemplateFolderHierarchy(templateFolders)
 
-    const renderFolder = (folder: any, level: number = 0) => (
+    const renderFolder = (folder: FolderHierarchy, level: number = 0) => (
       <div key={folder.id} style={{ marginLeft: `${level * 16}px` }}>
         <div
           className={`flex items-center justify-between py-2 px-3 hover:bg-gray-50 cursor-pointer rounded ${
@@ -1234,7 +1260,7 @@ export function NewScenarioEditor({
             {getTemplatesInFolder(folder.id).length}
           </span>
         </div>
-        {expandedFolders.has(folder.id) && folder.children.map((child: any) => renderFolder(child, level + 1))}
+        {expandedFolders.has(folder.id) && folder.children.map((child) => renderFolder(child, level + 1))}
       </div>
     )
 
@@ -2455,6 +2481,7 @@ export function NewScenarioEditor({
       id: scenario?.id || Date.now().toString(),
       campaignId: scenario?.campaignId || '',
       name: scenarioData.name,
+      description: scenarioData.description,
       trigger: scenarioData.trigger,
       triggerValue: scenarioData.triggerValue,
       isActive: scenarioData.isActive,
@@ -2680,50 +2707,21 @@ export function NewScenarioEditor({
             />
           </div>
 
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              トリガー種別 *
+              説明
             </label>
-            <select
-              value={scenarioData.trigger}
-              onChange={(e) => setScenarioData({ 
-                ...scenarioData, 
-                trigger: e.target.value as TriggerType,
-                triggerValue: ''
-              })}
+            <textarea
+              value={scenarioData.description || ''}
+              onChange={(e) => setScenarioData({ ...scenarioData, description: e.target.value })}
+              rows={3}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              {triggerOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              placeholder="このシナリオの目的や内容について説明してください..."
+            />
             <p className="mt-1 text-xs text-gray-500">
-              {triggerOptions.find(opt => opt.value === scenarioData.trigger)?.description}
+              シナリオの目的、対象ユーザー、実行タイミングなどを記載することで、後から管理しやすくなります。
             </p>
           </div>
-
-          {scenarioData.trigger !== 'MANUAL' && (
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                トリガー値
-              </label>
-              <input
-                type="text"
-                value={scenarioData.triggerValue || ''}
-                onChange={(e) => setScenarioData({ ...scenarioData, triggerValue: e.target.value })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder={
-                  scenarioData.trigger === 'SCHEDULE' ? '例: 2024-12-25 09:00' :
-                  scenarioData.trigger === 'USER_ACTION' ? '例: click_button, open_message' :
-                  scenarioData.trigger === 'TAG_ADDED' ? '例: premium, interested' :
-                  scenarioData.trigger === 'STATUS_CHANGED' ? '例: lead, customer' :
-                  scenarioData.trigger === 'TIME_BASED' ? '例: daily, weekly, monthly' : ''
-                }
-              />
-            </div>
-          )}
 
           <div className="lg:col-span-2">
             <div className="flex items-center">
@@ -3332,6 +3330,117 @@ export function NewScenarioEditor({
         </div>
       )}
 
+      {/* Pack Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Package className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Pack管理</h2>
+            <span className="text-sm text-gray-500">
+              ({scenarioPacks.length} Pack)
+            </span>
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                onClick={() => setPackViewMode('list')}
+                className={`p-1 rounded ${packViewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+              >
+                <Layers className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setPackViewMode('flow')}
+                className={`p-1 rounded ${packViewMode === 'flow' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+              >
+                <GitBranch className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setEditingPack(null)
+              setShowPackEditor(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+          >
+            <Plus className="w-4 h-4" />
+            Packを追加
+          </button>
+        </div>
+
+        {scenarioPacks.length === 0 ? (
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500 mb-4">まだPackが作成されていません</p>
+            <button
+              onClick={() => {
+                setEditingPack(null)
+                setShowPackEditor(true)
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+            >
+              <Plus className="w-4 h-4" />
+              最初のPackを作成
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {scenarioPacks
+              .sort((a, b) => a.order - b.order)
+              .map((pack) => (
+                <div key={pack.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-indigo-500" />
+                        <span className="font-medium">Pack {pack.order + 1}</span>
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {pack.packType === 'normal' ? '通常' : 
+                           pack.packType === 'conditional' ? '条件分岐' : 'リマインダー'}
+                        </span>
+                      </div>
+                      {pack.offsetMinutes > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Clock className="w-3 h-3" />
+                          {pack.offsetMinutes}分後
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingPack(pack)
+                          setShowPackEditor(true)
+                        }}
+                        className="p-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setScenarioPacks(prev => prev.filter(p => p.id !== pack.id))
+                        }}
+                        className="p-1 text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {pack.conditionalLogic && pack.conditionalLogic.conditions.length > 0 && (
+                    <div className="mt-3 pl-7">
+                      <div className="text-xs text-gray-500 mb-2">条件分岐:</div>
+                      {pack.conditionalLogic.conditions.map((branch) => (
+                        <div key={branch.id} className="text-xs text-gray-600 mb-1">
+                          • {branch.name} ({branch.condition.comparison} {branch.condition.tagId ? tags.find(t => t.id === branch.condition.tagId)?.name : String(branch.condition.value || '')})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+
       {/* Modals */}
       {showTemplateModal && <TemplateSelectionModal />}
       {showActionModal && <ActionModal />}
@@ -3363,6 +3472,33 @@ export function NewScenarioEditor({
             setEditingConditionType('then')
           }}
         />
+      )}
+      
+      {/* Pack Editor Modal */}
+      {showPackEditor && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <PackEditor
+              pack={editingPack}
+              templates={templates}
+              tags={tags}
+              statuses={statuses}
+              onSave={(pack) => {
+                if (editingPack) {
+                  setScenarioPacks(prev => prev.map(p => p.id === pack.id ? pack : p))
+                } else {
+                  setScenarioPacks(prev => [...prev, pack])
+                }
+                setShowPackEditor(false)
+                setEditingPack(null)
+              }}
+              onCancel={() => {
+                setShowPackEditor(false)
+                setEditingPack(null)
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

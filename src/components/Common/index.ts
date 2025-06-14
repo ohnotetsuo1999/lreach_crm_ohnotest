@@ -43,3 +43,6 @@ export {
   TableCell, 
   TableHeaderCell 
 } from './Table'
+
+// Action components
+export { AutoActionEditor } from './AutoActionEditor'

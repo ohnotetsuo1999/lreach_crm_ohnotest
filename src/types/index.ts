@@ -75,6 +75,7 @@ export interface Scenario {
   id: string
   campaignId: string
   name: string
+  description?: string // 説明フィールドを追加
   trigger: TriggerType
   triggerValue?: string
   isActive: boolean
@@ -117,7 +118,7 @@ export interface ReminderEventSettings {
   eventName?: string
   customField?: string
   eventId?: string // 特定のイベントに紐付ける場合のイベントID
-  eventData?: any // 選択されたイベントの詳細データ
+  eventData?: Record<string, unknown> // 選択されたイベントの詳細データ
   triggerConditions: ReminderTriggerCondition[]
 }
 
@@ -127,7 +128,7 @@ export interface ReminderTriggerCondition {
   condition: {
     field?: string
     operator: 'equals' | 'before' | 'after' | 'between' | 'exists' | 'not_exists'
-    value?: any
+    value?: string | number | boolean | Date
     dateOffset?: {
       value: number
       unit: 'minutes' | 'hours' | 'days' | 'weeks' | 'months'
@@ -161,8 +162,49 @@ export interface Pack {
   offsetMinutes: number
   conditionJson?: string
   createdAt: Date
-  packType?: 'normal' | 'reminder'
+  packType?: 'normal' | 'reminder' | 'conditional'
   reminderSettings?: ReminderSettings
+  // Enhanced conditional logic
+  conditionalLogic?: ConditionalLogic
+  // Action trigger settings
+  actionTriggers?: ActionTrigger[]
+  // Execution flow control
+  executionMode?: 'sequential' | 'parallel' | 'conditional'
+  // Pack-level actions
+  packActions?: BroadcastAction[]
+}
+
+// Enhanced conditional logic structure
+export interface ConditionalLogic {
+  id: string
+  type: 'if_then_else' | 'switch' | 'loop'
+  conditions: ConditionalBranch[]
+  defaultBranch?: ConditionalBranch
+  evaluationOrder: 'first_match' | 'all_match' | 'priority'
+}
+
+export interface ConditionalBranch {
+  id: string
+  name: string
+  condition: ConditionalExpression
+  actions: BroadcastAction[]
+  nextPackId?: string // For flow control
+  priority?: number
+  isActive: boolean
+}
+
+export interface ConditionalExpression {
+  type: 'simple' | 'compound'
+  operator?: 'AND' | 'OR' | 'NOT'
+  conditions?: ConditionalExpression[]
+  // Simple condition properties
+  field?: string
+  comparison: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'exists' | 'not_exists' | 'greater_than' | 'less_than' | 'between'
+  value?: string | number | boolean | Date
+  tagId?: string
+  statusId?: string
+  userField?: string
+  customFunction?: string
 }
 
 // 多対多関係: Pack-Template の中間テーブル
@@ -416,6 +458,9 @@ export interface ActionTrigger {
   type: ActionTriggerType
   condition?: TriggerCondition
   delayMinutes?: number
+  eventIntegration?: EventIntegration
+  tagFilter?: TagFilter
+  userFilter?: UserFilter
 }
 
 export type ActionTriggerType = 
@@ -425,6 +470,51 @@ export type ActionTriggerType =
   | 'MESSAGE_REPLY'     // メッセージ返信
   | 'TIME_DELAY'        // 時間経過
   | 'IMMEDIATE'         // 即座に実行
+  | 'FRIEND_ADDED'      // 友達追加時
+  | 'TAG_ADDED'         // タグ追加時
+  | 'TAG_REMOVED'       // タグ削除時
+  | 'STATUS_CHANGED'    // ステータス変更時
+  | 'RESERVATION_MADE'  // 予約作成時
+  | 'RESERVATION_CANCELLED' // 予約キャンセル時
+  | 'EVENT_TRIGGER'     // カスタムイベント
+  | 'RECURRING'         // 定期実行
+
+// Event integration for external systems
+export interface EventIntegration {
+  type: 'reservation_system' | 'calendar' | 'webhook' | 'api_call'
+  endpoint?: string
+  apiKey?: string
+  eventMapping: EventFieldMapping[]
+  triggerConditions?: EventTriggerCondition[]
+}
+
+export interface EventFieldMapping {
+  sourceField: string
+  targetField: string
+  transformation?: 'date_format' | 'text_format' | 'number_format' | 'custom'
+  customFunction?: string
+}
+
+export interface EventTriggerCondition {
+  field: string
+  operator: 'equals' | 'not_equals' | 'contains' | 'exists' | 'greater_than' | 'less_than'
+  value: string | number | boolean
+}
+
+// Enhanced tag and user filtering
+export interface TagFilter {
+  includeTagIds?: string[]
+  excludeTagIds?: string[]
+  tagLogic: 'AND' | 'OR'
+  requireAllTags?: boolean
+}
+
+export interface UserFilter {
+  userFields?: Record<string, any>
+  statusIds?: string[]
+  segmentIds?: string[]
+  customConditions?: string[]
+}
 
 export interface TriggerCondition {
   operator: 'equals' | 'contains' | 'starts_with' | 'ends_with' | 'greater_than' | 'less_than' | 'any'
@@ -478,7 +568,7 @@ export interface StatsCardProps {
 export interface FilterCondition {
   field: string
   operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'in' | 'not_in' | 'exists' | 'not_exists' | 'contains_all' | 'contains_any' | 'between' | 'before' | 'after'
-  value: any
+  value: string | number | boolean | string[] | number[] | { from: string; to: string }
   logic?: 'AND' | 'OR'
   title?: string // Custom title for the condition
 }

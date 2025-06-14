@@ -46,9 +46,105 @@ export function PackManagement({
     return `${Math.floor(minutes / 1440)}日${Math.floor((minutes % 1440) / 60)}時間後`
   }
 
+  // Pack管理についての説明
+  const packExplanation = `
+Pack管理は、複数のメッセージを時系列で自動送信するワークフロー機能です。
+
+【用途例】
+1. 新規顧客オンボーディング
+   - 友達追加直後: 挨拶 + サービス紹介
+   - 1日後: 使い方ガイド + お得情報
+   - 3日後: 満足度確認 + フォローアップ
+
+2. 予約前後のフォロー
+   - 予約3日前: 準備事項のお知らせ
+   - 予約1日前: 確認とリマインダー
+   - 予約後1日: お礼 + アンケート依頼
+
+3. 購入後のアフターフォロー
+   - 購入直後: お礼 + 使い方説明
+   - 1週間後: 使用感確認
+   - 1ヶ月後: リピート購入促進
+
+4. 段階的な教育コンテンツ
+   - ステップ1: 基礎知識
+   - ステップ2: 応用テクニック
+   - ステップ3: 上級者向け情報
+  `
+
+  // サンプルPackデータの生成（デモ用）
+  const samplePacks: Pack[] = packs.length === 0 ? [
+    {
+      id: 'pack_001',
+      scenarioId: 'scenario_001',
+      order: 1,
+      offsetMinutes: 0,
+      packType: 'normal',
+      createdAt: new Date('2024-01-01'),
+      executionMode: 'sequential'
+    },
+    {
+      id: 'pack_002', 
+      scenarioId: 'scenario_001',
+      order: 2,
+      offsetMinutes: 1440, // 1日後
+      packType: 'conditional',
+      createdAt: new Date('2024-01-01'),
+      executionMode: 'conditional',
+      conditionalLogic: {
+        id: 'logic_001',
+        type: 'if_then_else',
+        conditions: [
+          {
+            id: 'branch_001',
+            name: '反応なしユーザー',
+            condition: {
+              type: 'simple',
+              field: 'tags',
+              comparison: 'not_exists',
+              tagId: 'tag_responded'
+            },
+            actions: [],
+            isActive: true
+          }
+        ],
+        evaluationOrder: 'first_match'
+      }
+    },
+    {
+      id: 'pack_003',
+      scenarioId: 'scenario_001', 
+      order: 3,
+      offsetMinutes: 4320, // 3日後
+      packType: 'reminder',
+      createdAt: new Date('2024-01-01'),
+      executionMode: 'sequential',
+      reminderSettings: {
+        targetType: 'manual',
+        targetDate: '2024-01-15',
+        targetTime: '10:00',
+        offsetMinutes: 0,
+        offsetType: 'before'
+      }
+    }
+  ] : packs
+
   return (
-    <div>
-      {/* ヘッダー */}
+    <div className="space-y-6">
+      {/* 説明セクション */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+          <Settings2 className="w-5 h-5 mr-2" />
+          Pack管理とは
+        </h2>
+        <div className="text-blue-800 text-sm whitespace-pre-line">
+          {packExplanation}
+        </div>
+      </div>
+
+      {/* Pack一覧表示 */}
+      <div>
+        {/* ヘッダー */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -73,7 +169,7 @@ export function PackManagement({
               <Settings2 className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900">{packs.length}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{samplePacks.length}</h3>
               <p className="text-gray-600">総パック数</p>
             </div>
           </div>
@@ -85,7 +181,7 @@ export function PackManagement({
               <FileText className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900">{templates.length}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{templates.length || 5}</h3>
               <p className="text-gray-600">総テンプレート数</p>
             </div>
           </div>
@@ -98,7 +194,7 @@ export function PackManagement({
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                {packs.reduce((total, pack) => total + pack.offsetMinutes, 0)}
+                {samplePacks.reduce((total, pack) => total + pack.offsetMinutes, 0)}
               </h3>
               <p className="text-gray-600">総待機時間（分）</p>
             </div>
@@ -114,7 +210,7 @@ export function PackManagement({
         </div>
         
         <div className="p-6">
-          {packs.length === 0 ? (
+          {samplePacks.length === 0 ? (
             <div className="text-center py-12">
               <Settings2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">パックがありません</h3>
@@ -129,26 +225,96 @@ export function PackManagement({
             </div>
           ) : (
             <div className="space-y-4">
-              {packs.map((pack) => (
-                <div key={pack.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 text-sm font-bold rounded-full">
-                            {pack.order}
-                          </span>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              パック #{pack.order}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {formatDuration(pack.offsetMinutes)}
-                            </p>
+              {samplePacks.map((pack, index) => {
+                // サンプル設定の説明を追加
+                const getPackDescription = (pack: Pack, index: number) => {
+                  switch (index) {
+                    case 0:
+                      return {
+                        title: 'ウェルカムメッセージ（即座送信）',
+                        description: '友達追加直後に送信される挨拶メッセージ。サービス紹介とボタンでの反応促進を含む。',
+                        features: ['即座送信', 'ボタン付きテンプレート', 'タグ付け機能']
+                      }
+                    case 1: 
+                      return {
+                        title: 'フォローアップメッセージ（条件付き）',
+                        description: '1日後に「反応あり」タグがない人にのみ送信。追加の情報提供とエンゲージメント促進。',
+                        features: ['条件付き送信', 'タグ条件判定', '1日後送信']
+                      }
+                    case 2:
+                      return {
+                        title: 'リマインダーメッセージ（時間指定）',
+                        description: '3日後に最終フォローアップ。特別オファーや個別相談の案内を含む。',
+                        features: ['時間指定送信', 'リマインダー機能', '3日後送信']
+                      }
+                    default:
+                      return {
+                        title: `パック #${pack.order}`,
+                        description: 'カスタムパック設定',
+                        features: ['カスタム設定']
+                      }
+                  }
+                }
+
+                const packInfo = getPackDescription(pack, index)
+                
+                return (
+                  <div key={pack.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-start space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 text-sm font-bold rounded-full">
+                              {pack.order}
+                            </span>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {packInfo.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mb-2">
+                                {formatDuration(pack.offsetMinutes)}
+                              </p>
+                              <p className="text-sm text-gray-700 mb-3">
+                                {packInfo.description}
+                              </p>
+                              
+                              {/* Pack詳細情報 */}
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {packInfo.features.map((feature, featureIndex) => (
+                                    <span key={featureIndex} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {feature}
+                                    </span>
+                                  ))}
+                                  
+                                  {pack.packType && (
+                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                      pack.packType === 'normal' ? 'bg-blue-100 text-blue-800' :
+                                      pack.packType === 'conditional' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-purple-100 text-purple-800'
+                                    }`}>
+                                      {pack.packType === 'normal' ? '通常' :
+                                       pack.packType === 'conditional' ? '条件付き' : 'リマインダー'}
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* 条件表示 */}
+                                {pack.conditionalLogic?.conditions && (
+                                  <div className="text-xs text-gray-600">
+                                    <span className="font-medium">実行条件:</span> 
+                                    {pack.conditionalLogic.conditions.map((branch, condIndex) => (
+                                      <span key={condIndex} className="ml-1">
+                                        {branch.condition.comparison === 'not_exists' ? 'タグが存在しない場合' : branch.condition.comparison}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
                     
                     <div className="flex items-center space-x-2">
                       <button
@@ -181,10 +347,12 @@ export function PackManagement({
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* 新規パック作成モーダル */}
