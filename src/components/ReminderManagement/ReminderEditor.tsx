@@ -24,7 +24,7 @@ import {
   Save, ArrowLeft, Plus, Clock, Calendar, Bell, 
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
   MessageSquare, Trash2, Eye, ArrowUp, ArrowDown,
-  ChevronUp, Split, TagIcon, Users, Target
+  ChevronUp, Split, Tag as TagIcon, Users, Target
 } from 'lucide-react'
 import { 
   Modal,
@@ -38,6 +38,7 @@ import {
   FormActions,
   FormGroup
 } from '@/components/Common'
+import { TagSelector, StatusSelector, SegmentSelector } from '@/components/Common/Selectors'
 
 interface ReminderEditorProps {
   reminder: ReservationReminder | null
@@ -2104,17 +2105,18 @@ function EventSearchSection({ eventType, selectedEventId, onEventSelect }: Event
   )
 }
 
-// Tag selector with folder hierarchy
-interface TagFolderHierarchy extends TagFolder {
-  children: TagFolderHierarchy[]
-}
-
-function TagSelector({
+// Tag selector component
+function TagSelectorComponent({
   tags, tagFolders, selectedTagIds, onChange, multiple = true
 }: {
   tags: Tag[], tagFolders: TagFolder[], selectedTagIds: string[]
   onChange: (tagIds: string[]) => void, multiple?: boolean
 }) {
+  // Local type for folder hierarchy
+  interface TagFolderHierarchy extends TagFolder {
+    children: TagFolderHierarchy[]
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
@@ -2324,17 +2326,18 @@ function TagSelector({
   )
 }
 
-// Status selector with folder hierarchy
-interface StatusFolderHierarchy extends StatusFolder {
-  children: StatusFolderHierarchy[]
-}
-
-function StatusSelector({
+// Another component
+function AnotherComponent({
   statuses, statusFolders, selectedStatusIds, onChange, multiple = true
 }: {
   statuses: Status[], statusFolders: StatusFolder[], selectedStatusIds: string[]
   onChange: (statusIds: string[]) => void, multiple?: boolean
 }) {
+  // Local type for folder hierarchy
+  interface StatusFolderHierarchy extends StatusFolder {
+    children: StatusFolderHierarchy[]
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
@@ -2524,17 +2527,18 @@ function StatusSelector({
   )
 }
 
-// Segment selector with folder hierarchy
-interface SegmentFolderHierarchy extends SegmentFolder {
-  children: SegmentFolderHierarchy[]
-}
-
-function SegmentSelector({
+// Yet another component
+function YetAnotherComponent({
   segments, segmentFolders, selectedSegmentIds, onChange, multiple = true
 }: {
   segments: Segment[], segmentFolders: SegmentFolder[], selectedSegmentIds: string[]
   onChange: (segmentIds: string[]) => void, multiple?: boolean
 }) {
+  // Local type for folder hierarchy
+  interface SegmentFolderHierarchy extends SegmentFolder {
+    children: SegmentFolderHierarchy[]
+  }
+
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
