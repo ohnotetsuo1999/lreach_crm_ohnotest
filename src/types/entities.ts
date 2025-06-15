@@ -57,6 +57,7 @@ export enum ActionType {
   // Flow control
   WAIT = 'WAIT',
   CONDITIONAL = 'CONDITIONAL',
+  WEBHOOK = 'WEBHOOK',
   
   // User actions
   URL_CLICK = 'URL_CLICK',
@@ -72,34 +73,14 @@ export enum ActionType {
   CUSTOM = 'CUSTOM'
 }
 
-// Trigger types - consolidated
+// Trigger types - aligned with Prisma schema
 export enum TriggerType {
-  // Manual triggers
   MANUAL = 'MANUAL',
-  
-  // Time-based triggers
   SCHEDULE = 'SCHEDULE',
-  TIME_BASED = 'TIME_BASED',
-  RECURRING = 'RECURRING',
-  
-  // User event triggers
   USER_ACTION = 'USER_ACTION',
-  FRIEND_ADDED = 'FRIEND_ADDED',
-  MESSAGE_OPEN = 'MESSAGE_OPEN',
-  MESSAGE_REPLY = 'MESSAGE_REPLY',
-  
-  // Tag/Status triggers
   TAG_ADDED = 'TAG_ADDED',
-  TAG_REMOVED = 'TAG_REMOVED',
   STATUS_CHANGED = 'STATUS_CHANGED',
-  
-  // Reservation triggers
-  RESERVATION_MADE = 'RESERVATION_MADE',
-  RESERVATION_CANCELLED = 'RESERVATION_CANCELLED',
-  
-  // Custom events
-  EVENT_TRIGGER = 'EVENT_TRIGGER',
-  IMMEDIATE = 'IMMEDIATE'
+  TIME_BASED = 'TIME_BASED'
 }
 
 // Filter operators - used in segments and conditions

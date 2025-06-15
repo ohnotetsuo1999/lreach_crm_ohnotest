@@ -457,6 +457,7 @@ export type ActionType =
   | 'SEND_MESSAGE'      // メッセージ送信
   | 'WAIT'              // 待機
   | 'CONDITIONAL'       // 条件分岐
+  | 'WEBHOOK'           // Webhook
 
 export interface ActionTrigger {
   type: ActionTriggerType

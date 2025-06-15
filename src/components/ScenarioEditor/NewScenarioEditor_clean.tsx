@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { 
   Scenario, 
@@ -18,9 +18,10 @@ import {
   User,
   TemplateTimingConfig,
   ConditionalLogic,
-  ActionTrigger
+  ActionTrigger,
+  ActionType
 } from '@/types'
-import { ActionType, TriggerType } from '@/types/entities'
+import { TriggerType } from '@/types/entities'
 import { 
   Save, Play, ArrowLeft, Plus, MoreHorizontal, Edit, 
   Search, Folder, FolderOpen, ChevronRight, ChevronDown, 
@@ -206,7 +207,7 @@ export function NewScenarioEditor({
       delayMinutes: 0,
       actions: [{
         id: `action-${Date.now()}`,
-        type: ActionType.SEND_MESSAGE,
+        type: 'SEND_MESSAGE' as ActionType,
         order: 0,
         trigger: { type: 'IMMEDIATE' as ActionTriggerType },
         payload: {
@@ -300,19 +301,19 @@ export function NewScenarioEditor({
 
   const getActionIcon = (type: ActionType) => {
     switch (type) {
-      case ActionType.SEND_MESSAGE:
+      case 'SEND_MESSAGE':
         return MessageSquare
-      case ActionType.ADD_TAG:
+      case 'ADD_TAG':
         return TagIcon
-      case ActionType.REMOVE_TAG:
+      case 'REMOVE_TAG':
         return TagIcon
-      case ActionType.CHANGE_STATUS:
+      case 'CHANGE_STATUS':
         return Target
-      case ActionType.WAIT:
+      case 'WAIT':
         return Clock
-      case ActionType.WEBHOOK:
+      case 'WEBHOOK':
         return Zap
-      case ActionType.CONDITIONAL:
+      case 'CONDITIONAL':
         return GitBranch
       default:
         return MessageSquare
@@ -321,19 +322,19 @@ export function NewScenarioEditor({
 
   const getActionLabel = (action: BroadcastAction): string => {
     switch (action.type) {
-      case ActionType.SEND_MESSAGE:
+      case 'SEND_MESSAGE':
         return 'メッセージ送信'
-      case ActionType.ADD_TAG:
+      case 'ADD_TAG':
         return 'タグ追加'
-      case ActionType.REMOVE_TAG:
+      case 'REMOVE_TAG':
         return 'タグ削除'
-      case ActionType.CHANGE_STATUS:
+      case 'CHANGE_STATUS':
         return 'ステータス変更'
-      case ActionType.WAIT:
+      case 'WAIT':
         return '待機'
-      case ActionType.WEBHOOK:
+      case 'WEBHOOK':
         return 'Webhook'
-      case ActionType.CONDITIONAL:
+      case 'CONDITIONAL':
         return '条件分岐'
       default:
         return 'アクション'
@@ -364,12 +365,7 @@ export function NewScenarioEditor({
     if (!editingAction || !editingTemplateId) return
 
     const deleteSubActionRecursive = (subActions: SubAction[]): SubAction[] => {
-      return subActions
-        .filter(sa => sa.id !== subActionId)
-        .map(sa => ({
-          ...sa,
-          subActions: deleteSubActionRecursive(sa.subActions || [])
-        }))
+      return subActions.filter(sa => sa.id !== subActionId)
     }
 
     const updatedAction = {
@@ -410,7 +406,7 @@ export function NewScenarioEditor({
       }
       return templates.filter(template => 
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        template.notes?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 
@@ -466,8 +462,8 @@ export function NewScenarioEditor({
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">{template.name}</p>
-                    {template.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
+                    {template.notes && (
+                      <p className="text-xs text-gray-500 mt-0.5">{template.notes}</p>
                     )}
                   </div>
                 </div>
@@ -510,8 +506,8 @@ export function NewScenarioEditor({
                       onClick={() => handleAddTemplate(template)}
                     >
                       <p className="text-sm font-medium">{template.name}</p>
-                      {template.description && (
-                        <p className="text-xs text-gray-500 mt-1">{template.description}</p>
+                      {template.notes && (
+                        <p className="text-xs text-gray-500 mt-1">{template.notes}</p>
                       )}
                     </div>
                   ))}
@@ -556,8 +552,8 @@ export function NewScenarioEditor({
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">{template.name}</p>
-                        {template.description && (
-                          <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
+                        {template.notes && (
+                          <p className="text-xs text-gray-500 mt-0.5">{template.notes}</p>
                         )}
                       </div>
                     </div>
@@ -582,7 +578,7 @@ export function NewScenarioEditor({
 
   // Action Modal Component  
   function ActionModal() {
-    const [actionType, setActionType] = useState<ActionType>(ActionType.SEND_MESSAGE)
+    const [actionType, setActionType] = useState<ActionType>('SEND_MESSAGE')
     const [actionData, setActionData] = useState<any>({
       templateId: '',
       tagIds: [],
@@ -628,17 +624,17 @@ export function NewScenarioEditor({
                 onChange={(e) => setActionType(e.target.value as ActionType)}
                 className="w-full border rounded-lg px-3 py-2"
               >
-                <option value={ActionType.SEND_MESSAGE}>メッセージ送信</option>
-                <option value={ActionType.ADD_TAG}>タグ追加</option>
-                <option value={ActionType.REMOVE_TAG}>タグ削除</option>
-                <option value={ActionType.CHANGE_STATUS}>ステータス変更</option>
-                <option value={ActionType.WAIT}>待機</option>
-                <option value={ActionType.WEBHOOK}>Webhook</option>
-                <option value={ActionType.CONDITIONAL}>条件分岐</option>
+                <option value="SEND_MESSAGE">メッセージ送信</option>
+                <option value="ADD_TAG">タグ追加</option>
+                <option value="REMOVE_TAG">タグ削除</option>
+                <option value="CHANGE_STATUS">ステータス変更</option>
+                <option value="WAIT">待機</option>
+                <option value="WEBHOOK">Webhook</option>
+                <option value="CONDITIONAL">条件分岐</option>
               </select>
             </div>
 
-            {actionType === ActionType.SEND_MESSAGE && (
+            {actionType === 'SEND_MESSAGE' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   送信するテンプレート
@@ -658,7 +654,7 @@ export function NewScenarioEditor({
               </div>
             )}
 
-            {(actionType === ActionType.ADD_TAG || actionType === ActionType.REMOVE_TAG) && (
+            {(actionType === 'ADD_TAG' || actionType === 'REMOVE_TAG') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   タグ
@@ -672,7 +668,7 @@ export function NewScenarioEditor({
               </div>
             )}
 
-            {actionType === ActionType.CHANGE_STATUS && (
+            {actionType === 'CHANGE_STATUS' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ステータス
@@ -687,7 +683,7 @@ export function NewScenarioEditor({
               </div>
             )}
 
-            {actionType === ActionType.WAIT && (
+            {actionType === 'WAIT' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   待機時間（分）
@@ -702,7 +698,7 @@ export function NewScenarioEditor({
               </div>
             )}
 
-            {actionType === ActionType.WEBHOOK && (
+            {actionType === 'WEBHOOK' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Webhook URL
@@ -717,7 +713,7 @@ export function NewScenarioEditor({
               </div>
             )}
 
-            {actionType === ActionType.CONDITIONAL && (
+            {actionType === 'CONDITIONAL' && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -801,7 +797,7 @@ export function NewScenarioEditor({
   // SubAction Modal Component
   function SubActionModal() {
     const [actionData, setActionData] = useState<any>({
-      type: ActionType.SEND_MESSAGE,
+      type: 'SEND_MESSAGE' as ActionType,
       templateId: '',
       tagIds: [],
       statusId: '',
@@ -820,7 +816,6 @@ export function NewScenarioEditor({
       const newSubAction: SubAction = {
         id: `subaction-${Date.now()}`,
         type: subActionType === 'CONDITIONAL' ? 'CONDITIONAL' : 'ACTION',
-        order: 0,
         action: subActionType === 'ACTION' ? {
           id: `action-${Date.now()}`,
           type: actionData.type,
@@ -829,22 +824,10 @@ export function NewScenarioEditor({
           payload: actionData,
           subActions: []
         } : undefined,
-        condition: subActionType === 'CONDITIONAL' ? {
-          type: actionData.condition.type,
-          logic: {
-            operator: 'AND',
-            conditions: actionData.condition.type.includes('tag') 
-              ? actionData.condition.tagIds.map((tagId: string) => ({
-                  type: actionData.condition.type,
-                  value: tagId
-                }))
-              : [{
-                  type: actionData.condition.type,
-                  value: actionData.condition.statusId
-                }]
-          }
-        } : undefined,
-        subActions: []
+        condition: subActionType === 'CONDITIONAL' && actionData.condition?.type.includes('tag') ? {
+          type: actionData.condition.type.includes('not') ? 'not_has' : 'has' as 'has' | 'not_has',
+          tagIds: actionData.condition.tagIds || []
+        } : undefined
       }
 
       const addSubActionRecursive = (subActions: SubAction[]): SubAction[] => {
@@ -858,25 +841,18 @@ export function NewScenarioEditor({
               if (editingConditionType === 'then') {
                 return {
                   ...sa,
-                  subActions: [...(sa.subActions || []), newSubAction]
+                  thenActions: [...(sa.thenActions || []), newSubAction.action!].filter(Boolean)
                 }
               } else {
                 return {
                   ...sa,
-                  elseSubActions: [...(sa.elseSubActions || []), newSubAction]
+                  elseActions: [...(sa.elseActions || []), newSubAction.action!].filter(Boolean)
                 }
               }
             }
-            return {
-              ...sa,
-              subActions: [...(sa.subActions || []), newSubAction]
-            }
+            return sa
           }
-          return {
-            ...sa,
-            subActions: addSubActionRecursive(sa.subActions || []),
-            elseSubActions: sa.elseSubActions ? addSubActionRecursive(sa.elseSubActions) : undefined
-          }
+          return sa
         })
       }
 
@@ -937,16 +913,16 @@ export function NewScenarioEditor({
                     onChange={(e) => setActionData({ ...actionData, type: e.target.value as ActionType })}
                     className="w-full border rounded-lg px-3 py-2"
                   >
-                    <option value={ActionType.SEND_MESSAGE}>メッセージ送信</option>
-                    <option value={ActionType.ADD_TAG}>タグ追加</option>
-                    <option value={ActionType.REMOVE_TAG}>タグ削除</option>
-                    <option value={ActionType.CHANGE_STATUS}>ステータス変更</option>
-                    <option value={ActionType.WAIT}>待機</option>
-                    <option value={ActionType.WEBHOOK}>Webhook</option>
+                    <option value="SEND_MESSAGE">メッセージ送信</option>
+                    <option value="ADD_TAG">タグ追加</option>
+                    <option value="REMOVE_TAG">タグ削除</option>
+                    <option value="CHANGE_STATUS">ステータス変更</option>
+                    <option value="WAIT">待機</option>
+                    <option value="WEBHOOK">Webhook</option>
                   </select>
                 </div>
 
-                {actionData.type === ActionType.SEND_MESSAGE && (
+                {actionData.type === 'SEND_MESSAGE' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       送信するテンプレート
@@ -966,7 +942,7 @@ export function NewScenarioEditor({
                   </div>
                 )}
 
-                {(actionData.type === ActionType.ADD_TAG || actionData.type === ActionType.REMOVE_TAG) && (
+                {(actionData.type === 'ADD_TAG' || actionData.type === 'REMOVE_TAG') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       タグ
@@ -980,7 +956,7 @@ export function NewScenarioEditor({
                   </div>
                 )}
 
-                {actionData.type === ActionType.CHANGE_STATUS && (
+                {actionData.type === 'CHANGE_STATUS' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       ステータス
@@ -995,7 +971,7 @@ export function NewScenarioEditor({
                   </div>
                 )}
 
-                {actionData.type === ActionType.WAIT && (
+                {actionData.type === 'WAIT' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       待機時間（分）
@@ -1010,7 +986,7 @@ export function NewScenarioEditor({
                   </div>
                 )}
 
-                {actionData.type === ActionType.WEBHOOK && (
+                {actionData.type === 'WEBHOOK' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Webhook URL
@@ -1134,7 +1110,7 @@ export function NewScenarioEditor({
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-                {renderSubActions(subAction.subActions || [], level + 1)}
+                {/* ACTION type doesn't have nested subActions */}
               </div>
             )}
 
@@ -1164,7 +1140,12 @@ export function NewScenarioEditor({
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    {renderSubActions(subAction.subActions || [], level + 1, 'then')}
+                    {subAction.thenActions && subAction.thenActions.map((action, idx) => (
+                      <div key={idx} className="flex items-center gap-2 mt-1">
+                        {React.createElement(getActionIcon(action.type), { className: "w-3 h-3 text-gray-500" })}
+                        <span className="text-xs">{getActionLabel(action)}</span>
+                      </div>
+                    ))}
                   </div>
                   
                   <div className="bg-white rounded p-2">
@@ -1177,7 +1158,12 @@ export function NewScenarioEditor({
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    {renderSubActions(subAction.elseSubActions || [], level + 1, 'else')}
+                    {subAction.elseActions && subAction.elseActions.map((action, idx) => (
+                      <div key={idx} className="flex items-center gap-2 mt-1">
+                        {React.createElement(getActionIcon(action.type), { className: "w-3 h-3 text-gray-500" })}
+                        <span className="text-xs">{getActionLabel(action)}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1606,13 +1592,13 @@ export function NewScenarioEditor({
   const handleSave = () => {
     const newScenario: Scenario = {
       id: scenario?.id || `scenario-${Date.now()}`,
+      campaignId: scenario?.campaignId || 'default-campaign',
       name: scenarioData.name,
       description: scenarioData.description,
       trigger: scenarioData.trigger,
       triggerValue: scenarioData.triggerValue,
       isActive: scenarioData.isActive,
       folderId: scenarioData.folderId,
-      templates: scenarioTemplates,
       createdAt: scenario?.createdAt || new Date(),
       updatedAt: new Date()
     }
