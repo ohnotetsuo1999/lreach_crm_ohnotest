@@ -94,15 +94,17 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
         ]
       case 'tags':
         return [
-          { value: 'contains_all', label: '含む（すべて）' },
-          { value: 'contains_any', label: 'いずれかを含む' },
-          { value: 'not_contains', label: '含まない' }
+          { value: 'contains_any', label: 'いずれか1つ以上含む' },
+          { value: 'contains_all', label: 'すべて含む' },
+          { value: 'not_contains_any', label: 'いずれか1つ以上含まない' },
+          { value: 'not_contains_all', label: '全て含まない' }
         ]
       case 'status':
         return [
-          { value: 'contains_all', label: '含む（すべて）' },
-          { value: 'contains_any', label: 'いずれかを含む' },
-          { value: 'not_contains', label: '含まない' }
+          { value: 'contains_any', label: 'いずれか1つ以上含む' },
+          { value: 'contains_all', label: 'すべて含む' },
+          { value: 'not_contains_any', label: 'いずれか1つ以上含まない' },
+          { value: 'not_contains_all', label: '全て含まない' }
         ]
       case 'age':
         return [
@@ -118,9 +120,10 @@ export function ConditionBuilder({ filter, tags, statuses, onChange }: Condition
         ]
       case 'address':
         return [
-          { value: 'contains_all', label: '含む（すべて）' },
-          { value: 'contains_any', label: 'いずれかを含む' },
-          { value: 'not_contains', label: '含まない' }
+          { value: 'contains_any', label: 'いずれか1つ以上含む' },
+          { value: 'contains_all', label: 'すべて含む' },
+          { value: 'not_contains_any', label: 'いずれか1つ以上含まない' },
+          { value: 'not_contains_all', label: '全て含まない' }
         ]
       case 'name':
         return OPERATOR_OPTIONS.filter(op => 

@@ -166,6 +166,18 @@ export function PreviewCount({ filter, users, onRefresh }: PreviewCountProps) {
           return value.some(v => fieldValue.includes(v))
         }
         return false
+      case 'not_contains_any':
+        // いずれか1つ以上含まない
+        if (Array.isArray(fieldValue) && Array.isArray(value)) {
+          return value.some(v => !fieldValue.includes(v))
+        }
+        return true
+      case 'not_contains_all':
+        // 全て含まない
+        if (Array.isArray(fieldValue) && Array.isArray(value)) {
+          return !value.some(v => fieldValue.includes(v))
+        }
+        return true
       case 'between':
         // 期間内の評価（日付または年齢）
         if (fieldValue instanceof Date && typeof value === 'object') {

@@ -38,7 +38,10 @@ export interface Status {
   id: string
   code: string
   label: string
+  folderId?: string
 }
+
+export interface StatusFolder extends BaseFolder {}
 
 export interface UserStatusLog {
   id: string
@@ -120,7 +123,7 @@ export interface ReminderEventSettings {
   customField?: string
   eventId?: string // 特定のイベントに紐付ける場合のイベントID
   eventData?: Record<string, unknown> // 選択されたイベントの詳細データ
-  triggerConditions: ReminderTriggerCondition[]
+  selectedEventIds?: string[] // 選択されたイベントIDのリスト
 }
 
 export interface ReminderTriggerCondition {
@@ -568,7 +571,7 @@ export interface StatsCardProps {
 
 export interface FilterCondition {
   field: string
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'in' | 'not_in' | 'exists' | 'not_exists' | 'contains_all' | 'contains_any' | 'between' | 'before' | 'after'
+  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'greater_equal' | 'less_equal' | 'in' | 'not_in' | 'exists' | 'not_exists' | 'contains_all' | 'contains_any' | 'not_contains_any' | 'not_contains_all' | 'between' | 'before' | 'after'
   value: string | number | boolean | string[] | number[] | { from: string; to: string }
   logic?: 'AND' | 'OR'
   title?: string // Custom title for the condition

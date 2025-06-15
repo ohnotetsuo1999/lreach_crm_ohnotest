@@ -14,7 +14,8 @@ import {
   User, 
   Tag, 
   TagFolder,
-  Status, 
+  Status,
+  StatusFolder, 
   Segment, 
   SegmentFolder,
   Campaign, 
@@ -54,6 +55,7 @@ export default function LineMarketingApp() {
   const [tags, setTags] = useState<Tag[]>([])
   const [tagFolders, setTagFolders] = useState<TagFolder[]>([])
   const [statuses, setStatuses] = useState<Status[]>([])
+  const [statusFolders, setStatusFolders] = useState<StatusFolder[]>([])
   const [segments, setSegments] = useState<Segment[]>([])
   const [segmentFolders, setSegmentFolders] = useState<SegmentFolder[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -1296,7 +1298,7 @@ export default function LineMarketingApp() {
         },
         eventSettings: {
           eventType: 'reservation',
-          triggerConditions: []
+          selectedEventIds: []
         },
         templates: [
           {
@@ -1329,7 +1331,7 @@ export default function LineMarketingApp() {
         },
         eventSettings: {
           eventType: 'reservation',
-          triggerConditions: []
+          selectedEventIds: []
         },
         templates: [
           {
@@ -1377,7 +1379,7 @@ export default function LineMarketingApp() {
         eventSettings: {
           eventType: 'birthday',
           eventName: 'お客様の誕生日',
-          triggerConditions: []
+          selectedEventIds: []
         },
         templates: [
           {
@@ -1862,6 +1864,7 @@ export default function LineMarketingApp() {
           tags={tags}
           tagFolders={tagFolders}
           statuses={statuses}
+          statusFolders={statusFolders}
           segments={segments}
           segmentFolders={segmentFolders}
           users={users}
@@ -2256,6 +2259,9 @@ export default function LineMarketingApp() {
               tags={tags}
               tagFolders={tagFolders}
               statuses={statuses}
+              statusFolders={statusFolders}
+              segments={segments}
+              segmentFolders={segmentFolders}
               users={users}
               onSave={handleSaveReminder}
               onBack={() => setCurrentView('list')}
