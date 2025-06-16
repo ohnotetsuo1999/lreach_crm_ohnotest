@@ -210,6 +210,8 @@ export function ScenarioList({
                 onReorderScenarios={onReorderScenarios}
                 onMoveScenario={onMoveScenario}
                 selectedFolder={selectedFolder}
+                onTestSend={onTestSend}
+                setTestSendScenario={setTestSendScenario}
               />
             </div>
           </div>
@@ -366,7 +368,9 @@ function ScenarioTable({
   onViewAnalytics,
   onReorderScenarios,
   onMoveScenario,
-  selectedFolder
+  selectedFolder,
+  onTestSend,
+  setTestSendScenario
 }: any) {
   return (
     <div className="overflow-x-auto">
@@ -451,8 +455,7 @@ function ScenarioTable({
                     </button>
                     <button
                       onClick={() => {
-                        // テスト送信ボタンの処理
-                        console.log('Test send scenario:', scenario.id)
+                        if (onTestSend) setTestSendScenario(scenario)
                       }}
                       className="text-blue-600 hover:text-blue-900"
                       title="テスト送信"
@@ -542,6 +545,15 @@ function ScenarioTable({
                         title="分析"
                       >
                         <BarChart3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onTestSend) setTestSendScenario(scenario)
+                        }}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="テスト送信"
+                      >
+                        <Send className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onEditScenario(scenario)}

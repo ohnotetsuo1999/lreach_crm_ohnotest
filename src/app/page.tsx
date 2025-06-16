@@ -32,7 +32,7 @@ import {
   ReservationReminder,
   ReminderFolder
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { ReminderList } from '@/components/ReminderManagement/ReminderList'
@@ -40,6 +40,7 @@ import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 import { SupabaseTest } from '@/components/SupabaseTest/SupabaseTest'
 import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
 import { BulkTestSendModal } from '@/components/Common/BulkTestSendModal'
+import { AdAnalytics } from '@/components/AdAnalytics/AdAnalytics'
 import {
   InterviewDashboard,
   BookingFormSettings,
@@ -47,10 +48,13 @@ import {
   InterviewBooking,
   AccountSettings
 } from '@/components/InterviewBooking'
+import { DatabaseManagement } from '@/components/DatabaseManagement/DatabaseManagement'
+import { ApplicantManagement } from '@/components/ApplicantManagement/ApplicantManagement'
+import { MessageManagement } from '@/components/MessageManagement/MessageManagement'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'interview-dashboard' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'interview-dashboard' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings' | 'admin-home' | 'admin-database' | 'admin-applicants' | 'admin-messages'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -1876,6 +1880,15 @@ export default function LineMarketingApp() {
   
   const navigationCategories = [
     {
+      title: '管理機能',
+      items: [
+        { id: 'admin-home', label: '広告分析', icon: Home },
+        { id: 'admin-database', label: 'データベース管理', icon: Database },
+        { id: 'admin-applicants', label: '求職者管理（CA）', icon: Users },
+        { id: 'admin-messages', label: 'メッセージ', icon: MessageCircle }
+      ]
+    },
+    {
       title: 'マーケティング関連',
       items: [
         { id: 'dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
@@ -2464,6 +2477,18 @@ export default function LineMarketingApp() {
         
       case 'account-settings':
         return <AccountSettings />
+        
+      case 'admin-home':
+        return <AdAnalytics />
+        
+      case 'admin-database':
+        return <DatabaseManagement />
+        
+      case 'admin-applicants':
+        return <ApplicantManagement />
+        
+      case 'admin-messages':
+        return <MessageManagement />
         
       default:
         return <div>Unknown tab</div>
