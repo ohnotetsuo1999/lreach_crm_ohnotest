@@ -32,7 +32,7 @@ import {
   ReservationReminder,
   ReminderFolder
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3 } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { ReminderList } from '@/components/ReminderManagement/ReminderList'
@@ -40,10 +40,17 @@ import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 import { SupabaseTest } from '@/components/SupabaseTest/SupabaseTest'
 import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
 import { BulkTestSendModal } from '@/components/Common/BulkTestSendModal'
+import {
+  InterviewDashboard,
+  BookingFormSettings,
+  FormTemplateSettings,
+  InterviewBooking,
+  AccountSettings
+} from '@/components/InterviewBooking'
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'interview-dashboard' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings'>('dashboard')
   const [currentView, setCurrentView] = useState<'list' | 'edit'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -1867,18 +1874,38 @@ export default function LineMarketingApp() {
     clickRate: deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length > 0 ? (deliveryLogs.filter(log => log.status === 'CLICKED').length / deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length) * 100 : 0
   }
   
-  const navigationItems = [
-    { id: 'dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
-    { id: 'users', label: 'ユーザー管理', icon: Users },
-    { id: 'segments', label: 'セグメント', icon: Target },
-    { id: 'scenarios', label: 'シナリオ', icon: List },
-    { id: 'broadcast', label: '一斉配信', icon: Send },
-    { id: 'reminders', label: 'リマインダー', icon: Bell },
-    { id: 'templates', label: 'テンプレート', icon: Settings2 },
-    { id: 'supabase-test', label: 'Supabaseテスト', icon: Database },
-    { id: 'database-schema', label: 'DBスキーマ', icon: Columns3 },
-    { id: 'tags', label: 'タグ管理', icon: Tags },
-    { id: 'reports', label: 'レポート', icon: BarChart3 }
+  const navigationCategories = [
+    {
+      title: 'マーケティング関連',
+      items: [
+        { id: 'dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
+        { id: 'users', label: 'ユーザー管理', icon: Users },
+        { id: 'segments', label: 'セグメント', icon: Target },
+        { id: 'scenarios', label: 'シナリオ', icon: List },
+        { id: 'broadcast', label: '一斉配信', icon: Send },
+        { id: 'reminders', label: 'リマインダー', icon: Bell },
+        { id: 'templates', label: 'テンプレート', icon: Settings2 },
+        { id: 'tags', label: 'タグ管理', icon: Tags },
+        { id: 'reports', label: 'レポート', icon: BarChart3 }
+      ]
+    },
+    {
+      title: '予約・イベント関連',
+      items: [
+        { id: 'interview-dashboard', label: '面談予約ダッシュボード', icon: Calendar },
+        { id: 'booking-form', label: '予約フォーム設定', icon: FileText },
+        { id: 'form-template', label: 'フォームテンプレート設定', icon: FileCheck },
+        { id: 'interview-booking', label: '面談予約', icon: Calendar }
+      ]
+    },
+    {
+      title: 'その他',
+      items: [
+        { id: 'account-settings', label: 'アカウント設定', icon: UserCog },
+        { id: 'supabase-test', label: 'Supabaseテスト', icon: Database },
+        { id: 'database-schema', label: 'DBスキーマ', icon: Columns3 }
+      ]
+    }
   ] as const
 
   const renderMainContent = () => {
@@ -2423,6 +2450,21 @@ export default function LineMarketingApp() {
           />
         )
         
+      case 'interview-dashboard':
+        return <InterviewDashboard />
+        
+      case 'booking-form':
+        return <BookingFormSettings />
+        
+      case 'form-template':
+        return <FormTemplateSettings />
+        
+      case 'interview-booking':
+        return <InterviewBooking />
+        
+      case 'account-settings':
+        return <AccountSettings />
+        
       default:
         return <div>Unknown tab</div>
     }
@@ -2435,35 +2477,53 @@ export default function LineMarketingApp() {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0 fixed left-0 top-0 h-full z-10 flex flex-col">
-        <div className="p-6">
-          <h1 className="text-xl font-bold text-gray-900">LINE Marketing</h1>
+        {/* Fixed Header */}
+        <div className="p-6 border-b border-gray-200 bg-white">
+          <h1 className="text-xl font-bold text-gray-900">LリーチHUB</h1>
           <p className="text-sm text-gray-600 mt-1">自動化プラットフォーム</p>
         </div>
         
-        <nav className="px-4 pb-4 flex-1">
-          <div className="space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  {item.label}
-                </button>
-              )
-            })}
+        {/* Scrollable Navigation */}
+        <nav className="flex-1 overflow-y-auto">
+          <div className="px-4 py-4">
+            <div className="space-y-6">
+            {navigationCategories.map((category, categoryIndex) => (
+              <div key={category.title}>
+                {/* カテゴリタイトル */}
+                <div className="px-3 py-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {category.title}
+                  </h3>
+                </div>
+                
+                {/* カテゴリアイテム */}
+                <div className="space-y-1">
+                  {category.items.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleTabChange(item.id)}
+                        className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          activeTab === item.id
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 mr-3" />
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+            </div>
           </div>
         </nav>
         
-        {/* 管理者情報 */}
-        <div className="px-4 py-4 border-t border-gray-200">
+        {/* 管理者情報 (固定) */}
+        <div className="px-4 py-4 border-t border-gray-200 bg-white">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-sm font-medium">管</span>
