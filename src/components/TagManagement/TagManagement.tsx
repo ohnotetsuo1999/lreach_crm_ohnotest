@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { Tag, TagFolder } from '@/types'
 import { Plus, Search, Folder, Edit2, Trash2, ChevronDown, ChevronRight, Move, Grid3X3, List, FolderOpen, Eye, EyeOff, Filter, Copy } from 'lucide-react'
+import { ActionMenu, createCommonMenuItems } from '@/components/Common/ActionMenu'
+import { DraggableFolderTree } from '@/components/Common/DraggableFolderTree'
+import { DraggableTableBody } from '@/components/Common/DraggableTableBody'
 
 interface TagManagementProps {
   tags: Tag[]
@@ -14,6 +17,8 @@ interface TagManagementProps {
   onUpdateFolder: (folderId: string, updates: Partial<TagFolder>) => void
   onDeleteFolder: (folderId: string) => void
   onMoveTag: (tagId: string, folderId: string | null) => void
+  onReorderTags?: (tags: Tag[]) => void
+  onReorderFolders?: (folders: TagFolder[]) => void
 }
 
 export function TagManagement({
@@ -25,7 +30,9 @@ export function TagManagement({
   onCreateFolder,
   onUpdateFolder,
   onDeleteFolder,
-  onMoveTag
+  onMoveTag,
+  onReorderTags,
+  onReorderFolders
 }: TagManagementProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<string[]>(['1', '4']) // プロジェクトと個人フォルダを展開
@@ -260,20 +267,39 @@ export function TagManagement({
               <h3 className="font-semibold text-gray-900">フォルダ</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              <FolderTreeView 
-                rootFolders={rootFolders}
-                expandedFolders={expandedFolders}
-                selectedFolder={selectedFolder}
-                onToggleFolder={toggleFolder}
-                onSelectFolder={setSelectedFolder}
-                onEditFolder={setEditingFolder}
-                onDeleteFolder={onDeleteFolder}
-                onContextMenu={handleContextMenu}
-                onCreateFolderInFolder={handleCreateFolderInFolder}
-                onCreateTagInFolder={handleCreateTagInFolder}
-                tags={tags}
-                showEmptyFolders={showEmptyFolders}
-              />
+              {onReorderFolders && onMoveTag ? (
+                <DraggableFolderTree
+                  folders={tagFolders}
+                  items={tags}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onReorderFolders={onReorderFolders}
+                  onReorderItems={onReorderTags || (() => {})}
+                  onMoveItem={onMoveTag}
+                  onContextMenu={handleContextMenu}
+                  showAllFolder={true}
+                  showUncategorizedFolder={true}
+                  allFolderLabel="すべてのタグ"
+                  uncategorizedFolderLabel="未分類"
+                />
+              ) : (
+                <FolderTreeView 
+                  rootFolders={rootFolders}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onEditFolder={setEditingFolder}
+                  onDeleteFolder={onDeleteFolder}
+                  onContextMenu={handleContextMenu}
+                  onCreateFolderInFolder={handleCreateFolderInFolder}
+                  onCreateTagInFolder={handleCreateTagInFolder}
+                  tags={tags}
+                  showEmptyFolders={showEmptyFolders}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -291,25 +317,25 @@ export function TagManagement({
                     : tagFolders.find(f => f.id === selectedFolder)?.name || 'タグ'}
                 </h3>
                 <div className="flex items-center space-x-3">
-                  {/* フォルダ内アクションボタン */}
-                  {selectedFolder && selectedFolder !== 'null' && (
-                    <>
-                      <button
-                        onClick={() => handleCreateFolderInFolder(selectedFolder)}
-                        className="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <Folder className="w-3 h-3 mr-1" />
-                        フォルダ追加
-                      </button>
-                      <button
-                        onClick={() => handleCreateTagInFolder(selectedFolder)}
-                        className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        タグ追加
-                      </button>
-                    </>
-                  )}
+                  {/* アクションメニュー */}
+                  <ActionMenu
+                    items={createCommonMenuItems({
+                      onCreateNew: () => handleCreateTagInFolder(selectedFolder),
+                      onCreateFolder: () => handleCreateFolderInFolder(selectedFolder),
+                      entityName: 'タグ',
+                      selectedFolder: selectedFolder && selectedFolder !== 'null' ? tagFolders.find(f => f.id === selectedFolder) : null,
+                      onEditFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = tagFolders.find(f => f.id === selectedFolder)
+                        if (folder) setEditingFolder(folder)
+                      } : undefined,
+                      onDeleteFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = tagFolders.find(f => f.id === selectedFolder)
+                        if (folder && confirm(`フォルダ「${folder.name}」を削除しますか？`)) {
+                          onDeleteFolder(selectedFolder)
+                        }
+                      } : undefined
+                    })}
+                  />
                   
                   {/* 検索 */}
                   <div className="relative">
@@ -347,9 +373,12 @@ export function TagManagement({
                 <TagListView 
                   tags={filteredTags}
                   tagFolders={tagFolders}
+                  selectedFolder={selectedFolder}
                   onEditTag={setEditingTag}
                   onDeleteTag={onDeleteTag}
                   getTagColor={getTagColorByName}
+                  onReorderTags={onReorderTags}
+                  onMoveTag={onMoveTag}
                 />
               )}
             </div>
@@ -487,29 +516,7 @@ function FolderTreeView({
             <Folder className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
             <span className="font-medium truncate">{folder.name}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-xs text-gray-500">{tagCount}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onCreateTagInFolder(folder.id)
-              }}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-200 rounded transition-all"
-              title="新規タグ作成"
-            >
-              <Plus className="w-3 h-3 text-blue-600" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onCreateFolderInFolder(folder.id)
-              }}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
-              title="新規フォルダ作成"
-            >
-              <Folder className="w-3 h-3 text-gray-600" />
-            </button>
-          </div>
+          <span className="text-xs text-gray-500">{tagCount}</span>
         </div>
         
         {isExpanded && hasChildren && (
@@ -536,29 +543,7 @@ function FolderTreeView({
           <Folder className="w-4 h-4 mr-2 text-green-500" />
           <span className="font-medium">すべてのタグ</span>
         </div>
-        <div className="flex items-center space-x-1">
-          <span className="text-xs text-gray-500">{tags.length}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateTagInFolder(null)
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-200 rounded transition-all"
-            title="新規タグ作成"
-          >
-            <Plus className="w-3 h-3 text-blue-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateFolderInFolder(null)
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
-            title="新規フォルダ作成"
-          >
-            <Folder className="w-3 h-3 text-gray-600" />
-          </button>
-        </div>
+        <span className="text-xs text-gray-500">{tags.length}</span>
       </div>
 
       {/* 未分類タグ */}
@@ -574,29 +559,7 @@ function FolderTreeView({
           <FolderOpen className="w-4 h-4 mr-2 text-gray-500" />
           <span className="font-medium">未分類</span>
         </div>
-        <div className="flex items-center space-x-1">
-          <span className="text-xs text-gray-500">{tags.filter(tag => !tag.folderId).length}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateTagInFolder('null')
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-200 rounded transition-all"
-            title="新規タグ作成"
-          >
-            <Plus className="w-3 h-3 text-blue-600" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateFolderInFolder(null)
-            }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
-            title="新規フォルダ作成"
-          >
-            <Folder className="w-3 h-3 text-gray-600" />
-          </button>
-        </div>
+        <span className="text-xs text-gray-500">{tags.filter(tag => !tag.folderId).length}</span>
       </div>
 
       {/* フォルダツリー */}
@@ -647,15 +610,21 @@ function TagGridView({
 function TagListView({ 
   tags, 
   tagFolders,
+  selectedFolder,
   onEditTag, 
   onDeleteTag,
-  getTagColor
+  getTagColor,
+  onReorderTags,
+  onMoveTag
 }: {
   tags: Tag[]
   tagFolders: TagFolder[]
+  selectedFolder: string | null
   onEditTag: (tag: Tag) => void
   onDeleteTag: (tagId: string) => void
   getTagColor: (tagName: string) => string
+  onReorderTags?: (tags: Tag[]) => void
+  onMoveTag?: (tagId: string, targetFolderId: string | null) => void
 }) {
   const handleDelete = (tag: Tag) => {
     if (confirm(`タグ「${tag.name}」を削除しますか？`)) {
@@ -678,6 +647,7 @@ function TagListView({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {onReorderTags && <th className="w-10 px-2"></th>}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 タグ名
               </th>
@@ -695,9 +665,63 @@ function TagListView({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {tags.map((tag) => {
-              return (
+          {onReorderTags && onMoveTag ? (
+            <DraggableTableBody
+              items={tags}
+              currentFolderId={selectedFolder}
+              onReorderItems={onReorderTags}
+              onMoveItem={onMoveTag}
+              showDragHandle={true}
+              renderRow={(tag, index, isDragging) => (
+                <>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTagColor(tag.name)}`}>
+                        {tag.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                      tag.type === 'MANUAL' ? 'bg-blue-100 text-blue-800' :
+                      tag.type === 'AUTOMATIC' ? 'bg-green-100 text-green-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}>
+                      {tag.type === 'MANUAL' ? '手動' : tag.type === 'AUTOMATIC' ? '自動' : '行動'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    <div className="max-w-xs truncate" title={tag.note}>
+                      {tag.note || '備考なし'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {tag.createdAt.toLocaleDateString('ja-JP')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => onEditTag(tag)}
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                        title="編集"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tag)}
+                        className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                        title="削除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </>
+              )}
+            />
+          ) : (
+            <tbody className="bg-white divide-y divide-gray-200">
+              {tags.map((tag) => (
                 <tr key={tag.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -742,9 +766,9 @@ function TagListView({
                     </div>
                   </td>
                 </tr>
-              )
-            })}
-          </tbody>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
     </div>

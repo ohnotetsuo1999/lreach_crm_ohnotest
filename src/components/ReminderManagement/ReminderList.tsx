@@ -23,8 +23,13 @@ import {
   Folder,
   FolderOpen,
   Target,
-  Edit2
+  Edit2,
+  Send
 } from 'lucide-react'
+import { ActionMenu, createCommonMenuItems } from '@/components/Common/ActionMenu'
+import { DraggableFolderTree } from '@/components/Common/DraggableFolderTree'
+import { DraggableTableBody } from '@/components/Common/DraggableTableBody'
+import { TestSendModal } from '@/components/Common/TestSendModal'
 
 interface ReminderListProps {
   reminders: ReservationReminder[]
@@ -36,9 +41,13 @@ interface ReminderListProps {
   onDeleteReminder: (reminderId: string) => void
   onToggleActive: (reminderId: string, isActive: boolean) => void
   onViewAnalytics: (reminderId: string) => void
+  onTestSend?: (reminderId: string, userIds: string[], message?: string) => Promise<void>
   onCreateFolder: (folder: Omit<ReminderFolder, 'id' | 'createdAt' | 'updatedAt'>) => void
   onUpdateFolder: (folderId: string, updates: Partial<ReminderFolder>) => void
   onDeleteFolder: (folderId: string) => void
+  onReorderReminders?: (reminders: ReservationReminder[]) => void
+  onReorderFolders?: (folders: ReminderFolder[]) => void
+  onMoveReminder?: (reminderId: string, targetFolderId: string | null) => void
 }
 
 export function ReminderList({
@@ -51,15 +60,20 @@ export function ReminderList({
   onDeleteReminder,
   onToggleActive,
   onViewAnalytics,
+  onTestSend,
   onCreateFolder,
   onUpdateFolder,
-  onDeleteFolder
+  onDeleteFolder,
+  onReorderReminders,
+  onReorderFolders,
+  onMoveReminder
 }: ReminderListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [expandedFolders, setExpandedFolders] = useState<string[]>([])
   const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [editingFolder, setEditingFolder] = useState<ReminderFolder | null>(null)
+  const [testSendReminder, setTestSendReminder] = useState<ReservationReminder | null>(null)
 
   // フォルダの展開/折りたたみ
   const toggleFolder = (folderId: string) => {
@@ -127,20 +141,14 @@ export function ReminderList({
         </div>
         
         <div className="mt-4 lg:mt-0 flex items-center space-x-3">
-          <button
-            onClick={() => setShowCreateFolder(true)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Folder className="w-4 h-4 mr-2 text-green-600" />
-            新しいフォルダ
-          </button>
-          <button
-            onClick={onCreateReminder}
-            className="inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            リマインダーを作成
-          </button>
+          {/* アクションメニュー */}
+          <ActionMenu
+            items={createCommonMenuItems({
+              onCreateNew: onCreateReminder,
+              onCreateFolder: () => setShowCreateFolder(true),
+              entityName: 'リマインダー'
+            })}
+          />
         </div>
       </div>
 
@@ -153,16 +161,34 @@ export function ReminderList({
               <h3 className="font-semibold text-gray-900">フォルダ</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              <ReminderFolderTreeView 
-                rootFolders={rootFolders}
-                expandedFolders={expandedFolders}
-                selectedFolder={selectedFolder}
-                onToggleFolder={toggleFolder}
-                onSelectFolder={setSelectedFolder}
-                onEditFolder={setEditingFolder}
-                onDeleteFolder={onDeleteFolder}
-                reminders={reminders}
-              />
+              {onReorderFolders && onMoveReminder ? (
+                <DraggableFolderTree
+                  folders={reminderFolders}
+                  items={reminders}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onReorderFolders={onReorderFolders}
+                  onReorderItems={onReorderReminders || (() => {})}
+                  onMoveItem={onMoveReminder}
+                  showAllFolder={true}
+                  showUncategorizedFolder={true}
+                  allFolderLabel="すべてのリマインダー"
+                  uncategorizedFolderLabel="未分類"
+                />
+              ) : (
+                <ReminderFolderTreeView 
+                  rootFolders={rootFolders}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onEditFolder={setEditingFolder}
+                  onDeleteFolder={onDeleteFolder}
+                  reminders={reminders}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -180,25 +206,25 @@ export function ReminderList({
                     : reminderFolders.find(f => f.id === selectedFolder)?.name || 'リマインダー'}
                 </h3>
                 <div className="flex items-center space-x-3">
-                  {/* フォルダ内アクションボタン */}
-                  {selectedFolder && selectedFolder !== 'null' && (
-                    <>
-                      <button
-                        onClick={() => setShowCreateFolder(true)}
-                        className="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <Folder className="w-3 h-3 mr-1" />
-                        フォルダ追加
-                      </button>
-                      <button
-                        onClick={onCreateReminder}
-                        className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        リマインダー追加
-                      </button>
-                    </>
-                  )}
+                  {/* アクションメニュー */}
+                  <ActionMenu
+                    items={createCommonMenuItems({
+                      onCreateNew: onCreateReminder,
+                      onCreateFolder: () => setShowCreateFolder(true),
+                      entityName: 'リマインダー',
+                      selectedFolder: selectedFolder && selectedFolder !== 'null' ? reminderFolders.find(f => f.id === selectedFolder) : null,
+                      onEditFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = reminderFolders.find(f => f.id === selectedFolder)
+                        if (folder) setEditingFolder(folder)
+                      } : undefined,
+                      onDeleteFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = reminderFolders.find(f => f.id === selectedFolder)
+                        if (folder && confirm(`フォルダ「${folder.name}」を削除しますか？`)) {
+                          onDeleteFolder(selectedFolder)
+                        }
+                      } : undefined
+                    })}
+                  />
                   
                   {/* 検索 */}
                   <div className="relative">
@@ -218,12 +244,17 @@ export function ReminderList({
               <ReminderContentView 
                 reminders={filteredReminders}
                 searchQuery={searchQuery}
+                selectedFolder={selectedFolder}
                 onEditReminder={onEditReminder}
                 onDuplicateReminder={onDuplicateReminder}
                 onDeleteReminder={handleDelete}
                 onToggleActive={onToggleActive}
                 onViewAnalytics={onViewAnalytics}
+                onTestSend={onTestSend}
+                setTestSendReminder={setTestSendReminder}
                 getReminderTypeLabel={getReminderTypeLabel}
+                onReorderReminders={onReorderReminders}
+                onMoveReminder={onMoveReminder}
               />
             </div>
           </div>
@@ -249,6 +280,34 @@ export function ReminderList({
           onSubmit={(folderId, updates) => {
             onUpdateFolder(folderId, updates)
             setEditingFolder(null)
+          }}
+        />
+      )}
+
+      {/* テスト送信モーダル */}
+      {testSendReminder && onTestSend && (
+        <TestSendModal
+          isOpen={true}
+          onClose={() => setTestSendReminder(null)}
+          users={users}
+          title={`リマインダー「${testSendReminder.name}」のテスト送信`}
+          contentPreview={
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-900">
+                {testSendReminder.name}
+              </div>
+              {testSendReminder.description && (
+                <div className="text-sm text-gray-600">
+                  {testSendReminder.description}
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                タイプ: {testSendReminder.reminderType}
+              </div>
+            </div>
+          }
+          onSend={async (userIds, message) => {
+            await onTestSend(testSendReminder.id, userIds, message)
           }}
         />
       )}
@@ -318,33 +377,7 @@ function ReminderFolderTreeView({
             <Folder className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
             <span className="font-medium truncate">{folder.name}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-xs text-gray-500">{reminderCount}</span>
-            <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEditFolder(folder)
-                }}
-                className="p-1 hover:bg-gray-200 rounded transition-all"
-                title="フォルダ編集"
-              >
-                <Edit2 className="w-3 h-3 text-gray-600" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (confirm(`フォルダ「${folder.name}」を削除しますか？フォルダ内のリマインダーは未分類になります。`)) {
-                    onDeleteFolder(folder.id)
-                  }
-                }}
-                className="p-1 hover:bg-red-200 rounded transition-all"
-                title="フォルダ削除"
-              >
-                <Trash2 className="w-3 h-3 text-red-600" />
-              </button>
-            </div>
-          </div>
+          <span className="text-xs text-gray-500">{reminderCount}</span>
         </div>
         
         {isExpanded && hasChildren && (
@@ -398,21 +431,31 @@ function ReminderFolderTreeView({
 function ReminderContentView({
   reminders,
   searchQuery,
+  selectedFolder,
   onEditReminder,
   onDuplicateReminder,
   onDeleteReminder,
   onToggleActive,
   onViewAnalytics,
-  getReminderTypeLabel
+  onTestSend,
+  setTestSendReminder,
+  getReminderTypeLabel,
+  onReorderReminders,
+  onMoveReminder
 }: {
   reminders: ReservationReminder[]
   searchQuery: string
+  selectedFolder: string | null
   onEditReminder: (reminder: ReservationReminder) => void
   onDuplicateReminder: (reminder: ReservationReminder) => void
   onDeleteReminder: (reminderId: string, reminderName: string) => void
   onToggleActive: (reminderId: string, isActive: boolean) => void
   onViewAnalytics: (reminderId: string) => void
+  onTestSend?: (reminderId: string, userIds: string[], message?: string) => Promise<void>
+  setTestSendReminder: (reminder: ReservationReminder) => void
   getReminderTypeLabel: (type: string) => string
+  onReorderReminders?: (reminders: ReservationReminder[]) => void
+  onMoveReminder?: (reminderId: string, targetFolderId: string | null) => void
 }) {
   if (reminders.length === 0) {
     return (
@@ -439,6 +482,7 @@ function ReminderContentView({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {onReorderReminders && <th className="w-10 px-2"></th>}
               <th className="min-w-[250px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 リマインダー名
               </th>
@@ -456,9 +500,113 @@ function ReminderContentView({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {reminders.map((reminder) => {
-              return (
+          {onReorderReminders && onMoveReminder ? (
+            <DraggableTableBody
+              items={reminders}
+              currentFolderId={selectedFolder}
+              onReorderItems={onReorderReminders}
+              onMoveItem={onMoveReminder}
+              showDragHandle={true}
+              renderRow={(reminder, index, isDragging) => (
+                <>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          <div className="truncate max-w-[200px]" title={reminder.name}>
+                            {reminder.name}
+                          </div>
+                        </div>
+                        {reminder.description && (
+                          <div className="text-sm text-gray-500 mt-1">
+                            <div className="truncate max-w-[200px]" title={reminder.description}>
+                              {reminder.description}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-900">
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      {getReminderTypeLabel(reminder.reminderType)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-900">
+                    <button
+                      onClick={() => onToggleActive(reminder.id, !reminder.isActive)}
+                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                        reminder.isActive 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                      }`}
+                    >
+                      {reminder.isActive ? (
+                        <>
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          アクティブ
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3 mr-1" />
+                          停止中
+                        </>
+                      )}
+                    </button>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    {new Date(reminder.createdAt).toLocaleDateString('ja-JP')}
+                  </td>
+                  <td className="px-4 py-4 text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => onViewAnalytics(reminder.id)}
+                        className="text-purple-600 hover:text-purple-900 inline-flex items-center p-1 rounded hover:bg-purple-100"
+                        title="分析"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                      </button>
+                      {onTestSend && (
+                        <button
+                          onClick={() => setTestSendReminder(reminder)}
+                          className="text-orange-600 hover:text-orange-900 inline-flex items-center p-1 rounded hover:bg-orange-100"
+                          title="テスト送信"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onEditReminder(reminder)}
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                        title="編集"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDuplicateReminder(reminder)}
+                        className="text-green-600 hover:text-green-900 inline-flex items-center p-1 rounded hover:bg-green-100"
+                        title="複製"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteReminder(reminder.id, reminder.name)}
+                        className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                        title="削除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </>
+              )}
+            />
+          ) : (
+            <tbody className="bg-white divide-y divide-gray-200">
+              {reminders.map((reminder) => (
                 <tr key={reminder.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4">
                     <div className="flex items-center">
@@ -520,6 +668,15 @@ function ReminderContentView({
                       >
                         <BarChart3 className="w-4 h-4" />
                       </button>
+                      {onTestSend && (
+                        <button
+                          onClick={() => setTestSendReminder(reminder)}
+                          className="text-orange-600 hover:text-orange-900 inline-flex items-center p-1 rounded hover:bg-orange-100"
+                          title="テスト送信"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onEditReminder(reminder)}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
@@ -544,9 +701,9 @@ function ReminderContentView({
                     </div>
                   </td>
                 </tr>
-              )
-            })}
-          </tbody>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
     </div>

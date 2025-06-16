@@ -9,6 +9,9 @@ import {
   Settings, Tag as TagIcon, MessageSquare, GitBranch, Zap, ExternalLink, MousePointer, ArrowUp, ArrowDown, Timer, 
   Eye
 } from 'lucide-react'
+import { ActionMenu, createCommonMenuItems } from '@/components/Common/ActionMenu'
+import { DraggableFolderTree } from '@/components/Common/DraggableFolderTree'
+import { DraggableItemList, TableRowDragHandle } from '@/components/Common/DraggableItemList'
 
 
 interface BroadcastHistory {
@@ -62,6 +65,9 @@ interface BroadcastPageProps {
   onDeleteBroadcast: (broadcastId: string) => void
   onToggleBroadcast: (broadcastId: string, isActive: boolean) => void
   onViewAnalytics: (broadcastId: string) => void
+  onReorderBroadcasts?: (broadcasts: Broadcast[]) => void
+  onReorderFolders?: (folders: BroadcastFolder[]) => void
+  onMoveBroadcast?: (broadcastId: string, targetFolderId: string | null) => void
 }
 
 // タグ選択コンポーネント
@@ -419,7 +425,10 @@ export function BroadcastPage({
   onDuplicateBroadcast,
   onDeleteBroadcast,
   onToggleBroadcast,
-  onViewAnalytics
+  onViewAnalytics,
+  onReorderBroadcasts,
+  onReorderFolders,
+  onMoveBroadcast
 }: BroadcastPageProps) {
   const [currentView, setCurrentView] = useState<'list' | 'create' | 'schedule'>('list')
   const [currentStep, setCurrentStep] = useState<'target' | 'template' | 'actions' | 'schedule' | 'confirm'>('target')
@@ -833,20 +842,14 @@ export function BroadcastPage({
             </button>
           </div>
           
-          <button
-            onClick={() => setShowCreateFolder(true)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Folder className="w-4 h-4 mr-2 text-green-600" />
-            新しいフォルダ
-          </button>
-          <button
-            onClick={handleCreateNew}
-            className="inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            一斉配信を作成
-          </button>
+          {/* アクションメニュー */}
+          <ActionMenu
+            items={createCommonMenuItems({
+              onCreateNew: handleCreateNew,
+              onCreateFolder: () => setShowCreateFolder(true),
+              entityName: '配信'
+            })}
+          />
         </div>
       </div>
 
@@ -859,41 +862,58 @@ export function BroadcastPage({
               <h3 className="font-semibold text-gray-900">フォルダ</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              <div className="space-y-1">
-                {/* すべての一斉配信 */}
-                <div 
-                  className={`group flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors ${
-                    selectedFolder === null ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                  }`}
-                  onClick={() => setSelectedFolder(null)}
-                >
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2" />
-                    <Folder className="w-4 h-4 mr-2 text-green-500" />
-                    <span className="font-medium">すべて</span>
+              {onReorderFolders && onMoveBroadcast ? (
+                <DraggableFolderTree
+                  folders={broadcastFolders}
+                  items={broadcasts}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onReorderFolders={onReorderFolders}
+                  onReorderItems={onReorderBroadcasts || (() => {})}
+                  onMoveItem={onMoveBroadcast}
+                  showAllFolder={true}
+                  showUncategorizedFolder={true}
+                  allFolderLabel="すべて"
+                  uncategorizedFolderLabel="未分類"
+                />
+              ) : (
+                <div className="space-y-1">
+                  {/* すべての一斉配信 */}
+                  <div 
+                    className={`group flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors ${
+                      selectedFolder === null ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => setSelectedFolder(null)}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 mr-2" />
+                      <Folder className="w-4 h-4 mr-2 text-green-500" />
+                      <span className="font-medium">すべて</span>
+                    </div>
+                    <span className="text-sm text-gray-500">{broadcasts.length}</span>
                   </div>
-                  <span className="text-sm text-gray-500">{broadcasts.length}</span>
-                </div>
 
-                {/* 未分類の一斉配信 */}
-                <div 
-                  className={`group flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors ${
-                    selectedFolder === 'null' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                  }`}
-                  onClick={() => setSelectedFolder('null')}
-                >
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2" />
-                    <FolderOpen className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">未分類</span>
+                  {/* 未分類の一斉配信 */}
+                  <div 
+                    className={`group flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors ${
+                      selectedFolder === 'null' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => setSelectedFolder('null')}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 mr-2" />
+                      <FolderOpen className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">未分類</span>
+                    </div>
+                    <span className="text-sm text-gray-500">{broadcasts.filter(b => !b.folderId).length}</span>
                   </div>
-                  <span className="text-sm text-gray-500">{broadcasts.filter(b => !b.folderId).length}</span>
-                </div>
 
-                {/* フォルダツリー */}
-                {rootFolders.map(folder => (
-                  <FolderItem
-                    key={folder.id}
+                  {/* フォルダツリー */}
+                  {rootFolders.map(folder => (
+                    <FolderItem
+                      key={folder.id}
                     folder={folder}
                     level={0}
                     broadcasts={broadcasts}
@@ -903,9 +923,10 @@ export function BroadcastPage({
                     onSelectFolder={setSelectedFolder}
                     onEditFolder={setEditingFolder}
                     onDeleteFolder={onDeleteFolder}
-                  />
-                ))}
-              </div>
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -923,25 +944,25 @@ export function BroadcastPage({
                     : broadcastFolders.find(f => f.id === selectedFolder)?.name || '一斉配信'}
                 </h3>
                 <div className="flex items-center space-x-3">
-                  {/* フォルダ内アクションボタン */}
-                  {selectedFolder && selectedFolder !== 'null' && (
-                    <>
-                      <button
-                        onClick={() => setShowCreateFolder(true)}
-                        className="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <Folder className="w-3 h-3 mr-1" />
-                        フォルダ追加
-                      </button>
-                      <button
-                        onClick={onCreateBroadcast}
-                        className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        配信追加
-                      </button>
-                    </>
-                  )}
+                  {/* アクションメニュー */}
+                  <ActionMenu
+                    items={createCommonMenuItems({
+                      onCreateNew: onCreateBroadcast,
+                      onCreateFolder: () => setShowCreateFolder(true),
+                      entityName: '配信',
+                      selectedFolder: selectedFolder && selectedFolder !== 'null' ? broadcastFolders.find(f => f.id === selectedFolder) : null,
+                      onEditFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = broadcastFolders.find(f => f.id === selectedFolder)
+                        if (folder) setEditingFolder(folder)
+                      } : undefined,
+                      onDeleteFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = broadcastFolders.find(f => f.id === selectedFolder)
+                        if (folder && confirm(`フォルダ「${folder.name}」を削除しますか？`)) {
+                          onDeleteFolder(selectedFolder)
+                        }
+                      } : undefined
+                    })}
+                  />
                   
                   {/* 検索 */}
                   <div className="relative">
@@ -966,6 +987,93 @@ export function BroadcastPage({
                     新しい一斉配信を作成してください。
                   </p>
                 </div>
+              ) : onReorderBroadcasts && onMoveBroadcast ? (
+                <DraggableItemList
+                  items={filteredBroadcasts}
+                  currentFolderId={selectedFolder}
+                  onReorderItems={onReorderBroadcasts}
+                  onMoveItem={onMoveBroadcast}
+                  className="space-y-4"
+                  showDragHandle={true}
+                  renderItem={(broadcast, index, isDragging) => (
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="font-medium text-gray-900">{broadcast.name}</h4>
+                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                              broadcast.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                              broadcast.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
+                              broadcast.status === 'SENDING' ? 'bg-yellow-100 text-yellow-800' :
+                              broadcast.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {getStatusLabel(broadcast.status)}
+                            </span>
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 mb-2">
+                            {broadcast.description}
+                          </div>
+                          
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>作成: {new Date(broadcast.createdAt).toLocaleDateString('ja-JP')}</span>
+                            </div>
+                            
+                            <div className="flex items-center space-x-1">
+                              <Target className="w-4 h-4" />
+                              <span>
+                                {broadcast.targetType === 'ALL' ? '全ユーザー' :
+                                 broadcast.targetType === 'SEGMENT' ? 'セグメント' :
+                                 broadcast.targetType === 'TAGS' ? 'タグ' : '不明'}
+                              </span>
+                            </div>
+
+                            {broadcast.sentCount !== undefined && (
+                              <div className="flex items-center space-x-1">
+                                <Users className="w-4 h-4" />
+                                <span>送信: {broadcast.sentCount}件</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => onViewAnalytics(broadcast.id)}
+                            className="text-purple-600 hover:text-purple-900 inline-flex items-center p-1 rounded hover:bg-purple-100"
+                            title="分析"
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onEditBroadcast(broadcast)}
+                            className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                            title="編集"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDuplicateBroadcast(broadcast)}
+                            className="text-green-600 hover:text-green-900 inline-flex items-center p-1 rounded hover:bg-green-100"
+                            title="複製"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(broadcast.id, broadcast.name)}
+                            className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                />
               ) : (
                 <div className="space-y-4">
                   {filteredBroadcasts.map((broadcast) => (

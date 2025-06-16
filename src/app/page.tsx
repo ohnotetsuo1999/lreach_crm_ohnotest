@@ -39,6 +39,7 @@ import { ReminderList } from '@/components/ReminderManagement/ReminderList'
 import { ReminderEditor } from '@/components/ReminderManagement/ReminderEditor'
 import { SupabaseTest } from '@/components/SupabaseTest/SupabaseTest'
 import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
+import { BulkTestSendModal } from '@/components/Common/BulkTestSendModal'
 
 export default function LineMarketingApp() {
   // Navigation state
@@ -71,6 +72,7 @@ export default function LineMarketingApp() {
   const [reminders, setReminders] = useState<ReservationReminder[]>([])
   const [reminderFolders, setReminderFolders] = useState<ReminderFolder[]>([])
   const [editingReminder, setEditingReminder] = useState<ReservationReminder | null>(null)
+  const [showBulkTestSendModal, setShowBulkTestSendModal] = useState(false)
 
   // Initialize data
   useEffect(() => {
@@ -1827,6 +1829,31 @@ export default function LineMarketingApp() {
     ))
   }
 
+  // テスト送信ハンドラー
+  const handleScenarioTestSend = async (scenarioId: string, userIds: string[], message?: string) => {
+    console.log('シナリオテスト送信:', { scenarioId, userIds, message })
+    // 実際の送信処理をここに実装
+    alert(`シナリオのテスト送信が完了しました。\n送信先: ${userIds.length}名`)
+  }
+
+  const handleTemplateTestSend = async (templateId: string, userIds: string[], message?: string) => {
+    console.log('テンプレートテスト送信:', { templateId, userIds, message })
+    // 実際の送信処理をここに実装
+    alert(`テンプレートのテスト送信が完了しました。\n送信先: ${userIds.length}名`)
+  }
+
+  const handleReminderTestSend = async (reminderId: string, userIds: string[], message?: string) => {
+    console.log('リマインダーテスト送信:', { reminderId, userIds, message })
+    // 実際の送信処理をここに実装
+    alert(`リマインダーのテスト送信が完了しました。\n送信先: ${userIds.length}名`)
+  }
+
+  const handleBulkTestSend = async (userIds: string[], items: any[], message?: string) => {
+    console.log('一括テスト送信:', { userIds, items, message })
+    // 実際の送信処理をここに実装
+    alert(`一括テスト送信が完了しました。\n送信先: ${userIds.length}名\nコンテンツ: ${items.length}件`)
+  }
+
   // Calculate dashboard stats
   const dashboardStats = {
     totalUsers: users.length,
@@ -1902,9 +1929,19 @@ export default function LineMarketingApp() {
       case 'dashboard':
         return (
           <div>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">ダッシュボード</h1>
-              <p className="text-gray-600 mt-1">システム全体の状況を確認</p>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">ダッシュボード</h1>
+                <p className="text-gray-600 mt-1">システム全体の状況を確認</p>
+              </div>
+              <button
+                onClick={() => setShowBulkTestSendModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                title="シナリオ、テンプレート、リマインダーを一括でテスト送信"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                一括テスト送信
+              </button>
             </div>
             <Dashboard
               deliveries={deliveryLogs}
@@ -2006,6 +2043,17 @@ export default function LineMarketingApp() {
                   : folder
               ))
             }}
+            onReorderSegments={(reorderedSegments) => {
+              setSegments(reorderedSegments)
+            }}
+            onReorderFolders={(reorderedFolders) => {
+              setSegmentFolders(reorderedFolders)
+            }}
+            onMoveSegment={(segmentId, targetFolderId) => {
+              setSegments(segments.map(segment =>
+                segment.id === segmentId ? { ...segment, folderId: targetFolderId || undefined } : segment
+              ))
+            }}
           />
         )
         
@@ -2015,12 +2063,14 @@ export default function LineMarketingApp() {
             scenarios={scenarios}
             scenarioFolders={scenarioFolders}
             campaigns={campaigns}
+            users={users}
             onCreateScenario={handleCreateScenario}
             onEditScenario={handleEditScenario}
             onDuplicateScenario={handleDuplicateScenario}
             onDeleteScenario={handleDeleteScenario}
             onToggleActive={handleToggleActive}
             onViewAnalytics={handleViewAnalytics}
+            onTestSend={handleScenarioTestSend}
             onCreateFolder={(folder) => {
               const newFolder: ScenarioFolder = {
                 ...folder,
@@ -2048,6 +2098,17 @@ export default function LineMarketingApp() {
                   : folder
               ))
             }}
+            onReorderScenarios={(reorderedScenarios) => {
+              setScenarios(reorderedScenarios)
+            }}
+            onReorderFolders={(reorderedFolders) => {
+              setScenarioFolders(reorderedFolders)
+            }}
+            onMoveScenario={(scenarioId, targetFolderId) => {
+              setScenarios(scenarios.map(scenario =>
+                scenario.id === scenarioId ? { ...scenario, folderId: targetFolderId || undefined } : scenario
+              ))
+            }}
           />
         )
         
@@ -2057,6 +2118,7 @@ export default function LineMarketingApp() {
             templates={templates}
             templateFolders={templateFolders}
             templatePacks={templatePacks}
+            users={users}
             onCreateTemplate={(template) => {
               const newTemplate: Template = {
                 ...template,
@@ -2095,6 +2157,24 @@ export default function LineMarketingApp() {
             onUpdateFolder={(folderId, updates) => {
               setTemplateFolders(templateFolders.map(folder => 
                 folder.id === folderId ? { ...folder, ...updates, updatedAt: new Date() } : folder
+              ))
+            }}
+            onDeleteFolder={(folderId) => {
+              setTemplateFolders(templateFolders.filter(folder => folder.id !== folderId))
+              // フォルダ内のテンプレートをルートに移動
+              setTemplates(templates.map(template => 
+                template.folderId === folderId ? { ...template, folderId: undefined } : template
+              ))
+            }}
+            onReorderFolders={(folders) => {
+              setTemplateFolders(folders)
+            }}
+            onReorderTemplates={(reorderedTemplates) => {
+              setTemplates(reorderedTemplates)
+            }}
+            onMoveTemplate={(templateId, targetFolderId) => {
+              setTemplates(templates.map(template =>
+                template.id === templateId ? { ...template, folderId: targetFolderId || undefined } : template
               ))
             }}
             onCreatePack={(pack) => {
@@ -2145,6 +2225,7 @@ export default function LineMarketingApp() {
             onNavigateToPackDetail={(packId) => {
               // パック詳細表示機能は TemplateDrawer 内で処理されるため、何もしない
             }}
+            onTestSend={handleTemplateTestSend}
           />
         )
         
@@ -2160,6 +2241,12 @@ export default function LineMarketingApp() {
             onUpdateFolder={handleUpdateFolder}
             onDeleteFolder={handleDeleteFolder}
             onMoveTag={handleMoveTag}
+            onReorderTags={(reorderedTags) => {
+              setTags(reorderedTags)
+            }}
+            onReorderFolders={(reorderedFolders) => {
+              setTagFolders(reorderedFolders)
+            }}
           />
         )
         
@@ -2236,6 +2323,17 @@ export default function LineMarketingApp() {
             onViewAnalytics={(broadcastId) => {
               // TODO: Implement analytics view
             }}
+            onReorderBroadcasts={(reorderedBroadcasts) => {
+              setBroadcasts(reorderedBroadcasts)
+            }}
+            onReorderFolders={(reorderedFolders) => {
+              setBroadcastFolders(reorderedFolders)
+            }}
+            onMoveBroadcast={(broadcastId, targetFolderId) => {
+              setBroadcasts(broadcasts.map(broadcast =>
+                broadcast.id === broadcastId ? { ...broadcast, folderId: targetFolderId || undefined } : broadcast
+              ))
+            }}
           />
         )
         
@@ -2307,9 +2405,21 @@ export default function LineMarketingApp() {
               // TODO: Implement analytics view for reminders
               console.log('View analytics for reminder:', reminderId)
             }}
+            onTestSend={handleReminderTestSend}
             onCreateFolder={handleCreateReminderFolder}
             onUpdateFolder={handleUpdateReminderFolder}
             onDeleteFolder={handleDeleteReminderFolder}
+            onReorderReminders={(reorderedReminders) => {
+              setReminders(reorderedReminders)
+            }}
+            onReorderFolders={(reorderedFolders) => {
+              setReminderFolders(reorderedFolders)
+            }}
+            onMoveReminder={(reminderId, targetFolderId) => {
+              setReminders(reminders.map(reminder =>
+                reminder.id === reminderId ? { ...reminder, folderId: targetFolderId || undefined } : reminder
+              ))
+            }}
           />
         )
         
@@ -2379,6 +2489,19 @@ export default function LineMarketingApp() {
           </div>
         </main>
       </div>
+
+      {/* 一括テスト送信モーダル */}
+      {showBulkTestSendModal && (
+        <BulkTestSendModal
+          isOpen={showBulkTestSendModal}
+          onClose={() => setShowBulkTestSendModal(false)}
+          users={users}
+          scenarios={scenarios}
+          templates={templates}
+          reminders={reminders}
+          onSend={handleBulkTestSend}
+        />
+      )}
     </div>
   )
 }

@@ -1,57 +1,72 @@
 'use client'
 
 import { useState } from 'react'
-import { Scenario, Campaign, ScenarioFolder, TriggerType } from '@/types'
-import { 
-  Plus, 
-  Search, 
-  Folder, 
+import { Scenario, ScenarioFolder, Campaign, User } from '@/types'
+import {
+  Plus,
+  Search,
+  Folder,
   FolderOpen,
   ChevronRight,
   ChevronDown,
+  Play,
+  Pause,
   Edit2,
   Copy,
   Trash2,
-  Target,
-  Play,
-  Pause,
-  BarChart3
+  BarChart3,
+  Send
 } from 'lucide-react'
+import { ActionMenu, createCommonMenuItems } from '@/components/Common/ActionMenu'
+import { DraggableList, DragHandle } from '@/components/Common/DraggableList'
+import { DraggableFolderTree } from '@/components/Common/DraggableFolderTree'
+import { DraggableTableBody } from '@/components/Common/DraggableTableBody'
+import { TestSendModal } from '@/components/Common/TestSendModal'
 
 interface ScenarioListProps {
   scenarios: Scenario[]
   scenarioFolders: ScenarioFolder[]
   campaigns: Campaign[]
+  users?: User[]
   onCreateScenario: () => void
   onEditScenario: (scenario: Scenario) => void
   onDuplicateScenario: (scenario: Scenario) => void
   onDeleteScenario: (scenarioId: string) => void
   onToggleActive: (scenarioId: string, isActive: boolean) => void
   onViewAnalytics: (scenarioId: string) => void
+  onTestSend?: (scenarioId: string, userIds: string[], message?: string) => Promise<void>
   onCreateFolder: (folder: Omit<ScenarioFolder, 'id' | 'createdAt' | 'updatedAt'>) => void
   onUpdateFolder: (folderId: string, updates: Partial<ScenarioFolder>) => void
   onDeleteFolder: (folderId: string) => void
+  onReorderScenarios?: (scenarios: Scenario[]) => void
+  onReorderFolders?: (folders: ScenarioFolder[]) => void
+  onMoveScenario?: (scenarioId: string, targetFolderId: string | null) => void
 }
 
 export function ScenarioList({
   scenarios,
   scenarioFolders,
   campaigns,
+  users = [],
   onCreateScenario,
   onEditScenario,
   onDuplicateScenario,
   onDeleteScenario,
   onToggleActive,
   onViewAnalytics,
+  onTestSend,
   onCreateFolder,
   onUpdateFolder,
-  onDeleteFolder
+  onDeleteFolder,
+  onReorderScenarios,
+  onReorderFolders,
+  onMoveScenario
 }: ScenarioListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
   const [expandedFolders, setExpandedFolders] = useState<string[]>([])
   const [showCreateFolder, setShowCreateFolder] = useState(false)
-  const [editingFolder, setEditingFolder] = useState<ScenarioFolder | null>(null)
+  const [testSendScenario, setTestSendScenario] = useState<Scenario | null>(null)
 
   // フォルダの展開/折りたたみ
   const toggleFolder = (folderId: string) => {
@@ -62,137 +77,112 @@ export function ScenarioList({
     )
   }
 
-  // フォルダ階層の構築
-  const buildFolderHierarchy = (folders: ScenarioFolder[], parentId: string | null = null): any[] => {
-    const filtered = folders.filter(folder => 
-      (folder.parentId === parentId) || 
-      (parentId === null && folder.parentId === undefined)
-    )
-    
-    return filtered.map(folder => ({
-      ...folder,
-      children: buildFolderHierarchy(folders, folder.id)
-    }))
-  }
-
-  const rootFolders = buildFolderHierarchy(scenarioFolders)
-
-  // Filter scenarios based on search and folder
+  // フィルタリングされたシナリオ
   const filteredScenarios = scenarios.filter(scenario => {
     const matchesSearch = scenario.name.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    let matchesFolder = true
-    if (selectedFolder === 'null') {
-      matchesFolder = !scenario.folderId
-    } else if (selectedFolder) {
-      matchesFolder = scenario.folderId === selectedFolder
-    }
-    
+    const matchesFolder = selectedFolder === null 
+      ? true 
+      : selectedFolder === 'null' 
+      ? !scenario.folderId 
+      : scenario.folderId === selectedFolder
     return matchesSearch && matchesFolder
   })
 
-  const handleDelete = (scenarioId: string, scenarioName: string) => {
-    if (confirm(`シナリオ「${scenarioName}」を削除しますか？`)) {
-      onDeleteScenario(scenarioId)
-    }
+  // フォルダ階層の構築
+  const buildFolderHierarchy = (folders: ScenarioFolder[], parentId: string | null = null): any[] => {
+    return folders
+      .filter(folder => folder.parentId === parentId)
+      .map(folder => ({
+        ...folder,
+        children: buildFolderHierarchy(folders, folder.id)
+      }))
   }
 
-  const getTriggerLabel = (trigger: TriggerType) => {
-    switch (trigger) {
-      case 'MANUAL': return '手動'
-      case 'SCHEDULE': return 'スケジュール'
-      case 'TAG_ADDED': return 'タグ追加'
-      case 'STATUS_CHANGED': return 'ステータス変更'
-      case 'USER_ACTION': return 'ユーザーアクション'
-      case 'TIME_BASED': return '時間ベース'
-      default: return trigger
-    }
-  }
+  const folderHierarchy = buildFolderHierarchy(scenarioFolders)
 
   return (
     <div className="space-y-6">
       {/* ヘッダー */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">シナリオ</h2>
           <p className="mt-1 text-sm text-gray-600">
-            自動配信シナリオを管理して効率的な顧客コミュニケーションを実現
+            自動配信シナリオを作成・管理します
           </p>
-        </div>
-        
-        <div className="mt-4 lg:mt-0 flex items-center space-x-3">
-          <button
-            onClick={() => setShowCreateFolder(true)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Folder className="w-4 h-4 mr-2 text-green-600" />
-            新しいフォルダ
-          </button>
-          <button
-            onClick={onCreateScenario}
-            className="inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            シナリオを作成
-          </button>
         </div>
       </div>
 
-      {/* 2カラムレイアウト */}
+      {/* メインコンテンツ */}
       <div className="grid grid-cols-12 gap-6">
-        {/* 左カラム: フォルダツリー */}
-        <div className="col-span-4">
-          <div className="bg-white rounded-lg border border-gray-200 h-[600px] flex flex-col">
+        {/* 左サイドバー: フォルダツリー */}
+        <div className="col-span-3">
+          <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">フォルダ</h3>
             </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              <FolderTreeView 
-                rootFolders={rootFolders}
-                expandedFolders={expandedFolders}
-                selectedFolder={selectedFolder}
-                onToggleFolder={toggleFolder}
-                onSelectFolder={setSelectedFolder}
-                onEditFolder={setEditingFolder}
-                onDeleteFolder={onDeleteFolder}
-                scenarios={scenarios}
-              />
+            <div className="p-4">
+              {onReorderFolders && onMoveScenario ? (
+                <DraggableFolderTree
+                  folders={scenarioFolders}
+                  items={scenarios}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  onReorderFolders={onReorderFolders}
+                  onReorderItems={onReorderScenarios || (() => {})}
+                  onMoveItem={onMoveScenario}
+                  showAllFolder={true}
+                  showUncategorizedFolder={true}
+                  allFolderLabel="すべてのシナリオ"
+                  uncategorizedFolderLabel="未分類"
+                />
+              ) : (
+                <FolderTree
+                  folders={folderHierarchy}
+                  expandedFolders={expandedFolders}
+                  selectedFolder={selectedFolder}
+                  onToggleFolder={toggleFolder}
+                  onSelectFolder={setSelectedFolder}
+                  scenarios={scenarios}
+                />
+              )}
             </div>
           </div>
         </div>
 
-        {/* 右カラム: シナリオ表示 */}
-        <div className="col-span-8">
-          <div className="bg-white rounded-lg border border-gray-200 h-[600px] flex flex-col">
+        {/* 右メインエリア: シナリオリスト */}
+        <div className="col-span-9">
+          <div className="bg-white rounded-lg border border-gray-200">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">
                   {selectedFolder === null 
-                    ? 'すべてのシナリオ' 
+                    ? 'すべてのシナリオ'
                     : selectedFolder === 'null'
                     ? '未分類のシナリオ'
                     : scenarioFolders.find(f => f.id === selectedFolder)?.name || 'シナリオ'}
                 </h3>
-                <div className="flex items-center space-x-3">
-                  {/* フォルダ内アクションボタン */}
-                  {selectedFolder && selectedFolder !== 'null' && (
-                    <>
-                      <button
-                        onClick={() => setShowCreateFolder(true)}
-                        className="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <Folder className="w-3 h-3 mr-1" />
-                        フォルダ追加
-                      </button>
-                      <button
-                        onClick={onCreateScenario}
-                        className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        シナリオ追加
-                      </button>
-                    </>
-                  )}
+                <div className="flex items-center gap-3">
+                  {/* アクションメニュー */}
+                  <ActionMenu
+                    items={createCommonMenuItems({
+                      onCreateNew: onCreateScenario,
+                      onCreateFolder: () => setShowCreateFolder(true),
+                      entityName: 'シナリオ',
+                      selectedFolder: selectedFolder && selectedFolder !== 'null' ? scenarioFolders.find(f => f.id === selectedFolder) : null,
+                      onEditFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = scenarioFolders.find(f => f.id === selectedFolder)
+                        if (folder) onUpdateFolder(folder.id, folder)
+                      } : undefined,
+                      onDeleteFolder: selectedFolder && selectedFolder !== 'null' ? () => {
+                        const folder = scenarioFolders.find(f => f.id === selectedFolder)
+                        if (folder && confirm(`フォルダ「${folder.name}」を削除しますか？`)) {
+                          onDeleteFolder(selectedFolder)
+                        }
+                      } : undefined
+                    })}
+                  />
                   
                   {/* 検索 */}
                   <div className="relative">
@@ -202,22 +192,24 @@ export function ScenarioList({
                       placeholder="シナリオを検索"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-48"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <ScenarioContentView 
+            <div className="p-4">
+              <ScenarioTable
                 scenarios={filteredScenarios}
-                searchQuery={searchQuery}
+                campaigns={campaigns}
                 onEditScenario={onEditScenario}
                 onDuplicateScenario={onDuplicateScenario}
-                onDeleteScenario={handleDelete}
+                onDeleteScenario={onDeleteScenario}
                 onToggleActive={onToggleActive}
                 onViewAnalytics={onViewAnalytics}
-                getTriggerLabel={getTriggerLabel}
+                onReorderScenarios={onReorderScenarios}
+                onMoveScenario={onMoveScenario}
+                selectedFolder={selectedFolder}
               />
             </div>
           </div>
@@ -226,23 +218,40 @@ export function ScenarioList({
 
       {/* フォルダ作成モーダル */}
       {showCreateFolder && (
-        <CreateFolderModal 
-          onClose={() => setShowCreateFolder(false)} 
-          onSubmit={(folder) => {
-            onCreateFolder(folder)
+        <CreateFolderModal
+          onClose={() => setShowCreateFolder(false)}
+          onSubmit={(data: Omit<ScenarioFolder, 'id' | 'createdAt' | 'updatedAt'>) => {
+            onCreateFolder(data)
             setShowCreateFolder(false)
-          }} 
+          }}
+          parentFolders={scenarioFolders}
         />
       )}
-      
-      {/* フォルダ編集モーダル */}
-      {editingFolder && (
-        <EditFolderModal 
-          folder={editingFolder} 
-          onClose={() => setEditingFolder(null)} 
-          onSubmit={(folderId, updates) => {
-            onUpdateFolder(folderId, updates)
-            setEditingFolder(null)
+
+      {/* テスト送信モーダル */}
+      {testSendScenario && onTestSend && (
+        <TestSendModal
+          isOpen={true}
+          onClose={() => setTestSendScenario(null)}
+          users={users}
+          title={`シナリオ「${testSendScenario.name}」のテスト送信`}
+          contentPreview={
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-900">
+                {testSendScenario.name}
+              </div>
+              {testSendScenario.description && (
+                <div className="text-sm text-gray-600">
+                  {testSendScenario.description}
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                トリガー: {testSendScenario.trigger}
+              </div>
+            </div>
+          }
+          onSend={async (userIds, message) => {
+            await onTestSend(testSendScenario.id, userIds, message)
           }}
         />
       )}
@@ -250,97 +259,53 @@ export function ScenarioList({
   )
 }
 
-// フォルダツリー表示コンポーネント
-function FolderTreeView({ 
-  rootFolders, 
+// フォルダツリーコンポーネント
+function FolderTree({ 
+  folders, 
   expandedFolders, 
-  selectedFolder,
+  selectedFolder, 
   onToggleFolder, 
   onSelectFolder,
-  onEditFolder,
-  onDeleteFolder,
-  scenarios
-}: {
-  rootFolders: any[]
-  expandedFolders: string[]
-  selectedFolder: string | null
-  onToggleFolder: (folderId: string) => void
-  onSelectFolder: (folderId: string | null) => void
-  onEditFolder: (folder: ScenarioFolder) => void
-  onDeleteFolder: (folderId: string) => void
-  scenarios: Scenario[]
-}) {
-  const getScenarioCount = (folderId: string): number => {
-    return scenarios.filter(scenario => scenario.folderId === folderId).length
+  scenarios 
+}: any) {
+  const getScenarioCount = (folderId: string) => {
+    return scenarios.filter((s: Scenario) => s.folderId === folderId).length
   }
 
   const renderFolder = (folder: any, level: number = 0) => {
-    const scenarioCount = getScenarioCount(folder.id)
     const hasChildren = folder.children && folder.children.length > 0
     const isExpanded = expandedFolders.includes(folder.id)
     const isSelected = selectedFolder === folder.id
+    const count = getScenarioCount(folder.id)
 
     return (
       <div key={folder.id} className="mb-1">
-        <div 
-          className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
+        <div
+          className={`group flex items-center justify-between py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
             isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
           }`}
           style={{ paddingLeft: `${12 + level * 16}px` }}
           onClick={() => onSelectFolder(folder.id)}
         >
-          <div className="flex items-center min-w-0 flex-1">
+          <div className="flex items-center">
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                if (hasChildren || scenarioCount > 0) {
-                  onToggleFolder(folder.id)
-                }
+                if (hasChildren) onToggleFolder(folder.id)
               }}
-              className="w-4 h-4 mr-2 flex items-center justify-center"
+              className="w-4 h-4 mr-2"
             >
-              {hasChildren || scenarioCount > 0 ? (
-                isExpanded ? (
-                  <ChevronDown className="w-3 h-3 text-gray-500" />
-                ) : (
-                  <ChevronRight className="w-3 h-3 text-gray-500" />
-                )
+              {hasChildren ? (
+                isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
               ) : (
                 <div className="w-3 h-3" />
               )}
             </button>
-            <Folder className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-            <span className="font-medium truncate">{folder.name}</span>
+            <Folder className="w-4 h-4 mr-2 text-blue-500" />
+            <span className="font-medium">{folder.name}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-xs text-gray-500">{scenarioCount}</span>
-            <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEditFolder(folder)
-                }}
-                className="p-1 hover:bg-gray-200 rounded transition-all"
-                title="フォルダ編集"
-              >
-                <Edit2 className="w-3 h-3 text-gray-600" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (confirm(`フォルダ「${folder.name}」を削除しますか？フォルダ内のシナリオは未分類になります。`)) {
-                    onDeleteFolder(folder.id)
-                  }
-                }}
-                className="p-1 hover:bg-red-200 rounded transition-all"
-                title="フォルダ削除"
-              >
-                <Trash2 className="w-3 h-3 text-red-600" />
-              </button>
-            </div>
-          </div>
+          <span className="text-xs text-gray-500">({count})</span>
         </div>
-        
         {isExpanded && hasChildren && (
           <div>
             {folder.children.map((child: any) => renderFolder(child, level + 1))}
@@ -353,8 +318,8 @@ function FolderTreeView({
   return (
     <div className="space-y-1">
       {/* すべてのシナリオ */}
-      <div 
-        className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
+      <div
+        className={`group flex items-center justify-between py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
           selectedFolder === null ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
         }`}
         onClick={() => onSelectFolder(null)}
@@ -364,12 +329,12 @@ function FolderTreeView({
           <Folder className="w-4 h-4 mr-2 text-green-500" />
           <span className="font-medium">すべてのシナリオ</span>
         </div>
-        <span className="text-xs text-gray-500">{scenarios.length}</span>
+        <span className="text-xs text-gray-500">({scenarios.length})</span>
       </div>
 
-      {/* 未分類シナリオ */}
-      <div 
-        className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
+      {/* 未分類 */}
+      <div
+        className={`group flex items-center justify-between py-2 px-3 rounded cursor-pointer hover:bg-gray-100 ${
           selectedFolder === 'null' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
         }`}
         onClick={() => onSelectFolder('null')}
@@ -379,136 +344,226 @@ function FolderTreeView({
           <FolderOpen className="w-4 h-4 mr-2 text-gray-500" />
           <span className="font-medium">未分類</span>
         </div>
-        <span className="text-xs text-gray-500">{scenarios.filter(scenario => !scenario.folderId).length}</span>
+        <span className="text-xs text-gray-500">
+          ({scenarios.filter((s: Scenario) => !s.folderId).length})
+        </span>
       </div>
 
       {/* フォルダツリー */}
-      {rootFolders.map(folder => renderFolder(folder))}
+      {folders.map((folder: any) => renderFolder(folder))}
     </div>
   )
 }
 
-// シナリオコンテンツ表示コンポーネント
-function ScenarioContentView({
+// シナリオテーブルコンポーネント
+function ScenarioTable({
   scenarios,
-  searchQuery,
+  campaigns,
   onEditScenario,
   onDuplicateScenario,
   onDeleteScenario,
   onToggleActive,
   onViewAnalytics,
-  getTriggerLabel
-}: {
-  scenarios: Scenario[]
-  searchQuery: string
-  onEditScenario: (scenario: Scenario) => void
-  onDuplicateScenario: (scenario: Scenario) => void
-  onDeleteScenario: (scenarioId: string, scenarioName: string) => void
-  onToggleActive: (scenarioId: string, isActive: boolean) => void
-  onViewAnalytics: (scenarioId: string) => void
-  getTriggerLabel: (trigger: TriggerType) => string
-}) {
-  if (scenarios.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        <div className="text-gray-400 mb-4">
-          <Target className="w-16 h-16 mx-auto" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          {searchQuery ? 'シナリオが見つかりません' : 'シナリオがまだありません'}
-        </h3>
-        <p className="text-gray-600">
-          {searchQuery 
-            ? '検索条件に一致するシナリオがありません。'
-            : '新しいシナリオを作成して、自動配信を設定しましょう。'
-          }
-        </p>
-      </div>
-    )
-  }
-
+  onReorderScenarios,
+  onMoveScenario,
+  selectedFolder
+}: any) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="min-w-[250px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                シナリオ名
-              </th>
-              <th className="min-w-[120px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                トリガー
-              </th>
-              <th className="min-w-[100px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ステータス
-              </th>
-              <th className="min-w-[120px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                作成日
-              </th>
-              <th className="min-w-[150px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                アクション
-              </th>
-            </tr>
-          </thead>
+    <div className="overflow-x-auto">
+      <table className="min-w-full">
+        <thead>
+          <tr className="border-b border-gray-200">
+            {onReorderScenarios && <th className="w-10 px-2"></th>}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              シナリオ名
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              キャンペーン
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              トリガー
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              ステータス
+            </th>
+            <th className="relative px-6 py-3">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        {onReorderScenarios && onMoveScenario ? (
+          <DraggableTableBody
+            items={scenarios}
+            currentFolderId={selectedFolder}
+            onReorderItems={onReorderScenarios}
+            onMoveItem={onMoveScenario}
+            showDragHandle={true}
+            renderRow={(scenario: Scenario, index, isDragging) => {
+              const campaign = campaigns.find((c: Campaign) => c.id === scenario.campaignId)
+              return (
+                <>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{scenario.name}</div>
+                    {scenario.description && (
+                      <div className="text-sm text-gray-500">{scenario.description}</div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{campaign?.name || '-'}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                    {scenario.trigger}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => onToggleActive(scenario.id, !scenario.isActive)}
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      scenario.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {scenario.isActive ? (
+                      <>
+                        <Play className="w-3 h-3 mr-1" />
+                        有効
+                      </>
+                    ) : (
+                      <>
+                        <Pause className="w-3 h-3 mr-1" />
+                        無効
+                      </>
+                    )}
+                  </button>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => onViewAnalytics(scenario.id)}
+                      className="text-gray-600 hover:text-gray-900"
+                      title="分析"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        // テスト送信ボタンの処理
+                        console.log('Test send scenario:', scenario.id)
+                      }}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="テスト送信"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onEditScenario(scenario)}
+                      className="text-gray-600 hover:text-gray-900"
+                      title="編集"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onDuplicateScenario(scenario)}
+                      className="text-gray-600 hover:text-gray-900"
+                      title="複製"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`シナリオ「${scenario.name}」を削除しますか？`)) {
+                          onDeleteScenario(scenario.id)
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                      title="削除"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+                </>
+              )
+            }}
+          />
+        ) : (
           <tbody className="bg-white divide-y divide-gray-200">
-            {scenarios.map((scenario) => {
+            {scenarios.map((scenario: Scenario) => {
+              const campaign = campaigns.find((c: Campaign) => c.id === scenario.campaignId)
               return (
                 <tr key={scenario.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      <div className="truncate max-w-[200px]" title={scenario.name}>
-                        {scenario.name}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      <div className="truncate max-w-[200px]" title={`ID: ${scenario.id}`}>
-                        ID: {scenario.id}
-                      </div>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{scenario.name}</div>
+                      {scenario.description && (
+                        <div className="text-sm text-gray-500">{scenario.description}</div>
+                      )}
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900">
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                      {getTriggerLabel(scenario.trigger)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{campaign?.name || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                      {scenario.trigger}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900">
-                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                      scenario.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {scenario.isActive ? 'アクティブ' : '無効'}
-                    </span>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => onToggleActive(scenario.id, !scenario.isActive)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        scenario.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {scenario.isActive ? (
+                        <>
+                          <Play className="w-3 h-3 mr-1" />
+                          有効
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-3 h-3 mr-1" />
+                          無効
+                        </>
+                      )}
+                    </button>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
-                    {scenario.createdAt.toLocaleDateString('ja-JP')}
-                  </td>
-                  <td className="px-4 py-4 text-sm font-medium">
-                    <div className="flex items-center space-x-2">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => onViewAnalytics(scenario.id)}
-                        className="text-purple-600 hover:text-purple-900 inline-flex items-center p-1 rounded hover:bg-purple-100"
+                        className="text-gray-600 hover:text-gray-900"
                         title="分析"
                       >
                         <BarChart3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onEditScenario(scenario)}
-                        className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 rounded hover:bg-blue-100"
+                        className="text-gray-600 hover:text-gray-900"
                         title="編集"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onDuplicateScenario(scenario)}
-                        className="text-green-600 hover:text-green-900 inline-flex items-center p-1 rounded hover:bg-green-100"
+                        className="text-gray-600 hover:text-gray-900"
                         title="複製"
                       >
                         <Copy className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => onDeleteScenario(scenario.id, scenario.name)}
-                        className="text-red-600 hover:text-red-900 inline-flex items-center p-1 rounded hover:bg-red-100"
+                        onClick={() => {
+                          if (confirm(`シナリオ「${scenario.name}」を削除しますか？`)) {
+                            onDeleteScenario(scenario.id)
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-900"
                         title="削除"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -519,148 +574,95 @@ function ScenarioContentView({
               )
             })}
           </tbody>
-        </table>
-      </div>
+        )}
+      </table>
+      {scenarios.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">シナリオがありません</p>
+        </div>
+      )}
     </div>
   )
 }
 
 // フォルダ作成モーダル
-function CreateFolderModal({ onClose, onSubmit }: { 
-  onClose: () => void, 
-  onSubmit: (folder: Omit<ScenarioFolder, 'id' | 'createdAt' | 'updatedAt'>) => void
-}) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+function CreateFolderModal({ onClose, onSubmit, parentFolders }: any) {
+  const [folderData, setFolderData] = useState({
+    name: '',
+    description: '',
+    parentId: null as string | null
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
-    
-    onSubmit({
-      name: name.trim(),
-      description: description.trim() || undefined
-    })
-    onClose()
+    if (folderData.name.trim()) {
+      onSubmit(folderData)
+    }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">新規フォルダ作成</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-96">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">新規フォルダ作成</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">フォルダ名</label>
+              <label className="block text-sm font-medium text-gray-700">
+                フォルダ名
+              </label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="フォルダ名を入力"
+                value={folderData.name}
+                onChange={(e) => setFolderData({ ...folderData, name: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 required
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">説明（任意）</label>
+              <label className="block text-sm font-medium text-gray-700">
+                説明（任意）
+              </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="フォルダの説明を入力"
+                value={folderData.description}
+                onChange={(e) => setFolderData({ ...folderData, description: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 rows={3}
               />
             </div>
-            
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                作成
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// フォルダ編集モーダル
-function EditFolderModal({ folder, onClose, onSubmit }: { 
-  folder: ScenarioFolder, 
-  onClose: () => void, 
-  onSubmit: (folderId: string, updates: Partial<ScenarioFolder>) => void
-}) {
-  const [name, setName] = useState(folder.name)
-  const [description, setDescription] = useState(folder.description || '')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    
-    onSubmit(folder.id, {
-      name: name.trim(),
-      description: description.trim() || undefined
-    })
-    onClose()
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">フォルダ編集</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">フォルダ名</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">説明（任意）</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              <label className="block text-sm font-medium text-gray-700">
+                親フォルダ（任意）
+              </label>
+              <select
+                value={folderData.parentId || ''}
+                onChange={(e) => setFolderData({ ...folderData, parentId: e.target.value || null })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                更新
-              </button>
+                <option value="">なし</option>
+                {parentFolders.map((folder: ScenarioFolder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          </form>
-        </div>
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+            >
+              作成
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

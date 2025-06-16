@@ -12,6 +12,7 @@ export interface BaseFolder extends BaseEntity {
   name: string
   description?: string
   parentId?: string | null
+  order?: number
 }
 
 export interface BaseTimingConfig {
