@@ -733,3 +733,794 @@ export interface TemplateRecommendation {
     performanceScore?: number
   }
 }
+
+// ========== CRM (Customer Relationship Management) 関連の型定義 ==========
+
+// 求職者情報
+export interface JobSeeker {
+  id: string
+  name: string
+  email: string
+  phone: string
+  lineUserId?: string
+  profileImageUrl?: string
+  
+  // 基本情報
+  birthDate?: Date
+  age?: number
+  gender?: 'male' | 'female' | 'other'
+  address?: string
+  
+  // 職歴・学歴
+  currentCompany?: string
+  currentPosition?: string
+  yearsOfExperience?: number
+  education?: Education[]
+  workHistory?: WorkHistory[]
+  experiences?: WorkHistory[] // エイリアスとして追加
+  
+  // スキル・資格
+  skills: Skill[]
+  certifications: Certification[]
+  languages: Language[]
+  
+  // 希望条件
+  desiredPositions: string[]
+  desiredSalary?: {
+    min: number
+    max: number
+    currency: string
+  }
+  desiredLocation?: string[]
+  availableFrom?: Date
+  workStyle?: 'full-time' | 'part-time' | 'contract' | 'freelance' | 'intern'
+  
+  // 書類
+  resumeUrl?: string
+  portfolioUrl?: string
+  attachments?: Attachment[]
+  
+  // ステータス
+  status: JobSeekerStatus
+  tags: string[]
+  notes?: string
+  
+  // 応募履歴
+  applications?: JobApplication[]
+  
+  // システム情報
+  source?: 'line' | 'web' | 'referral' | 'direct' | 'agency'
+  createdAt: Date
+  updatedAt: Date
+  lastContactedAt?: Date
+}
+
+export type JobSeekerStatus = 
+  | 'new'              // 新規
+  | 'screening'        // スクリーニング中
+  | 'qualified'        // 適格
+  | 'interviewing'     // 面接中
+  | 'offer_pending'    // オファー検討中
+  | 'hired'           // 採用
+  | 'rejected'        // 不採用
+  | 'on_hold'         // 保留
+  | 'withdrawn'       // 辞退
+
+export interface Education {
+  id: string
+  school: string
+  degree?: string
+  field?: string
+  startDate: Date
+  endDate?: Date
+  isCurrent: boolean
+  description?: string
+}
+
+export interface WorkHistory {
+  id: string
+  company: string
+  position: string
+  startDate: Date
+  endDate?: Date
+  isCurrent: boolean
+  description?: string
+  achievements?: string[]
+}
+
+export interface Skill {
+  id: string
+  name: string
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  yearsOfExperience?: number
+}
+
+export interface Certification {
+  id: string
+  name: string
+  issuer: string
+  issueDate: Date
+  expiryDate?: Date
+  credentialId?: string
+  url?: string
+}
+
+export interface Language {
+  id: string
+  name: string
+  proficiency: 'native' | 'fluent' | 'conversational' | 'basic'
+}
+
+export interface Attachment {
+  id: string
+  name: string
+  url: string
+  type: 'resume' | 'portfolio' | 'certificate' | 'other'
+  uploadedAt: Date
+}
+
+// 求人情報
+export interface JobPosting {
+  id: string
+  title: string
+  company?: string
+  department?: string
+  
+  // 求人詳細
+  description: string
+  requirements: string[]
+  responsibilities: string[]
+  preferredQualifications?: string[]
+  
+  // 雇用条件
+  employmentType: 'full-time' | 'part-time' | 'contract' | 'freelance' | 'intern'
+  jobType: JobType
+  location: string
+  locationType: JobLocation
+  remoteOption?: 'onsite' | 'remote' | 'hybrid'
+  salary?: {
+    min: number
+    max: number
+    currency: string
+    period: 'hourly' | 'monthly' | 'yearly'
+  }
+  salaryRange?: {
+    min: number
+    max: number
+    currency: string
+    period: 'hourly' | 'monthly' | 'yearly'
+  }
+  salaryDetails?: string
+  benefits?: string[]
+  
+  // 求めるスキル
+  requiredSkills: string[]
+  preferredSkills?: string[]
+  requiredExperience?: number // years
+  experienceRequired?: number // years alias
+  requiredEducation?: string
+  educationRequired?: string // alias
+  
+  // ステータス
+  status: JobPostingStatus
+  publishedAt?: Date
+  postedAt: Date
+  expiresAt?: Date
+  closingDate?: Date
+  
+  // 採用プロセス
+  hiringProcess: HiringStage[]
+  targetHiringDate?: Date
+  numberOfOpenings: number
+  
+  // 担当者
+  hiringManagerId?: string
+  recruiterId?: string
+  interviewers?: string[]
+  
+  // 応募者
+  applications?: JobApplication[]
+  
+  // 勤務条件
+  workingHours?: string
+  
+  // フラグ
+  isUrgent?: boolean
+  isFeatured?: boolean
+  
+  // システム情報
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+  tags?: string[]
+  internalNotes?: string
+}
+
+export type JobPostingStatus = 
+  | 'draft'           // 下書き
+  | 'published'       // 公開中
+  | 'active'          // アクティブ（公開中のエイリアス）
+  | 'closed'          // 募集終了
+  | 'on_hold'         // 一時停止
+  | 'filled'          // 採用済み
+
+// 求人タイプ
+export type JobType = 
+  | 'full_time'       // 正社員
+  | 'part_time'       // パート・アルバイト
+  | 'contract'        // 契約社員
+  | 'internship'      // インターン
+  | 'temporary'       // 派遣
+
+// 勤務地タイプ
+export type JobLocation = 
+  | 'onsite'          // オンサイト
+  | 'remote'          // リモート
+  | 'hybrid'          // ハイブリッド
+
+export interface HiringStage {
+  id: string
+  name: string
+  order: number
+  description?: string
+  estimatedDuration?: number // days
+}
+
+// エージェント情報
+export interface Agent {
+  id: string
+  name: string
+  email: string
+  phone: string
+  profileImageUrl?: string
+  
+  // エージェント情報
+  company?: string
+  department?: string
+  position?: string
+  specializations?: string[]
+  specialties?: string[] // エイリアス
+  
+  // パフォーマンス
+  successfulPlacements?: number
+  activeJobSeekers?: number
+  rating?: number
+  performanceMetrics?: {
+    totalRecommendations: number
+    successfulPlacements: number
+    averageTimeToHire: number
+    clientSatisfactionScore: number
+  }
+  
+  // 権限
+  permissions: AgentPermission[]
+  
+  // システム情報
+  status: AgentStatus
+  isActive?: boolean // 互換性のため
+  joinedAt: Date
+  lastActiveAt?: Date
+  notes?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export type AgentStatus = 
+  | 'active'          // アクティブ
+  | 'inactive'        // 非アクティブ
+  | 'suspended'       // 停止中
+
+export type AgentPermission = 
+  | 'view_all_candidates'
+  | 'edit_candidates'
+  | 'view_all_jobs'
+  | 'create_jobs'
+  | 'manage_applications'
+  | 'send_messages'
+  | 'export_data'
+
+// 応募情報
+export interface JobApplication {
+  id: string
+  jobSeekerId: string
+  jobPostingId: string
+  
+  // 応募情報
+  appliedAt: Date
+  coverLetter?: string
+  expectedSalary?: number
+  availableFrom?: Date
+  
+  // ステータス
+  status: ApplicationStatus
+  stage: string // Current hiring stage ID
+  
+  // 評価
+  ratings?: ApplicationRating[]
+  averageRating?: number
+  
+  // 面接
+  interviews?: Interview[]
+  
+  // オファー
+  offer?: JobOffer
+  
+  // アクティビティ
+  activities?: ApplicationActivity[]
+  
+  // システム情報
+  source?: 'direct' | 'agent' | 'referral' | 'job_board'
+  agentId?: string
+  referrerId?: string
+  updatedAt: Date
+  notes?: string
+}
+
+export type ApplicationStatus = 
+  | 'new'             // 新規
+  | 'applied'         // 応募済み
+  | 'reviewing'       // 審査中
+  | 'shortlisted'     // 候補者リスト入り
+  | 'interviewing'    // 面接中
+  | 'offered'         // オファー済み
+  | 'accepted'        // 承諾
+  | 'rejected'        // 不採用
+  | 'withdrawn'       // 辞退
+
+export interface ApplicationRating {
+  id: string
+  evaluatorId: string
+  rating: number // 1-5
+  criteria: string
+  comments?: string
+  createdAt: Date
+}
+
+export interface Interview {
+  id: string
+  applicationId: string
+  
+  // 面接情報
+  type: 'phone' | 'video' | 'in-person' | 'technical' | 'final'
+  scheduledAt: Date
+  duration: number // minutes
+  location?: string
+  meetingUrl?: string
+  
+  // 参加者
+  interviewers: string[]
+  
+  // 結果
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show'
+  feedback?: InterviewFeedback[]
+  overallRating?: number
+  decision?: 'pass' | 'fail' | 'maybe'
+  
+  // システム情報
+  createdAt: Date
+  updatedAt: Date
+  notes?: string
+}
+
+export interface InterviewFeedback {
+  id: string
+  interviewerId: string
+  rating: number // 1-5
+  strengths?: string[]
+  weaknesses?: string[]
+  comments: string
+  recommendation: 'strong-yes' | 'yes' | 'maybe' | 'no' | 'strong-no'
+  createdAt: Date
+}
+
+export interface JobOffer {
+  id: string
+  applicationId: string
+  
+  // オファー詳細
+  position: string
+  salary: number
+  currency: string
+  startDate: Date
+  expiryDate: Date
+  
+  // 条件
+  employmentType: string
+  location: string
+  benefits?: string[]
+  additionalTerms?: string
+  
+  // ステータス
+  status: 'draft' | 'sent' | 'accepted' | 'declined' | 'expired' | 'withdrawn'
+  sentAt?: Date
+  respondedAt?: Date
+  
+  // システム情報
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ApplicationActivity {
+  id: string
+  applicationId: string
+  type: ActivityType
+  description: string
+  performedBy: string
+  createdAt: Date
+  metadata?: Record<string, any>
+}
+
+export type ActivityType = 
+  | 'status_changed'
+  | 'interview_scheduled'
+  | 'interview_completed'
+  | 'rating_added'
+  | 'offer_sent'
+  | 'offer_responded'
+  | 'note_added'
+  | 'document_uploaded'
+
+// チャット関連
+export interface ChatConversation {
+  id: string
+  participants: ChatParticipant[]
+  type: 'jobseeker_line' | 'agent_internal'
+  
+  // 会話情報
+  lastMessageAt?: Date
+  lastMessage?: ChatMessage
+  unreadCount?: number
+  
+  // コンテキスト
+  contextType?: 'job_application' | 'general_inquiry' | 'interview_schedule'
+  contextId?: string // applicationId, jobPostingId, etc.
+  
+  // システム情報
+  status: 'active' | 'archived' | 'closed'
+  createdAt: Date
+  updatedAt: Date
+  tags?: string[]
+}
+
+export interface ChatParticipant {
+  id: string
+  type: 'jobseeker' | 'agent' | 'system'
+  name: string
+  profileImageUrl?: string
+  lastSeenAt?: Date
+}
+
+export interface ChatMessage {
+  id: string
+  conversationId: string
+  senderId: string
+  
+  // メッセージ内容
+  type: 'text' | 'image' | 'file' | 'template' | 'system'
+  content: string
+  attachments?: ChatAttachment[]
+  
+  // メタデータ
+  metadata?: {
+    templateId?: string
+    quickReplies?: string[]
+    buttons?: ChatButton[]
+  }
+  
+  // ステータス
+  status: 'sent' | 'delivered' | 'read' | 'failed'
+  sentAt: Date
+  deliveredAt?: Date
+  readAt?: Date
+  
+  // システム情報
+  isDeleted: boolean
+  editedAt?: Date
+}
+
+export interface ChatAttachment {
+  id: string
+  type: 'image' | 'document' | 'video'
+  url: string
+  name: string
+  size: number
+  mimeType: string
+}
+
+export interface ChatButton {
+  id: string
+  text: string
+  action: 'url' | 'postback' | 'call'
+  value: string
+}
+
+// CRM ダッシュボード用の統計
+export interface CRMStats {
+  totalJobSeekers: number
+  activeApplications: number
+  openPositions: number
+  placementsThisMonth: number
+  averageTimeToHire: number // days
+  applicationsByStatus: Record<ApplicationStatus, number>
+  topSkillsInDemand: Array<{ skill: string; count: number }>
+  hiringFunnel: Array<{ stage: string; count: number }>
+  sourceEffectiveness: Array<{ source: string; applications: number; hires: number }>
+}
+
+// ========== CRM/ATS Integration Types ==========
+
+// マスク化されたプロファイル（個人情報を隠した履歴書）
+export interface MaskedProfile {
+  id: string
+  jobSeekerId: string // 元の求職者ID（CRM側のみ参照可能）
+  
+  // 公開情報（個人情報なし）
+  profileCode: string // 匿名化されたコード（例："JP-2024-001"）
+  
+  // 職務要約（個人情報を除外）
+  careerSummary: string
+  yearsOfExperience: number
+  currentIndustry?: string
+  currentJobLevel?: string // "Junior", "Mid", "Senior", "Manager", etc.
+  
+  // スキル情報
+  skills: Array<{
+    category: string
+    items: string[]
+    level?: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  }>
+  
+  // 経歴（会社名は業界・規模で表現）
+  experiences: Array<{
+    industry: string
+    companySize: 'startup' | 'small' | 'medium' | 'large' | 'enterprise'
+    position: string
+    duration: string // "2年3ヶ月" など
+    achievements: string[]
+  }>
+  
+  // 学歴（学校名は伏せる）
+  education: Array<{
+    level: string // "Bachelor", "Master", "PhD", etc.
+    field: string
+    graduationYear?: number
+  }>
+  
+  // 資格・認定
+  certifications: string[]
+  languages: Array<{
+    language: string
+    proficiency: 'native' | 'fluent' | 'conversational' | 'basic'
+  }>
+  
+  // 希望条件
+  preferences: {
+    desiredRoles: string[]
+    salaryRange?: {
+      min: number
+      max: number
+      currency: string
+    }
+    locations: string[]
+    workStyle: ('full-time' | 'part-time' | 'contract' | 'remote')[]
+    availabilityPeriod: string // "即日", "1ヶ月以内", "3ヶ月以内" など
+  }
+  
+  // CA（キャリアアドバイザー）所感
+  advisorInsights: {
+    personalityTraits: string[]
+    strengths: string[]
+    developmentAreas?: string[]
+    recommendations: string
+    fitForRoles: string[]
+    notes: string
+  }
+  
+  // メタ情報
+  isPublished: boolean
+  publishedAt?: Date
+  lastUpdatedAt: Date
+  viewCount?: number
+  requestCount?: number
+  tags: string[]
+  
+  // システム情報
+  createdBy: string // Agent ID
+  createdAt: Date
+  updatedAt: Date
+}
+
+// 推薦リクエスト（ATS側からCRM側へ）
+export interface RecommendationRequest {
+  id: string
+  
+  // リクエスト元（ATS側）
+  requesterId: string // HR担当者ID
+  requesterName: string
+  requesterCompany: string
+  requesterEmail?: string
+  
+  // 対象
+  maskedProfileId: string
+  maskedProfile?: MaskedProfile // Populated
+  jobPostingId: string
+  jobPosting?: JobPosting // Populated
+  
+  // リクエスト詳細
+  message: string // HR担当者からのメッセージ
+  requirements?: string[] // 追加要件
+  preferredSkills?: string[] // 希望スキル
+  
+  // 提示条件
+  offeredSalary?: {
+    min: number
+    max: number
+    currency: string
+    negotiable: boolean
+  }
+  benefits?: string[]
+  startDate?: Date
+  
+  // 優先度・緊急度
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  deadline?: Date
+  
+  // 添付資料
+  attachments?: Array<{
+    id: string
+    name: string
+    url: string
+    type: 'pitch_deck' | 'job_description' | 'company_profile' | 'video' | 'other'
+  }>
+  
+  // ステータス管理
+  status: RecommendationRequestStatus
+  
+  // レスポンス情報
+  agentId?: string // 担当エージェントID
+  agentResponse?: {
+    respondedAt: Date
+    message: string
+    candidateStatus: 'interested' | 'considering' | 'declined' | 'unavailable'
+    candidateFeedback?: string
+    expectedFollowUp?: Date
+  }
+  
+  // LINE送信情報
+  lineSentAt?: Date
+  lineMessageId?: string
+  candidateLineResponse?: {
+    respondedAt: Date
+    response: 'interested' | 'declined'
+    message?: string
+  }
+  
+  // システム情報
+  createdAt: Date
+  updatedAt: Date
+  completedAt?: Date
+  notes?: string
+}
+
+export type RecommendationRequestStatus = 
+  | 'new'                    // 新着
+  | 'viewed'                  // 既読
+  | 'in_progress'            // 対応中
+  | 'sent_to_candidate'      // 候補者に送信済み
+  | 'candidate_interested'   // 候補者が興味あり
+  | 'candidate_declined'     // 候補者が辞退
+  | 'completed'              // 完了
+  | 'expired'                // 期限切れ
+  | 'cancelled'              // キャンセル
+
+// マスクプロファイル検索条件
+export interface MaskedProfileSearchCriteria {
+  keywords?: string[]
+  skills?: string[]
+  industries?: string[]
+  jobLevels?: string[]
+  yearsOfExperience?: {
+    min?: number
+    max?: number
+  }
+  salaryRange?: {
+    min?: number
+    max?: number
+  }
+  locations?: string[]
+  workStyles?: ('full-time' | 'part-time' | 'contract' | 'remote')[]
+  availability?: string[]
+  languages?: string[]
+  certifications?: string[]
+  tags?: string[]
+  
+  // ソート・フィルタ
+  sortBy?: 'relevance' | 'experience' | 'updated' | 'viewed'
+  sortOrder?: 'asc' | 'desc'
+  isPublished?: boolean
+  publishedAfter?: Date
+  limit?: number
+  offset?: number
+}
+
+// LINE メッセージテンプレート（推薦用）
+export interface RecommendationLineTemplate {
+  id: string
+  name: string
+  
+  // メッセージ構成
+  greeting: string
+  jobSummary: string // 求人要約のテンプレート
+  companyIntroduction: string
+  benefitsHighlight: string
+  callToAction: string
+  
+  // 動的フィールド（置換用）
+  variables: Array<{
+    key: string // {{company_name}}, {{position}}, {{salary_range}} など
+    description: string
+    required: boolean
+    defaultValue?: string
+  }>
+  
+  // クイックリプライボタン
+  quickReplies: Array<{
+    label: string
+    action: 'interested' | 'declined' | 'ask_more'
+    postbackData?: string
+  }>
+  
+  // 使用統計
+  usageCount?: number
+  successRate?: number // 興味ありの割合
+  
+  createdAt: Date
+  updatedAt: Date
+}
+
+// Webhook ペイロード（LINE応答受信用）
+export interface LineRecommendationWebhook {
+  event: 'postback' | 'message'
+  userId: string // LINE User ID
+  timestamp: Date
+  
+  // Postback データ（ボタン押下時）
+  postback?: {
+    data: string // JSON string containing action and recommendationRequestId
+    params?: Record<string, any>
+  }
+  
+  // メッセージデータ（テキスト返信時）
+  message?: {
+    type: 'text'
+    text: string
+  }
+  
+  // 解析後のデータ
+  parsed?: {
+    action: 'interested' | 'declined' | 'ask_more'
+    recommendationRequestId: string
+    additionalInfo?: string
+  }
+}
+
+// ========== ATS Functions Types ==========
+
+// 企業情報
+export interface Company {
+  id: string
+  name: string
+  logo?: string
+  industry: string
+  size: 'startup' | 'small' | 'medium' | 'large' | 'enterprise'
+  description: string
+  website?: string
+  location: string
+  foundedYear?: number
+  employeeCount?: number
+  culture?: string
+  benefits?: string[]
+  createdAt: Date
+  updatedAt: Date
+}
