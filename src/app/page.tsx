@@ -113,6 +113,12 @@ export default function LineMarketingApp() {
   // CRM state
   const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([])
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([])
+  
+  // ATS state
+  const [recommendationRequests, setRecommendationRequests] = useState<RecommendationRequest[]>([])
+  const [showRecommendationForm, setShowRecommendationForm] = useState(false)
+  const [selectedProfileForRecommendation, setSelectedProfileForRecommendation] = useState<MaskedProfile | null>(null)
+  const [selectedJobForRecommendation, setSelectedJobForRecommendation] = useState<JobPosting | null>(null)
   const [agents, setAgents] = useState<Agent[]>([])
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([])
   const [chatConversations, setChatConversations] = useState<ChatConversation[]>([])
@@ -3470,7 +3476,9 @@ export default function LineMarketingApp() {
         )
 
       case 'crm-request-inbox':
-        const mockRequests: RecommendationRequest[] = [
+        // 動的に追加されたリクエストとモックデータを結合
+        const allRequests = [
+          ...recommendationRequests,
           {
             id: 'req_1',
             requesterId: 'hr_1',
@@ -3592,7 +3600,7 @@ export default function LineMarketingApp() {
         
         return (
           <RequestInbox 
-            requests={mockRequests}
+            requests={allRequests}
             onViewRequest={(request) => {
               console.log('リクエスト表示:', request)
             }}
@@ -3825,13 +3833,20 @@ export default function LineMarketingApp() {
               console.log('プロファイル表示:', profile)
             }}
             onRequestRecommendation={(profileId) => {
-              console.log('推薦リクエスト:', profileId)
+              const profile = mockMaskedProfiles.find(p => p.id === profileId)
+              if (profile) {
+                setSelectedProfileForRecommendation(profile)
+                setShowRecommendationForm(true)
+                setActiveTab('ats-recommendation-request')
+              }
             }}
           />
         )
 
       case 'ats-recommendation-request':
-        const mockJobPostings: JobPosting[] = [
+        // 推薦フォームが選択された場合
+        if (showRecommendationForm && selectedProfileForRecommendation) {
+          const availableJobPostings: JobPosting[] = [
           {
             id: 'job_001',
             title: 'フロントエンドリードエンジニア',
@@ -3902,6 +3917,128 @@ export default function LineMarketingApp() {
             applications: 6,
             isPublic: true,
             createdAt: new Date('2024-11-05'),
+            updatedAt: new Date()
+          }
+          ]
+
+          const availableCompanies: Company[] = [
+          {
+            id: 'mp_001',
+            profileCode: 'PRO-A1234',
+            maskedCandidateId: 'MASK_001',
+            careerSummary: '大手金融機関でのフロントエンド開発を経験',
+            yearsOfExperience: 8,
+            currentJobLevel: 'シニア',
+            preferences: {
+              locations: ['東京都', 'リモート'],
+              salaryRange: { min: 800, max: 1200, currency: 'JPY' },
+              employmentTypes: ['fullTime'],
+              availabilityPeriod: '1ヶ月以内',
+              workStyles: ['remote', 'hybrid']
+            },
+            advisorInsights: {
+              strengths: ['技術力が高い', 'リーダーシップがある'],
+              recommendations: '技術力が高く、チームをリードする経験も豊富。'
+            }
+          }
+          ]
+
+          return (
+            <RecommendationRequestForm 
+              profile={selectedProfileForRecommendation}
+              jobPostings={availableJobPostings}
+              maskedProfiles={[selectedProfileForRecommendation]}
+              companies={availableCompanies}
+              company={availableCompanies[0]}
+              onSubmit={(request) => {
+                // リクエストデータを作成
+                const newRequest: RecommendationRequest = {
+                  id: `req_${Date.now()}`,
+                  maskedProfileId: selectedProfileForRecommendation.id,
+                  candidateName: selectedProfileForRecommendation.profileCode,
+                  candidateId: selectedProfileForRecommendation.maskedCandidateId || selectedProfileForRecommendation.id,
+                  candidateSkills: selectedProfileForRecommendation.skills?.flatMap(s => 
+                    typeof s === 'string' ? [s] : (s.items || [])
+                  ) || [],
+                  candidateExperience: `${selectedProfileForRecommendation.currentJobLevel} ${selectedProfileForRecommendation.yearsOfExperience}年`,
+                  candidateCurrentCompany: selectedProfileForRecommendation.experiences?.[0]?.industry || '未設定',
+                  requesterCompany: request.requesterCompany || availableCompanies[0].name,
+                  requesterName: '採用担当者',
+                  jobPostingId: request.jobPostingId || '',
+                  jobPostingTitle: availableJobPostings.find(j => j.id === request.jobPostingId)?.title || '未設定',
+                  message: request.message || '',
+                  requirements: request.requirements || [],
+                  preferredSkills: request.preferredSkills || [],
+                  offeredSalary: request.offeredSalary,
+                  benefits: request.benefits || [],
+                  startDate: request.startDate,
+                  priority: request.priority || 'medium',
+                  deadline: request.deadline,
+                  status: 'new',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  requestDate: new Date()
+                }
+                
+                // リクエストを追加
+                setRecommendationRequests([...recommendationRequests, newRequest])
+                
+                // フォームを閉じる
+                setShowRecommendationForm(false)
+                setSelectedProfileForRecommendation(null)
+                
+                // 受信箱に移動
+                alert('推薦リクエストを送信しました！\n受信箱で確認してください。')
+                setActiveTab('crm-request-inbox')
+              }}
+              onCancel={() => {
+                setShowRecommendationForm(false)
+                setSelectedProfileForRecommendation(null)
+                setActiveTab('ats-masked-profiles')
+              }}
+            />
+          )
+        }
+        
+        // デフォルトの推薦フォーム表示
+        const mockJobPostings: JobPosting[] = [
+          {
+            id: 'company_001',
+            name: '株式会社テックノバ',
+            industry: 'IT',
+            size: '100-500',
+            website: 'https://technova.example.com',
+            description: '最先端の技術でビジネス課題を解決するIT企業',
+            logo: '',
+            location: '東京都渋谷区',
+            foundedYear: 2015,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: 'company_002',
+            name: '株式会社サービスプロ',
+            industry: 'SaaS',
+            size: '50-100',
+            website: 'https://servicepro.example.com',
+            description: 'B2B SaaSプラットフォームを提供',
+            logo: '',
+            location: '東京都港区',
+            foundedYear: 2018,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: 'company_003',
+            name: '株式会社グロース',
+            industry: 'EC',
+            size: '500-1000',
+            website: 'https://growth.example.com',
+            description: 'ECプラットフォームの運営',
+            logo: '',
+            location: '東京都中央区',
+            foundedYear: 2012,
+            createdAt: new Date(),
             updatedAt: new Date()
           }
         ]

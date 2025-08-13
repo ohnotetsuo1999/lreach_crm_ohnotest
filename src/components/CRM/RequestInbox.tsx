@@ -19,7 +19,15 @@ import {
   ChevronRight,
   Filter,
   Search,
-  Briefcase
+  Briefcase,
+  File,
+  FileCheck,
+  Download,
+  Shield,
+  Calculator,
+  Percent,
+  RefreshCw,
+  Info
 } from 'lucide-react'
 import type { RecommendationRequest, RecommendationRequestStatus } from '@/types'
 
@@ -277,6 +285,12 @@ export default function RequestInbox({
                         <DollarSign className="w-3 h-3" />
                         {request.salaryRange || '応相談'}
                       </span>
+                      {((request as any).agentFiles?.length > 0 || (request as any).candidateFiles?.length > 0) && (
+                        <span className="flex items-center gap-1">
+                          <Paperclip className="w-3 h-3" />
+                          {((request as any).agentFiles?.length || 0) + ((request as any).candidateFiles?.length || 0)} 件
+                        </span>
+                      )}
                     </div>
 
                     {request.deadline && (
@@ -411,6 +425,135 @@ export default function RequestInbox({
                       <p className="text-gray-700 whitespace-pre-wrap">
                         {selectedRequest.notes}
                       </p>
+                    </div>
+                  )}
+
+                  {/* エージェント向け条件 */}
+                  {(selectedRequest as any).agentTerms && (
+                    <div className="border rounded-lg p-4 bg-blue-50">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Calculator className="w-5 h-5 text-blue-600" />
+                        エージェント向け条件
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1">
+                            <Percent className="w-4 h-4" />
+                            紹介手数料
+                          </p>
+                          <p className="font-medium">
+                            {(selectedRequest as any).agentTerms.commissionType === 'annual' 
+                              ? `年収の${(selectedRequest as any).agentTerms.commissionRate}%`
+                              : `${(selectedRequest as any).agentTerms.fixedCommission}万円（固定）`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1">
+                            <Shield className="w-4 h-4" />
+                            返金保証
+                          </p>
+                          <p className="font-medium">
+                            {(selectedRequest as any).agentTerms.guaranteePeriod}ヶ月間
+                            {(selectedRequest as any).agentTerms.refundPolicy === 'full' && '（全額返金）'}
+                            {(selectedRequest as any).agentTerms.refundPolicy === 'partial' && '（段階的返金）'}
+                            {(selectedRequest as any).agentTerms.refundPolicy === 'none' && '（返金なし）'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            支払いタイミング
+                          </p>
+                          <p className="font-medium">
+                            {(selectedRequest as any).agentTerms.paymentTiming === 'after_start' ? '入社後' : '試用期間終了後'}
+                            {(selectedRequest as any).agentTerms.paymentDays}日以内
+                          </p>
+                        </div>
+                        {(selectedRequest as any).agentTerms.additionalTerms && (
+                          <div className="col-span-2">
+                            <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+                              <Info className="w-4 h-4" />
+                              追加条件
+                            </p>
+                            <p className="text-sm text-gray-700">
+                              {(selectedRequest as any).agentTerms.additionalTerms}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 添付資料 */}
+                  {((selectedRequest as any).agentFiles?.length > 0 || (selectedRequest as any).candidateFiles?.length > 0) && (
+                    <div className="space-y-4">
+                      {/* エージェント向け資料 */}
+                      {(selectedRequest as any).agentFiles?.length > 0 && (
+                        <div className="border rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Briefcase className="w-5 h-5 text-blue-600" />
+                            エージェント向け資料
+                            <span className="text-xs text-gray-500 font-normal">（エージェントのみ閲覧可能）</span>
+                          </h3>
+                          <div className="space-y-2">
+                            {(selectedRequest as any).agentFiles.map((file: any) => (
+                              <div key={file.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <File className="w-5 h-5 text-blue-600" />
+                                  <div>
+                                    <p className="font-medium text-gray-900">{file.name}</p>
+                                    <p className="text-xs text-gray-600">
+                                      {file.size ? `${Math.round(file.size / 1024)} KB` : 'サイズ不明'} • 
+                                      {file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('ja-JP') : '日付不明'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button className="px-3 py-1 bg-white text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors flex items-center gap-1">
+                                  <Download className="w-4 h-4" />
+                                  ダウンロード
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 求職者展開OK資料 */}
+                      {(selectedRequest as any).candidateFiles?.length > 0 && (
+                        <div className="border rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <FileCheck className="w-5 h-5 text-green-600" />
+                            求職者展開OK資料
+                            <span className="text-xs text-gray-500 font-normal">（求職者への共有可能）</span>
+                          </h3>
+                          <div className="space-y-2">
+                            {(selectedRequest as any).candidateFiles.map((file: any) => (
+                              <div key={file.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <FileCheck className="w-5 h-5 text-green-600" />
+                                  <div>
+                                    <p className="font-medium text-gray-900">{file.name}</p>
+                                    <p className="text-xs text-gray-600">
+                                      {file.size ? `${Math.round(file.size / 1024)} KB` : 'サイズ不明'} • 
+                                      {file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('ja-JP') : '日付不明'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button className="px-3 py-1 bg-white text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-colors flex items-center gap-1">
+                                    <Download className="w-4 h-4" />
+                                    ダウンロード
+                                  </button>
+                                  <button className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1">
+                                    <Send className="w-4 h-4" />
+                                    候補者に送信
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
