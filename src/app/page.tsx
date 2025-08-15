@@ -1574,8 +1574,6 @@ export default function LineMarketingApp() {
         email: 'suzuki@example.com',
         phone: '090-3456-7890',
         profileImageUrl: '/api/placeholder/150/150',
-        headline: 'セールスマネージャー | B2B営業15年',
-        summary: 'IT業界でのB2B営業経験15年。チームマネジメントと新規開拓を得意としています。',
         skills: [
           { id: 'sk1', name: 'B2B営業', level: 'expert', yearsOfExperience: 15 },
           { id: 'sk2', name: 'チームマネジメント', level: 'advanced', yearsOfExperience: 8 },
@@ -1604,10 +1602,10 @@ export default function LineMarketingApp() {
             field: '経営学'
           }
         ],
-        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY', period: 'yearly' },
+        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
         desiredLocation: ['東京都'],
         workStyle: 'full-time',
-        availability: 'in_2_weeks',
+        availableFrom: new Date(),
         status: 'interviewing',
         source: 'agency',
         certifications: [],
@@ -1623,8 +1621,6 @@ export default function LineMarketingApp() {
         email: 'takahashi@example.com',
         phone: '090-4567-8901',
         profileImageUrl: '/api/placeholder/150/150',
-        headline: 'データアナリスト | Python/SQL',
-        summary: 'データ分析とビジネスインサイトの提供に3年の経験があります。',
         skills: [
           { id: 'sk6', name: 'Python', level: 'intermediate', yearsOfExperience: 3 },
           { id: 'sk7', name: 'SQL', level: 'intermediate', yearsOfExperience: 3 },
@@ -1653,10 +1649,10 @@ export default function LineMarketingApp() {
             field: '統計学'
           }
         ],
-        desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY', period: 'yearly' },
+        desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY' },
         desiredLocation: ['東京都', '千葉県', '埼玉県'],
         workStyle: 'full-time',
-        availability: 'in_1_month',
+        availableFrom: new Date(),
         status: 'qualified',
         source: 'agency',
         certifications: [],
@@ -1672,8 +1668,6 @@ export default function LineMarketingApp() {
         email: 'yamada@example.com',
         phone: '090-5678-9012',
         profileImageUrl: '/api/placeholder/150/150',
-        headline: 'バックエンドエンジニア | Java/Spring',
-        summary: '10年以上のバックエンド開発経験。大規模システムの設計・開発を得意としています。',
         skills: [
           { id: 'sk16', name: 'Java', level: 'expert', yearsOfExperience: 10 },
           { id: 'sk17', name: 'Spring', level: 'advanced', yearsOfExperience: 8 },
@@ -1701,10 +1695,10 @@ export default function LineMarketingApp() {
             field: 'ソフトウェア工学'
           }
         ],
-        desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY', period: 'yearly' },
+        desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY' },
         desiredLocation: ['東京都', '大阪府'],
         workStyle: 'full-time',
-        availability: 'in_3_months',
+        availableFrom: new Date(),
         status: 'new',
         source: 'agency',
         certifications: [],
@@ -1720,8 +1714,6 @@ export default function LineMarketingApp() {
         email: 'tanaka.miho@example.com',
         phone: '090-6789-0123',
         profileImageUrl: '/api/placeholder/150/150',
-        headline: 'プロダクトマネージャー | B2C/SaaS',
-        summary: 'ユーザー中心のプロダクト開発を5年間経験。データドリブンな意思決定を重視。',
         skills: [
           { id: 'sk20', name: 'プロダクトマネジメント', level: 'advanced', yearsOfExperience: 5 },
           { id: 'sk21', name: 'アジャイル開発', level: 'advanced', yearsOfExperience: 5 },
@@ -1749,10 +1741,10 @@ export default function LineMarketingApp() {
             field: '経営学'
           }
         ],
-        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY', period: 'yearly' },
+        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
         desiredLocation: ['東京都'],
         workStyle: 'full-time',
-        availability: 'in_1_month',
+        availableFrom: new Date(),
         status: 'interviewing',
         source: 'agency',
         certifications: [],
@@ -1871,21 +1863,24 @@ export default function LineMarketingApp() {
         jobPostingId: 'jp1',
         jobSeekerId: 'js1',
         status: 'interviewing',
+        stage: 'technical_interview',
         appliedAt: new Date('2024-11-10'),
-        source: 'agency',
+        source: 'agent',
         interviews: [
           {
             id: 'int1',
+            applicationId: 'app1',
             scheduledAt: new Date('2024-11-20T14:00:00'),
             type: 'technical',
+            duration: 60,
             interviewers: ['面接官A'],
             location: 'オンライン',
             status: 'scheduled',
-            round: 1
+            createdAt: new Date('2024-11-10'),
+            updatedAt: new Date()
           }
         ],
         activities: [],
-        createdAt: new Date('2024-11-10'),
         updatedAt: new Date()
       },
       {
@@ -1893,32 +1888,41 @@ export default function LineMarketingApp() {
         jobPostingId: 'jp2',
         jobSeekerId: 'js2',
         status: 'offered',
+        stage: 'offer',
         appliedAt: new Date('2024-11-05'),
-        source: 'agency',
+        source: 'agent',
         interviews: [
           {
             id: 'int2',
+            applicationId: 'app2',
             scheduledAt: new Date('2024-11-12T10:00:00'),
-            type: 'screening',
+            type: 'phone',
+            duration: 30,
             interviewers: ['人事部長'],
             location: '本社',
             status: 'completed',
-            round: 1,
-            feedback: '非常に良い印象。次の面接に進む。'
+            feedback: [],
+            createdAt: new Date('2024-11-05'),
+            updatedAt: new Date()
           }
         ],
-        offers: [
-          {
-            id: 'offer1',
-            salary: { amount: 10000000, currency: 'JPY', period: 'yearly' },
-            startDate: new Date('2024-12-01'),
-            expiresAt: new Date('2024-11-25'),
-            status: 'pending',
-            createdAt: new Date('2024-11-15')
-          }
-        ],
+        offer: {
+          id: 'offer1',
+          applicationId: 'app2',
+          position: '営業マネージャー',
+          salary: 10000000,
+          currency: 'JPY',
+          startDate: new Date('2024-12-01'),
+          expiryDate: new Date('2024-11-25'),
+          employmentType: 'full-time',
+          location: '東京都新宿区',
+          status: 'sent',
+          sentAt: new Date('2024-11-15'),
+          createdBy: 'hr1',
+          createdAt: new Date('2024-11-15'),
+          updatedAt: new Date()
+        },
         activities: [],
-        createdAt: new Date('2024-11-05'),
         updatedAt: new Date()
       },
       {
@@ -1926,10 +1930,10 @@ export default function LineMarketingApp() {
         jobPostingId: 'jp3',
         jobSeekerId: 'js3',
         status: 'reviewing',
+        stage: 'screening',
         appliedAt: new Date('2024-11-12'),
-        source: 'agency',
+        source: 'agent',
         activities: [],
-        createdAt: new Date('2024-11-12'),
         updatedAt: new Date()
       }
     ]
@@ -3060,7 +3064,7 @@ export default function LineMarketingApp() {
             }}
             onStartChat={(jobSeekerId) => {
               // チャットタブに切り替え
-              setActiveTab('ats-chat')
+              setActiveTab('crm-chat')
             }}
             onAddNote={(jobSeekerId, note) => {
               setJobSeekers(jobSeekers.map(js =>
@@ -3102,7 +3106,7 @@ export default function LineMarketingApp() {
               setJobSeekers(jobSeekers.filter(js => js.id !== jobSeekerId))
             }}
             onStartChat={(jobSeekerId) => {
-              setActiveTab('ats-chat')
+              setActiveTab('crm-chat')
             }}
           />
         )
@@ -3146,7 +3150,7 @@ export default function LineMarketingApp() {
             }}
             onViewJobSeeker={(jobSeeker) => {
               setSelectedJobSeeker(jobSeeker)
-              setActiveTab('ats-jobseekers')
+              setActiveTab('crm-jobseekers')
               setCurrentView('detail')
             }}
             onUpdateApplicationStatus={(applicationId, status) => {
@@ -3223,16 +3227,16 @@ export default function LineMarketingApp() {
               ))
             }}
             onStartChat={(agentId) => {
-              setActiveTab('ats-chat')
+              setActiveTab('crm-chat')
             }}
             onViewJobSeeker={(jobSeeker) => {
               setSelectedJobSeeker(jobSeeker)
-              setActiveTab('ats-jobseekers')
+              setActiveTab('crm-jobseekers')
               setCurrentView('detail')
             }}
             onViewJobPosting={(jobPosting) => {
               setSelectedJobPosting(jobPosting)
-              setActiveTab('ats-jobs')
+              setActiveTab('crm-jobs')
               setCurrentView('detail')
             }}
           />
@@ -3255,7 +3259,7 @@ export default function LineMarketingApp() {
               ))
             }}
             onStartChat={(agentId) => {
-              setActiveTab('ats-chat')
+              setActiveTab('crm-chat')
             }}
           />
         )
@@ -3355,7 +3359,7 @@ export default function LineMarketingApp() {
                   jp.status === 'published' || jp.status === 'active'
                 )}
                 jobSeekers={jobSeekers.filter(js => 
-                  js.source === 'agent' && js.agentId === currentAgent.id
+                  js.source === 'agency'
                 )}
                 preselectedJobId={recommendationTarget.jobPosting?.id}
                 onClose={() => {
@@ -3369,10 +3373,10 @@ export default function LineMarketingApp() {
                     jobSeekerId: data.jobSeekerId,
                     status: 'new',
                     appliedAt: new Date(),
-                    source: 'agency',
+                    source: 'agent',
                     agentId: currentAgent.id,
                     activities: [],
-                    createdAt: new Date(),
+                    stage: 'initial',
                     updatedAt: new Date()
                   }
                   setJobApplications([...jobApplications, newRecommendation])
@@ -3410,7 +3414,7 @@ export default function LineMarketingApp() {
                   jp.status === 'published' || jp.status === 'active'
                 )}
                 jobSeekers={jobSeekers.filter(js => 
-                  js.source === 'agent' && js.agentId === currentAgent.id
+                  js.source === 'agency'
                 )}
                 preselectedJobId={recommendationTarget.jobPosting?.id}
                 onClose={() => {
@@ -3424,10 +3428,10 @@ export default function LineMarketingApp() {
                     jobSeekerId: data.jobSeekerId,
                     status: 'new',
                     appliedAt: new Date(),
-                    source: 'agency',
+                    source: 'agent',
                     agentId: currentAgent.id,
                     activities: [],
-                    createdAt: new Date(),
+                    stage: 'initial',
                     updatedAt: new Date()
                   }
                   setJobApplications([...jobApplications, newRecommendation])
@@ -3483,10 +3487,10 @@ export default function LineMarketingApp() {
               location: '東京都',
               salaryRange: '500-800万円',
               jobDescription: 'フロントエンド開発のリードポジション',
-              benefits: 'リモートワーク可、フレックスタイム',
+              benefits: ['リモートワーク可', 'フレックスタイム'],
               deadline: new Date('2024-12-31'),
               requestDate: new Date(),
-              status: 'pending',
+              status: 'new',
               priority: 'high',
               requesterName: '田中太郎',
               requesterEmail: 'tanaka@example.com',
@@ -3526,7 +3530,7 @@ export default function LineMarketingApp() {
             location: '東京都渋谷区',
             salaryRange: '600-800万円',
             jobDescription: 'モダンなWebアプリケーション開発',
-            benefits: 'リモートワーク可、フレックスタイム制',
+            benefits: ['リモートワーク可', 'フレックスタイム制'],
             deadline: new Date('2024-12-31'),
             requestDate: new Date('2024-11-20'),
             status: 'new',
@@ -3555,7 +3559,7 @@ export default function LineMarketingApp() {
             location: '東京都港区',
             salaryRange: '700-1000万円',
             jobDescription: 'ビッグデータ分析と機械学習モデルの開発',
-            benefits: 'ストックオプション、リモートワーク可',
+            benefits: ['ストックオプション', 'リモートワーク可'],
             deadline: new Date('2024-12-15'),
             requestDate: new Date('2024-11-18'),
             status: 'viewed',
@@ -3584,7 +3588,7 @@ export default function LineMarketingApp() {
             location: '東京都千代田区',
             salaryRange: '550-750万円',
             jobDescription: 'エンタープライズ向けシステム開発',
-            benefits: '研修制度充実、資格取得支援',
+            benefits: ['研修制度充実', '資格取得支援'],
             deadline: new Date('2025-01-15'),
             requestDate: new Date('2024-11-15'),
             status: 'sent_to_candidate',
@@ -3614,7 +3618,7 @@ export default function LineMarketingApp() {
             location: '東京都港区',
             salaryRange: '800-1200万円',
             jobDescription: 'SaaSプロダクトの企画・開発リード',
-            benefits: 'ストックオプション、フルリモート可',
+            benefits: ['ストックオプション', 'フルリモート可'],
             deadline: new Date('2024-12-20'),
             requestDate: new Date('2024-11-19'),
             status: 'new',
