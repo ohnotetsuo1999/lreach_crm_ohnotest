@@ -37,7 +37,10 @@ import {
   AgentStatus,
   JobApplication,
   ChatConversation,
-  AgentPermission
+  AgentPermission,
+  RecommendationRequest,
+  MaskedProfile,
+  Company
 } from '@/types'
 import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle, Briefcase, UserCheck, GanttChartSquare } from 'lucide-react'
 import { Reports } from '@/components/Reports/Reports'
