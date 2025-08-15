@@ -1597,8 +1597,10 @@ export default function LineMarketingApp() {
           {
             id: 'edu2',
             degree: '経営学学士',
-            institution: '慶應義塾大学',
-            graduationDate: new Date('2009-03-31'),
+            school: '慶應義塾大学',
+            startDate: new Date('2005-04-01'),
+            endDate: new Date('2009-03-31'),
+            isCurrent: false,
             field: '経営学'
           }
         ],
@@ -1644,8 +1646,10 @@ export default function LineMarketingApp() {
           {
             id: 'edu3',
             degree: '統計学修士',
-            institution: '東京大学',
-            graduationDate: new Date('2021-03-31'),
+            school: '東京大学',
+            startDate: new Date('2019-04-01'),
+            endDate: new Date('2021-03-31'),
+            isCurrent: false,
             field: '統計学'
           }
         ],
@@ -1690,8 +1694,10 @@ export default function LineMarketingApp() {
           {
             id: 'edu4',
             degree: '情報工学修士',
-            institution: '京都大学',
-            graduationDate: new Date('2014-03-31'),
+            school: '京都大学',
+            startDate: new Date('2012-04-01'),
+            endDate: new Date('2014-03-31'),
+            isCurrent: false,
             field: 'ソフトウェア工学'
           }
         ],
@@ -1736,8 +1742,10 @@ export default function LineMarketingApp() {
           {
             id: 'edu5',
             degree: 'MBA',
-            institution: '一橋大学',
-            graduationDate: new Date('2019-03-31'),
+            school: '一橋大学',
+            startDate: new Date('2017-04-01'),
+            endDate: new Date('2019-03-31'),
+            isCurrent: false,
             field: '経営学'
           }
         ],
