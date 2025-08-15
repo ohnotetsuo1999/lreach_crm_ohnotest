@@ -111,7 +111,7 @@ export function RecentDeliveryTable({ deliveries }: RecentDeliveryTableProps) {
                     テンプレート #{delivery.template.order}
                   </div>
                   <div className="text-sm text-gray-500">
-                    Pack ID: {delivery.template.packId.slice(-8)}
+                    Pack ID: {delivery.template.packId?.slice(-8) || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

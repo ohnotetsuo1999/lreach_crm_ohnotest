@@ -50,7 +50,7 @@ export default function RequestInbox({
 
   // 求職者ごとにグループ化
   const groupedRequests = requests.reduce<Record<string, RecommendationRequest[]>>((acc, req) => {
-    const candidateKey = req.candidateId || req.maskedProfileId || 'unknown'
+    const candidateKey = (req as any).candidateId || req.maskedProfileId || 'unknown'
     if (!acc[candidateKey]) {
       acc[candidateKey] = []
     }
@@ -63,15 +63,15 @@ export default function RequestInbox({
     const firstReq = reqs[0]
     return {
       candidateId,
-      candidateName: firstReq.candidateName || '候補者' + candidateId.slice(-4),
-      candidateSkills: firstReq.candidateSkills || [],
-      candidateExperience: firstReq.candidateExperience || '',
-      candidateCurrentCompany: firstReq.candidateCurrentCompany || '',
+      candidateName: (firstReq as any).candidateName || '候補者' + candidateId.slice(-4),
+      candidateSkills: (firstReq as any).candidateSkills || [],
+      candidateExperience: (firstReq as any).candidateExperience || '',
+      candidateCurrentCompany: (firstReq as any).candidateCurrentCompany || '',
       requestCount: reqs.length,
       newRequestCount: reqs.filter(r => r.status === 'new').length,
       latestRequest: reqs.sort((a, b) => 
-        new Date(b.requestDate || b.createdAt || 0).getTime() - 
-        new Date(a.requestDate || a.createdAt || 0).getTime()
+        new Date((b as any).requestDate || b.createdAt || 0).getTime() - 
+        new Date((a as any).requestDate || a.createdAt || 0).getTime()
       )[0]
     }
   })
@@ -214,7 +214,7 @@ export default function RequestInbox({
                   </div>
                   {candidate.candidateSkills.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {candidate.candidateSkills.slice(0, 3).map((skill, idx) => (
+                      {candidate.candidateSkills.slice(0, 3).map((skill: string, idx: number) => (
                         <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
                           {skill}
                         </span>
@@ -270,7 +270,7 @@ export default function RequestInbox({
                     </div>
 
                     <h4 className="font-semibold text-gray-900 mb-1">
-                      {request.jobPostingTitle || '求人タイトル'}
+                      {(request as any).jobPostingTitle || request.jobPosting?.title || '求人タイトル'}
                     </h4>
                     <p className="text-sm text-gray-600 mb-2">
                       {request.requesterCompany}
@@ -279,11 +279,11 @@ export default function RequestInbox({
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {request.location || '東京都'}
+                        {(request as any).location || request.jobPosting?.location || '東京都'}
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3" />
-                        {request.salaryRange || '応相談'}
+                        {(request as any).salaryRange || (request.offeredSalary ? `${request.offeredSalary.min}~${request.offeredSalary.max}万円` : '応相談')}
                       </span>
                       {((request as any).agentFiles?.length > 0 || (request as any).candidateFiles?.length > 0) && (
                         <span className="flex items-center gap-1">
@@ -310,7 +310,7 @@ export default function RequestInbox({
                   <div className="flex justify-between items-start">
                     <div>
                       <h2 className="text-2xl font-bold mb-2">
-                        {selectedRequest.jobPostingTitle || '求人情報'}
+                        {(selectedRequest as any).jobPostingTitle || selectedRequest.jobPosting?.title || '求人情報'}
                       </h2>
                       <p className="text-gray-600">
                         {selectedRequest.requesterCompany} - {selectedRequest.requesterName}
@@ -345,15 +345,15 @@ export default function RequestInbox({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-600">勤務地</p>
-                        <p className="font-medium">{selectedRequest.location || '東京都'}</p>
+                        <p className="font-medium">{(selectedRequest as any).location || selectedRequest.jobPosting?.location || '東京都'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">給与</p>
-                        <p className="font-medium">{selectedRequest.salaryRange || '応相談'}</p>
+                        <p className="font-medium">{(selectedRequest as any).salaryRange || (selectedRequest.offeredSalary ? `${selectedRequest.offeredSalary.min}~${selectedRequest.offeredSalary.max}万円` : '応相談')}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">雇用形態</p>
-                        <p className="font-medium">{selectedRequest.employmentType || '正社員'}</p>
+                        <p className="font-medium">{(selectedRequest as any).employmentType || selectedRequest.jobPosting?.employmentType || '正社員'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">募集期限</p>
@@ -367,21 +367,22 @@ export default function RequestInbox({
                   </div>
 
                   {/* 仕事内容 */}
-                  {selectedRequest.jobDescription && (
+                  {((selectedRequest as any).jobDescription || selectedRequest.jobPosting?.description) && (
                     <div>
                       <h3 className="text-lg font-semibold mb-4">仕事内容</h3>
                       <p className="text-gray-700 whitespace-pre-wrap">
-                        {selectedRequest.jobDescription}
+                        {(selectedRequest as any).jobDescription || selectedRequest.jobPosting?.description}
                       </p>
                     </div>
                   )}
 
                   {/* 必須スキル */}
-                  {selectedRequest.requiredSkills && selectedRequest.requiredSkills.length > 0 && (
+                  {((selectedRequest.preferredSkills && selectedRequest.preferredSkills.length > 0) || 
+                    (selectedRequest.jobPosting?.requiredSkills && selectedRequest.jobPosting.requiredSkills.length > 0)) && (
                     <div>
                       <h3 className="text-lg font-semibold mb-4">必須スキル</h3>
                       <div className="flex flex-wrap gap-2">
-                        {selectedRequest.requiredSkills.map((skill, index) => (
+                        {(selectedRequest.preferredSkills || selectedRequest.jobPosting?.requiredSkills || []).map((skill, index) => (
                           <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                             {skill}
                           </span>

@@ -96,8 +96,8 @@ export function ScenarioCard({
 }: ScenarioCardProps) {
   const [showActions, setShowActions] = useState(false)
 
-  const totalPacks = scenario.packs?.length || 0
-  const totalTemplates = scenario.packs?.reduce((sum, pack) => sum + (pack.templates?.length || 0), 0) || 0
+  const totalPacks = (scenario as any).packs?.length || 0
+  const totalTemplates = (scenario as any).packs?.reduce((sum: number, pack: any) => sum + (pack.templates?.length || 0), 0) || 0
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -232,11 +232,11 @@ export function ScenarioCard({
         </div>
 
         {/* Pack一覧（簡易表示） */}
-        {scenario.packs && scenario.packs.length > 0 && (
+        {(scenario as any).packs && (scenario as any).packs.length > 0 && (
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Pack構成</h4>
             <div className="space-y-2">
-              {scenario.packs.slice(0, 3).map((pack, index) => (
+              {(scenario as any).packs.slice(0, 3).map((pack: any, index: number) => (
                 <div key={pack.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-2">
                     <div className="w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-medium">
@@ -254,9 +254,9 @@ export function ScenarioCard({
                 </div>
               ))}
               
-              {scenario.packs.length > 3 && (
+              {(scenario as any).packs.length > 3 && (
                 <div className="text-xs text-gray-500 text-center">
-                  他{scenario.packs.length - 3}個のPack...
+                  他{(scenario as any).packs.length - 3}個のPack...
                 </div>
               )}
             </div>

@@ -62,9 +62,7 @@ export default function MaskedProfileList({
       const searchableText = [
         profile.profileCode,
         profile.careerSummary,
-        ...(profile.skills?.flatMap(s => 
-          typeof s === 'string' ? [s] : (s.items || [])
-        ) || []),
+        ...(profile.skills?.flatMap(s => s.items || []) || []),
         ...(profile.certifications || []),
         profile.advisorInsights?.recommendations || '',
         profile.advisorInsights?.notes || ''
@@ -76,7 +74,7 @@ export default function MaskedProfileList({
     // スキルフィルタ
     if (searchCriteria.skills && searchCriteria.skills.length > 0) {
       const profileSkills = profile.skills?.flatMap(s => 
-        typeof s === 'string' ? [s.toLowerCase()] : (s.items?.map(i => i.toLowerCase()) || [])
+        s.items?.map(i => i.toLowerCase()) || []
       ) || []
       if (!searchCriteria.skills.some(skill => 
         profileSkills.includes(skill.toLowerCase())
@@ -386,23 +384,14 @@ export default function MaskedProfileList({
                   {/* スキルタグ（最大5個） */}
                   {profile.skills && profile.skills.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {(typeof profile.skills[0] === 'string' 
-                        ? profile.skills.slice(0, 5)
-                        : profile.skills.flatMap(sg => sg.items || []).slice(0, 5)
-                      ).map((skill, idx) => (
+                      {profile.skills.flatMap(sg => sg.items || []).slice(0, 5).map((skill, idx) => (
                         <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
-                          {typeof skill === 'string' ? skill : ''}
+                          {skill}
                         </span>
                       ))}
-                      {(typeof profile.skills[0] === 'string' 
-                        ? profile.skills.length > 5
-                        : profile.skills.reduce((acc, sg) => acc + (sg.items?.length || 0), 0) > 5
-                      ) && (
+                      {profile.skills.reduce((acc, sg) => acc + (sg.items?.length || 0), 0) > 5 && (
                         <span className="text-xs text-gray-500">
-                          +{typeof profile.skills[0] === 'string' 
-                            ? profile.skills.length - 5
-                            : profile.skills.reduce((acc, sg) => acc + (sg.items?.length || 0), 0) - 5
-                          }
+                          +{profile.skills.reduce((acc, sg) => acc + (sg.items?.length || 0), 0) - 5}
                         </span>
                       )}
                     </div>
@@ -496,14 +485,6 @@ export default function MaskedProfileList({
                     <span className="text-orange-700">{selectedProfileForDetail.requestCount}件のリクエスト</span>
                   </div>
                 )}
-                {selectedProfileForDetail.lastViewed && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-700">
-                      最終閲覧: {new Date(selectedProfileForDetail.lastViewed).toLocaleDateString('ja-JP')}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -558,26 +539,20 @@ export default function MaskedProfileList({
                   <Award className="w-5 h-5 text-gray-500" />
                   スキル
                 </h3>
-                {selectedProfileForDetail.skills?.map((skillGroup, index) => 
-                  typeof skillGroup === 'string' ? (
-                    <span key={index} className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm mr-2 mb-2">
-                      {skillGroup}
-                    </span>
-                  ) : (
-                    <div key={index} className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        {skillGroup.category}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {skillGroup.items?.map((skill, i) => (
-                          <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                {selectedProfileForDetail.skills?.map((skillGroup, index) => (
+                  <div key={index} className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      {skillGroup.category}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {skillGroup.items?.map((skill, i) => (
+                        <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {skill}
+                        </span>
+                      ))}
                     </div>
-                  )
-                ) || []}
+                  </div>
+                )) || []}
               </div>
 
               {/* 学歴・資格 */}
@@ -590,7 +565,7 @@ export default function MaskedProfileList({
                   {selectedProfileForDetail.education?.map((edu, index) => (
                     <div key={index} className="mb-2">
                       <p className="text-gray-700">
-                        {edu.degree} - {edu.field} ({edu.graduationYear}年卒)
+                        {edu.level} - {edu.field} ({edu.graduationYear}年卒)
                       </p>
                     </div>
                   ))}
@@ -631,9 +606,9 @@ export default function MaskedProfileList({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">雇用形態</p>
+                    <p className="text-sm text-gray-600 mb-1">勤務形態</p>
                     <p className="text-gray-900">
-                      {selectedProfileForDetail.preferences?.employmentTypes?.join(', ') || '正社員'}
+                      {selectedProfileForDetail.preferences?.workStyle?.join(', ') || '正社員'}
                     </p>
                   </div>
                   <div>

@@ -288,21 +288,21 @@ export function AgentRecommendationModal({
                   <span className="font-medium text-gray-700">勤務地:</span>
                   <span className="text-gray-600">
                     {selectedJobPosting.location}
-                    {selectedJobSeeker.desiredLocations?.includes(selectedJobPosting.location) && (
+                    {selectedJobSeeker.desiredLocation?.includes(selectedJobPosting.location) && (
                       <span className="ml-2 text-green-600">✓ 希望勤務地と一致</span>
                     )}
                   </span>
                 </div>
 
                 {/* Salary Match */}
-                {selectedJobPosting.salaryRange && selectedJobSeeker.desiredSalary && (
+                {selectedJobPosting.salary && selectedJobSeeker.desiredSalary && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium text-gray-700">給与:</span>
                     <span className="text-gray-600">
-                      求人: ¥{(selectedJobPosting.salaryRange.min / 10000).toFixed(0)}万 - 
-                      ¥{(selectedJobPosting.salaryRange.max / 10000).toFixed(0)}万
-                      {selectedJobSeeker.desiredSalary.min <= selectedJobPosting.salaryRange.max &&
-                       selectedJobSeeker.desiredSalary.max >= selectedJobPosting.salaryRange.min && (
+                      求人: ¥{selectedJobPosting.salary.min}万 - 
+                      ¥{selectedJobPosting.salary.max}万
+                      {selectedJobSeeker.desiredSalary.min <= selectedJobPosting.salary.max &&
+                       selectedJobSeeker.desiredSalary.max >= selectedJobPosting.salary.min && (
                         <span className="ml-2 text-green-600">✓ 希望給与範囲内</span>
                       )}
                     </span>

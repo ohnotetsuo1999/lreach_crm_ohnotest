@@ -192,7 +192,12 @@ export default function RecommendationRequestForm({
       setFormData({
         ...formData,
         jobPostingId: jobId,
-        offeredSalary: job.salary || formData.offeredSalary,
+        offeredSalary: job.salary ? {
+          min: job.salary.min,
+          max: job.salary.max,
+          currency: job.salary.currency,
+          negotiable: true
+        } : formData.offeredSalary,
         benefits: job.benefits || [],
         requirements: job.requirements || []
       })

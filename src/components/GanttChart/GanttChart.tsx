@@ -176,7 +176,7 @@ const mockTimelineEvents: TimelineEvent[] = [
     id: '12',
     jobSeekerId: 'js2',
     date: new Date(currentYear, currentMonth, 24),
-    type: 'status_change',
+    type: 'status',
     title: 'ステータス変更',
     description: '面談調整中 → 面接中',
     previousValue: '面談調整中',
@@ -198,7 +198,7 @@ const mockTimelineEvents: TimelineEvent[] = [
     id: '14',
     jobSeekerId: 'js3',
     date: new Date(currentYear, currentMonth, 16),
-    type: 'status_change',
+    type: 'status',
     title: 'ステータス変更',
     description: '新規 → 資格確認済',
     previousValue: '新規',
@@ -257,7 +257,7 @@ const mockTimelineEvents: TimelineEvent[] = [
     id: '20',
     jobSeekerId: 'js4',
     date: new Date(currentYear, currentMonth, 11),
-    type: 'status_change',
+    type: 'status',
     title: 'ステータス変更',
     description: '新規登録',
     previousValue: '',
@@ -316,7 +316,7 @@ const mockTimelineEvents: TimelineEvent[] = [
     id: '26',
     jobSeekerId: 'js5',
     date: new Date(currentYear, currentMonth, 8),
-    type: 'status_change',
+    type: 'status',
     title: 'ステータス変更',
     description: '新規 → 面談調整中',
     previousValue: '新規',
@@ -364,7 +364,7 @@ const mockTimelineEvents: TimelineEvent[] = [
     id: '31',
     jobSeekerId: 'js5',
     date: new Date(currentYear, currentMonth, 20),
-    type: 'status_change',
+    type: 'status',
     title: 'ステータス変更',
     description: '面談調整中 → 面接中',
     previousValue: '面談調整中',
@@ -913,7 +913,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobSeekers }) => {
                         {jobSeekers.find(js => js.id === selectedEvent.jobSeekerId)?.name || '不明'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {jobSeekers.find(js => js.id === selectedEvent.jobSeekerId)?.headline || ''}
+                        {jobSeekers.find(js => js.id === selectedEvent.jobSeekerId)?.currentPosition || ''}
                       </p>
                     </div>
                   </div>
@@ -964,7 +964,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobSeekers }) => {
                                 </p>
                               )}
                               
-                              {event.type === 'status_change' && (
+                              {event.type === 'status' && (
                                 <div className="flex items-center gap-2 text-sm">
                                   <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
                                     {event.previousValue || '未設定'}
@@ -1018,7 +1018,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ jobSeekers }) => {
                         </div>
                       )}
                       
-                      {selectedEvent.type === 'status_change' && (
+                      {selectedEvent.type === 'status' && (
                         <div>
                           <p className="text-sm text-gray-500 mb-2">ステータス変更</p>
                           <div className="flex items-center gap-2">

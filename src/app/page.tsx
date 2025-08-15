@@ -3476,25 +3476,19 @@ export default function LineMarketingApp() {
       case 'crm-line-sender':
         return jobSeekers && jobSeekers.length > 0 ? (
           <LineSender 
-            request={{
+            request={recommendationRequests[0] || {
               id: 'req_1',
-              jobPostingId: 'job_1',
-              jobPostingTitle: 'フロントエンドエンジニア',
-              company: '株式会社Example',
-              requiredSkills: ['React', 'TypeScript', 'Next.js'],
-              experienceYears: '3年以上',
-              employmentType: '正社員',
-              location: '東京都',
-              salaryRange: '500-800万円',
-              jobDescription: 'フロントエンド開発のリードポジション',
-              benefits: ['リモートワーク可', 'フレックスタイム'],
-              deadline: new Date('2024-12-31'),
-              requestDate: new Date(),
+              maskedProfileId: 'profile_1',
+              jobPostingId: 'jp1',
+              requesterCompany: '株式会社Example',
+              requesterName: '田中太郎',
+              message: '推薦したい候補者がいます',
+              requirements: ['React', 'TypeScript', 'Next.js'],
+              closingDate: new Date('2024-12-31'),
               status: 'new',
               priority: 'high',
-              requesterName: '田中太郎',
-              requesterEmail: 'tanaka@example.com',
-              notes: '至急対応お願いします'
+              createdAt: new Date(),
+              updatedAt: new Date()
             }}
             jobSeeker={jobSeekers[0]}
             onSend={(message) => {
@@ -3512,125 +3506,67 @@ export default function LineMarketingApp() {
 
       case 'crm-request-inbox':
         // 動的に追加されたリクエストとモックデータを結合
-        const allRequests = [
+        const allRequests: RecommendationRequest[] = [
           ...recommendationRequests,
           {
             id: 'req_1',
             requesterId: 'hr_1',
             requesterName: '田中太郎',
             requesterCompany: '株式会社テック',
-            requesterEmail: 'tanaka@tech.com',
             maskedProfileId: 'masked_1',
             jobPostingId: 'job_1',
-            jobPostingTitle: 'フロントエンドエンジニア',
-            company: '株式会社テック',
-            requiredSkills: ['React', 'TypeScript', 'Next.js'],
-            experienceYears: '3年以上',
-            employmentType: '正社員',
-            location: '東京都渋谷区',
-            salaryRange: '600-800万円',
-            jobDescription: 'モダンなWebアプリケーション開発',
-            benefits: ['リモートワーク可', 'フレックスタイム制'],
-            deadline: new Date('2024-12-31'),
-            requestDate: new Date('2024-11-20'),
-            status: 'new',
-            priority: 'high',
+            closingDate: new Date('2024-12-31'),
+            status: 'new' as const,
+            priority: 'high' as const,
             message: '早急に優秀なフロントエンドエンジニアを探しています。',
-            notes: '至急対応をお願いします',
-            candidateName: '山田太郎',
-            candidateId: 'candidate_001',
-            candidateSkills: ['React', 'TypeScript', 'Next.js', 'Node.js'],
-            candidateExperience: '5年',
-            candidateCurrentCompany: 'Web開発会社'
-          },
+            createdAt: new Date('2024-11-20'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
           {
             id: 'req_2',
             requesterId: 'hr_2',
             requesterName: '佐藤花子',
             requesterCompany: 'デジタル株式会社',
-            requesterEmail: 'sato@digital.com',
             maskedProfileId: 'masked_2',
             jobPostingId: 'job_2',
-            jobPostingTitle: 'データサイエンティスト',
-            company: 'デジタル株式会社',
-            requiredSkills: ['Python', 'SQL', '機械学習'],
-            experienceYears: '5年以上',
-            employmentType: '正社員',
-            location: '東京都港区',
-            salaryRange: '700-1000万円',
-            jobDescription: 'ビッグデータ分析と機械学習モデルの開発',
-            benefits: ['ストックオプション', 'リモートワーク可'],
-            deadline: new Date('2024-12-15'),
-            requestDate: new Date('2024-11-18'),
-            status: 'viewed',
-            priority: 'medium',
+            requirements: ['Python', 'SQL', '機械学習'],
+            closingDate: new Date('2024-12-15'),
+            status: 'viewed' as const,
+            priority: 'medium' as const,
             message: 'データ分析のスペシャリストを募集しています。',
-            notes: '優秀な候補者を探しています',
-            candidateName: '佐藤花子',
-            candidateId: 'candidate_002',
-            candidateSkills: ['Python', 'R', 'SQL', 'TensorFlow'],
-            candidateExperience: '7年',
-            candidateCurrentCompany: 'データ分析企業'
-          },
+            createdAt: new Date('2024-11-18'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
           {
             id: 'req_3',
             requesterId: 'hr_3',
             requesterName: '鈴木一郎',
             requesterCompany: 'IT Solutions',
-            requesterEmail: 'suzuki@itsolutions.com',
             maskedProfileId: 'masked_3',
             jobPostingId: 'job_3',
-            jobPostingTitle: 'バックエンドエンジニア',
-            company: 'IT Solutions',
-            requiredSkills: ['Java', 'Spring', 'AWS'],
-            experienceYears: '4年以上',
-            employmentType: '正社員',
-            location: '東京都千代田区',
-            salaryRange: '550-750万円',
-            jobDescription: 'エンタープライズ向けシステム開発',
-            benefits: ['研修制度充実', '資格取得支援'],
-            deadline: new Date('2025-01-15'),
-            requestDate: new Date('2024-11-15'),
-            status: 'sent_to_candidate',
-            priority: 'low',
+            requirements: ['Java', 'Spring', 'AWS'],
+            closingDate: new Date('2025-01-15'),
+            status: 'sent_to_candidate' as const,
+            priority: 'low' as const,
             message: 'Javaのエキスパートを探しています。',
-            lineSentAt: new Date('2024-11-19'),
-            notes: '候補者に送信済み',
-            candidateName: '高橋次郎',
-            candidateId: 'candidate_003',
-            candidateSkills: ['Java', 'Spring Boot', 'AWS', 'Docker'],
-            candidateExperience: '6年',
-            candidateCurrentCompany: 'SIer企業'
-          },
+            createdAt: new Date('2024-11-15'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
           {
             id: 'req_4',
             requesterId: 'hr_4',
             requesterName: '山田花子',
             requesterCompany: 'スタートアップA',
-            requesterEmail: 'yamada@startup.com',
             maskedProfileId: 'masked_4',
             jobPostingId: 'job_4',
-            jobPostingTitle: 'プロダクトマネージャー',
-            company: 'スタートアップA',
-            requiredSkills: ['プロダクト企画', 'アジャイル', 'データ分析'],
-            experienceYears: '5年以上',
-            employmentType: '正社員',
-            location: '東京都港区',
-            salaryRange: '800-1200万円',
-            jobDescription: 'SaaSプロダクトの企画・開発リード',
-            benefits: ['ストックオプション', 'フルリモート可'],
-            deadline: new Date('2024-12-20'),
-            requestDate: new Date('2024-11-19'),
-            status: 'new',
-            priority: 'high',
+            requirements: ['プロダクト企画', 'アジャイル', 'データ分析'],
+            closingDate: new Date('2024-12-20'),
+            status: 'new' as const,
+            priority: 'high' as const,
             message: '成長中のSaaSプロダクトをリードできるPMを探しています。',
-            notes: '至急対応希望',
-            candidateName: '伊藤美咲',
-            candidateId: 'candidate_004',
-            candidateSkills: ['プロダクトマネジメント', 'SQL', 'Figma', 'アジャイル'],
-            candidateExperience: '8年',
-            candidateCurrentCompany: 'SaaS企業'
-          }
+            createdAt: new Date('2024-11-19'),
+            updatedAt: new Date()
+          } as RecommendationRequest
         ]
         
         return (
@@ -3653,7 +3589,6 @@ export default function LineMarketingApp() {
           {
             id: 'mp_001',
             profileCode: 'PRO-A1234',
-            maskedCandidateId: 'MASK_001',
             careerSummary: '大手金融機関でのフロントエンド開発を経験後、スタートアップでリードエンジニアとしてプロダクト開発をリード。React/TypeScriptを用いた大規模アプリケーションの開発・設計が得意。',
             experiences: [
               {
@@ -3694,7 +3629,7 @@ export default function LineMarketingApp() {
             ],
             education: [
               {
-                degree: '情報工学学士',
+                level: '学士',
                 field: 'コンピュータサイエンス',
                 graduationYear: 2013
               }
@@ -3705,16 +3640,16 @@ export default function LineMarketingApp() {
             ],
             languages: [
               { language: '日本語', proficiency: 'native' },
-              { language: '英語', proficiency: 'business' }
+              { language: '英語', proficiency: 'fluent' }
             ],
             yearsOfExperience: 8,
             currentJobLevel: 'シニア',
             preferences: {
+              desiredRoles: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
               locations: ['東京都', 'リモート'],
               salaryRange: { min: 800, max: 1200, currency: 'JPY' },
-              employmentTypes: ['fullTime'],
               availabilityPeriod: '1ヶ月以内',
-              workStyles: ['remote', 'hybrid']
+              workStyle: ['remote', 'full-time']
             },
             advisorInsights: {
               strengths: ['技術力が高い', 'リーダーシップがある', 'コミュニケーション能力が高い'],
@@ -3725,14 +3660,17 @@ export default function LineMarketingApp() {
             },
             viewCount: 45,
             requestCount: 3,
-            lastViewed: new Date('2024-11-10'),
+            jobSeekerId: 'js1',
+            isPublished: true,
+            lastUpdatedAt: new Date('2024-11-10'),
+            tags: ['React', 'TypeScript', 'フロントエンド'],
+            createdBy: 'admin1',
             createdAt: new Date('2024-11-01'),
             updatedAt: new Date('2024-11-10')
           },
           {
             id: 'mp_002',
             profileCode: 'PRO-B5678',
-            maskedCandidateId: 'MASK_002',
             careerSummary: 'ECサイトのバックエンド開発からキャリアをスタートし、マイクロサービスアーキテクチャの設計・実装を担当。大規模トラフィックに対応できるシステム設計が得意。',
             experiences: [
               {
@@ -3763,7 +3701,7 @@ export default function LineMarketingApp() {
             ],
             education: [
               {
-                degree: '情報科学修士',
+                level: '修士',
                 field: '分散システム',
                 graduationYear: 2016
               }
@@ -3774,16 +3712,16 @@ export default function LineMarketingApp() {
             ],
             languages: [
               { language: '日本語', proficiency: 'native' },
-              { language: '英語', proficiency: 'intermediate' }
+              { language: '英語', proficiency: 'conversational' }
             ],
             yearsOfExperience: 7,
             currentJobLevel: 'シニア',
             preferences: {
+              desiredRoles: ['データエンジニア', 'データアーキテクト'],
               locations: ['東京都', '大阪府'],
               salaryRange: { min: 700, max: 1000, currency: 'JPY' },
-              employmentTypes: ['fullTime'],
               availabilityPeriod: '2ヶ月以内',
-              workStyles: ['office', 'hybrid']
+              workStyle: ['full-time']
             },
             advisorInsights: {
               strengths: ['インフラ構築力', '問題解決能力', '学習意欲が高い'],
@@ -3794,14 +3732,17 @@ export default function LineMarketingApp() {
             },
             viewCount: 32,
             requestCount: 2,
-            lastViewed: new Date('2024-11-09'),
+            jobSeekerId: 'js2',
+            isPublished: true,
+            lastUpdatedAt: new Date('2024-11-09'),
+            tags: ['Python', 'データ分析', 'AI'],
+            createdBy: 'admin1',
             createdAt: new Date('2024-10-28'),
             updatedAt: new Date('2024-11-09')
           },
           {
             id: 'mp_003',
             profileCode: 'PRO-C9012',
-            maskedCandidateId: 'MASK_003',
             careerSummary: 'プロダクトマネージャーとしてB2B/B2C両方のプロダクト開発を経験。ユーザーリサーチからKPI設定、機能開発まで一貫して担当。データドリブンな意思決定が得意。',
             experiences: [
               {
@@ -3828,7 +3769,7 @@ export default function LineMarketingApp() {
             ],
             education: [
               {
-                degree: '経営学学士',
+                level: '学士',
                 field: 'マーケティング',
                 graduationYear: 2017
               }
@@ -3841,11 +3782,11 @@ export default function LineMarketingApp() {
             yearsOfExperience: 5,
             currentJobLevel: 'ミドル',
             preferences: {
+              desiredRoles: ['バックエンドエンジニア', 'システムアーキテクト'],
               locations: ['東京都'],
               salaryRange: { min: 600, max: 900, currency: 'JPY' },
-              employmentTypes: ['fullTime'],
               availabilityPeriod: '即日',
-              workStyles: ['remote', 'hybrid']
+              workStyle: ['remote', 'full-time']
             },
             advisorInsights: {
               strengths: ['ビジネス理解力', 'データ分析力', 'コミュニケーション力'],
@@ -3856,7 +3797,11 @@ export default function LineMarketingApp() {
             },
             viewCount: 28,
             requestCount: 1,
-            lastViewed: new Date('2024-11-08'),
+            jobSeekerId: 'js3',
+            isPublished: true,
+            lastUpdatedAt: new Date('2024-11-08'),
+            tags: ['Java', 'Spring', 'バックエンド'],
+            createdBy: 'admin1',
             createdAt: new Date('2024-10-25'),
             updatedAt: new Date('2024-11-08')
           }
@@ -3887,22 +3832,24 @@ export default function LineMarketingApp() {
             title: 'フロントエンドリードエンジニア',
             company: '株式会社テックノバ',
             location: '東京都渋谷区',
-            employmentType: '正社員',
-            salary: { min: 800, max: 1200, currency: 'JPY' },
+            locationType: 'hybrid',
+            employmentType: 'full-time',
+            jobType: 'full_time',
+            salary: { min: 800, max: 1200, currency: 'JPY', period: 'yearly' },
             description: 'React/Next.jsを用いたWebアプリケーションの開発をリードしていただきます。',
             requirements: ['Reactで3年以上の実務経験', 'TypeScriptの実務経験', 'チームリード経験'],
+            responsibilities: ['チームの技術リード', 'コードレビュー', '技術選定'],
             benefits: ['リモートワーク可', 'フレックスタイム', '書籍購入補助'],
             requiredSkills: ['React', 'TypeScript', 'Next.js'],
             preferredSkills: ['GraphQL', 'AWS', 'Docker'],
-            experienceLevel: 'senior',
             department: 'プロダクト開発部',
             numberOfOpenings: 2,
-            postedDate: new Date('2024-11-01'),
-            deadline: new Date('2024-12-31'),
-            status: 'open',
-            views: 234,
-            applications: 12,
-            isPublic: true,
+            hiringProcess: [],
+            postedAt: new Date('2024-11-01'),
+            closingDate: new Date('2024-12-31'),
+            status: 'published',
+            applications: [],
+            createdBy: 'hr1',
             createdAt: new Date('2024-11-01'),
             updatedAt: new Date()
           },
@@ -3911,22 +3858,58 @@ export default function LineMarketingApp() {
             title: 'バックエンドエンジニア',
             company: '株式会社サービスプロ',
             location: '東京都港区',
-            employmentType: '正社員',
-            salary: { min: 700, max: 1000, currency: 'JPY' },
+            employmentType: 'full-time',
+            jobType: 'full_time',
+            salary: { min: 700, max: 1000, currency: 'JPY', period: 'yearly' },
             description: 'マイクロサービスアーキテクチャの設計・開発を担当していただきます。',
             requirements: ['JavaまたはGoで3年以上の経験', 'API設計・開発経験', 'AWSまたはGCPの経験'],
             benefits: ['ストックオプション', '健康診断', 'ジム補助'],
             requiredSkills: ['Java', 'Spring Boot', 'AWS'],
             preferredSkills: ['Kubernetes', 'Terraform', 'Go'],
-            experienceLevel: 'mid',
             department: 'インフラ部',
             numberOfOpenings: 3,
-            postedDate: new Date('2024-10-25'),
-            deadline: new Date('2024-12-15'),
-            status: 'open',
-            views: 189,
-            applications: 8,
-            isPublic: true,
+            postedAt: new Date('2024-10-25'),
+            closingDate: new Date('2024-12-15'),
+            status: 'published',
+            applications: [],
+            responsibilities: [
+              'マイクロサービスの設計・開発',
+              'APIの実装と最適化',
+              'チーム内でのコードレビュー',
+              'インフラの改善提案'
+            ],
+            locationType: 'hybrid',
+            hiringProcess: [
+              {
+                id: 'hp_201',
+                name: '書類選考',
+                description: '応募書類の審査',
+                order: 1,
+                estimatedDuration: 3
+              },
+              {
+                id: 'hp_202',
+                name: 'コーディングテスト',
+                description: 'オンラインコーディング課題',
+                order: 2,
+                estimatedDuration: 7
+              },
+              {
+                id: 'hp_203',
+                name: '技術面接',
+                description: '技術力の評価',
+                order: 3,
+                estimatedDuration: 1
+              },
+              {
+                id: 'hp_204',
+                name: '最終面接',
+                description: '役員面接',
+                order: 4,
+                estimatedDuration: 1
+              }
+            ],
+            createdBy: 'hr1',
             createdAt: new Date('2024-10-25'),
             updatedAt: new Date()
           },
@@ -3935,22 +3918,59 @@ export default function LineMarketingApp() {
             title: 'プロダクトマネージャー',
             company: '株式会社グロース',
             location: '東京都中央区',
-            employmentType: '正社員',
-            salary: { min: 600, max: 900, currency: 'JPY' },
+            employmentType: 'full-time',
+            jobType: 'full_time',
+            salary: { min: 600, max: 900, currency: 'JPY', period: 'yearly' },
             description: 'B2Cサービスのプロダクト開発をリードしていただきます。',
             requirements: ['PM経験で3年以上', 'B2Cサービスの経験', 'データ分析経験'],
             benefits: ['リモートワーク', 'フレックス', 'スキルアップ支援'],
             requiredSkills: ['プロダクトマネジメント', 'データ分析', 'KPI管理'],
             preferredSkills: ['SQL', 'Figma', 'JIRA'],
-            experienceLevel: 'mid',
             department: 'プロダクト部',
             numberOfOpenings: 1,
-            postedDate: new Date('2024-11-05'),
-            deadline: new Date('2024-12-20'),
-            status: 'open',
-            views: 156,
-            applications: 6,
-            isPublic: true,
+            postedAt: new Date('2024-11-05'),
+            closingDate: new Date('2024-12-20'),
+            status: 'published',
+            applications: [],
+            responsibilities: [
+              'プロダクトビジョンの策定',
+              'ロードマップの作成と管理',
+              'ステークホルダーとの調整',
+              'KPIの設定と分析',
+              'ユーザーリサーチの実施'
+            ],
+            locationType: 'remote',
+            hiringProcess: [
+              {
+                id: 'hp_301',
+                name: '書類選考',
+                description: '応募書類とポートフォリオの審査',
+                order: 1,
+                estimatedDuration: 5
+              },
+              {
+                id: 'hp_302',
+                name: 'PM面接',
+                description: 'プロダクトマネジメント経験の評価',
+                order: 2,
+                estimatedDuration: 1
+              },
+              {
+                id: 'hp_303',
+                name: 'ケーススタディ',
+                description: 'プロダクト課題の解決提案',
+                order: 3,
+                estimatedDuration: 2
+              },
+              {
+                id: 'hp_304',
+                name: '最終面接',
+                description: '代表面接',
+                order: 4,
+                estimatedDuration: 1
+              }
+            ],
+            createdBy: 'hr1',
             createdAt: new Date('2024-11-05'),
             updatedAt: new Date()
           }
@@ -3958,23 +3978,17 @@ export default function LineMarketingApp() {
 
           const availableCompanies: Company[] = [
           {
-            id: 'mp_001',
-            profileCode: 'PRO-A1234',
-            maskedCandidateId: 'MASK_001',
-            careerSummary: '大手金融機関でのフロントエンド開発を経験',
-            yearsOfExperience: 8,
-            currentJobLevel: 'シニア',
-            preferences: {
-              locations: ['東京都', 'リモート'],
-              salaryRange: { min: 800, max: 1200, currency: 'JPY' },
-              employmentTypes: ['fullTime'],
-              availabilityPeriod: '1ヶ月以内',
-              workStyles: ['remote', 'hybrid']
-            },
-            advisorInsights: {
-              strengths: ['技術力が高い', 'リーダーシップがある'],
-              recommendations: '技術力が高く、チームをリードする経験も豊富。'
-            }
+            id: 'comp_001',
+            name: '株式会社テックコーポレーション',
+            industry: 'IT・ソフトウェア',
+            size: 'large',
+            description: '最先端のAI技術を活用したSaaSプラットフォームを提供するテクノロジー企業',
+            website: 'https://techcorp.example.com',
+            location: '東京都渋谷区',
+            foundedYear: 2010,
+            employeeCount: 500,
+            createdAt: new Date('2024-01-01'),
+            updatedAt: new Date()
           }
           ]
 
@@ -3989,18 +4003,13 @@ export default function LineMarketingApp() {
                 // リクエストデータを作成
                 const newRequest: RecommendationRequest = {
                   id: `req_${Date.now()}`,
-                  maskedProfileId: selectedProfileForRecommendation.id,
-                  candidateName: selectedProfileForRecommendation.profileCode,
-                  candidateId: selectedProfileForRecommendation.maskedCandidateId || selectedProfileForRecommendation.id,
-                  candidateSkills: selectedProfileForRecommendation.skills?.flatMap(s => 
-                    typeof s === 'string' ? [s] : (s.items || [])
-                  ) || [],
-                  candidateExperience: `${selectedProfileForRecommendation.currentJobLevel} ${selectedProfileForRecommendation.yearsOfExperience}年`,
-                  candidateCurrentCompany: selectedProfileForRecommendation.experiences?.[0]?.industry || '未設定',
-                  requesterCompany: request.requesterCompany || availableCompanies[0].name,
+                  requesterId: 'hr_001',
                   requesterName: '採用担当者',
+                  requesterCompany: request.requesterCompany || availableCompanies[0].name,
+                  maskedProfileId: selectedProfileForRecommendation.id,
+                  maskedProfile: selectedProfileForRecommendation,
                   jobPostingId: request.jobPostingId || '',
-                  jobPostingTitle: availableJobPostings.find(j => j.id === request.jobPostingId)?.title || '未設定',
+                  jobPosting: availableJobPostings.find(j => j.id === request.jobPostingId),
                   message: request.message || '',
                   requirements: request.requirements || [],
                   preferredSkills: request.preferredSkills || [],
@@ -4012,7 +4021,8 @@ export default function LineMarketingApp() {
                   status: 'new',
                   createdAt: new Date(),
                   updatedAt: new Date(),
-                  requestDate: new Date()
+                  // 拡張プロパティ（RequestInboxで使用）
+                  ...(request as any)
                 }
                 
                 // リクエストを追加
@@ -4034,69 +4044,64 @@ export default function LineMarketingApp() {
             />
           )
         }
-        
-        // デフォルトの推薦フォーム表示
-        const mockJobPostings: JobPosting[] = [
-          {
-            id: 'company_001',
-            name: '株式会社テックノバ',
-            industry: 'IT',
-            size: '100-500',
-            website: 'https://technova.example.com',
-            description: '最先端の技術でビジネス課題を解決するIT企業',
-            logo: '',
-            location: '東京都渋谷区',
-            foundedYear: 2015,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            id: 'company_002',
-            name: '株式会社サービスプロ',
-            industry: 'SaaS',
-            size: '50-100',
-            website: 'https://servicepro.example.com',
-            description: 'B2B SaaSプラットフォームを提供',
-            logo: '',
-            location: '東京都港区',
-            foundedYear: 2018,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            id: 'company_003',
-            name: '株式会社グロース',
-            industry: 'EC',
-            size: '500-1000',
-            website: 'https://growth.example.com',
-            description: 'ECプラットフォームの運営',
-            logo: '',
-            location: '東京都中央区',
-            foundedYear: 2012,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ]
 
-        const mockMaskedProfilesForForm = [
+        const mockMaskedProfilesForForm: MaskedProfile[] = [
           {
             id: 'mp_001',
+            jobSeekerId: 'js_001',
             profileCode: 'PRO-A1234',
-            maskedCandidateId: 'MASK_001',
             careerSummary: '大手金融機関でのフロントエンド開発を経験',
             yearsOfExperience: 8,
             currentJobLevel: 'シニア',
+            skills: [
+              {
+                category: 'フロントエンド',
+                items: ['React', 'TypeScript', 'Next.js']
+              }
+            ],
+            experiences: [
+              {
+                industry: '金融',
+                companySize: 'large',
+                position: 'シニアフロントエンドエンジニア',
+                duration: '3年',
+                achievements: ['大規模システムの開発']
+              }
+            ],
+            education: [
+              {
+                level: 'Bachelor',
+                field: 'コンピュータサイエンス',
+                graduationYear: 2015
+              }
+            ],
+            certifications: [],
+            languages: [
+              {
+                language: '日本語',
+                proficiency: 'native'
+              }
+            ],
             preferences: {
+              desiredRoles: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
               locations: ['東京都', 'リモート'],
               salaryRange: { min: 800, max: 1200, currency: 'JPY' },
-              employmentTypes: ['fullTime'],
               availabilityPeriod: '1ヶ月以内',
-              workStyles: ['remote', 'hybrid']
+              workStyle: ['remote', 'full-time']
             },
             advisorInsights: {
+              personalityTraits: ['チームプレイヤー'],
               strengths: ['技術力が高い', 'リーダーシップがある'],
-              recommendations: '技術力が高く、チームをリードする経験も豊富。'
-            }
+              recommendations: '技術力が高く、チームをリードする経験も豊富。',
+              fitForRoles: ['テックリード'],
+              notes: '大規模プロジェクトの経験が豊富'
+            },
+            isPublished: true,
+            lastUpdatedAt: new Date(),
+            tags: ['エンジニア', 'フロントエンド'],
+            createdBy: 'system',
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         ]
 
@@ -4105,7 +4110,7 @@ export default function LineMarketingApp() {
             id: 'company_001',
             name: '株式会社テックノバ',
             industry: 'IT',
-            size: '100-500',
+            size: 'medium',
             website: 'https://technova.example.com',
             description: '最先端の技術でビジネス課題を解決するIT企業',
             logo: '',
@@ -4118,7 +4123,7 @@ export default function LineMarketingApp() {
             id: 'company_002',
             name: '株式会社サービスプロ',
             industry: 'SaaS',
-            size: '50-100',
+            size: 'small',
             website: 'https://servicepro.example.com',
             description: 'B2B SaaSプラットフォームを提供',
             logo: '',
@@ -4131,7 +4136,7 @@ export default function LineMarketingApp() {
             id: 'company_003',
             name: '株式会社グロース',
             industry: 'EC',
-            size: '500-1000',
+            size: 'large',
             website: 'https://growth.example.com',
             description: 'ECプラットフォームの運営',
             logo: '',
@@ -4145,7 +4150,7 @@ export default function LineMarketingApp() {
         return (
           <RecommendationRequestForm 
             profile={mockMaskedProfilesForForm[0]}
-            jobPostings={mockJobPostings}
+            jobPostings={jobPostings}
             maskedProfiles={mockMaskedProfilesForForm}
             companies={mockCompanies}
             company={mockCompanies[0]}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ActionRule, TagAction, ActionType, Tag, Status, Scenario, Template } from '@/types'
+import { ActionRule, ScenarioActionRule, TagAction, ActionType, UserActionType, Tag, Status, Scenario, Template } from '@/types'
 import { Plus, Edit2, Trash2, ToggleLeft, AlertCircle, Target, Zap, Settings } from 'lucide-react'
 import { ActionRuleEditor } from './ActionRuleEditor'
 
@@ -43,18 +43,41 @@ export function ActionRuleManager({
     setIsEditorOpen(true)
   }
 
-  const handleSave = (ruleData: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = (ruleData: Omit<ScenarioActionRule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // ScenarioActionRuleからActionRuleに変換
+    const actionRuleData: Omit<ActionRule, 'id' | 'createdAt' | 'updatedAt'> = {
+      templateId: ruleData.packTemplateId,
+      scenarioId: undefined,
+      packId: undefined,
+      actionType: ruleData.actionType,
+      actionCondition: ruleData.actionCondition,
+      tagActions: ruleData.tagActions,
+      isActive: ruleData.isActive,
+      priority: ruleData.priority,
+      description: ruleData.description
+    }
+    
     if (selectedRule) {
-      onUpdateRule(selectedRule.id, ruleData)
+      onUpdateRule(selectedRule.id, actionRuleData)
     } else {
-      onCreateRule(ruleData)
+      onCreateRule(actionRuleData)
     }
     setIsEditorOpen(false)
     setSelectedRule(null)
   }
+  
+  // ActionRuleをScenarioActionRuleに変換する関数
+  const convertToScenarioActionRule = (rule: ActionRule | null): ScenarioActionRule | null => {
+    if (!rule) return null
+    
+    return {
+      ...rule,
+      packTemplateId: rule.templateId || ''
+    } as ScenarioActionRule
+  }
 
-  const getActionTypeLabel = (type: ActionType) => {
-    const labels: Record<ActionType, string> = {
+  const getActionTypeLabel = (type: UserActionType) => {
+    const labels: Record<UserActionType, string> = {
       'URL_CLICK': 'URL クリック',
       'BUTTON_CLICK': 'ボタンクリック',
       'IMAGE_CLICK': '画像クリック',
@@ -313,7 +336,7 @@ export function ActionRuleManager({
 
       {/* アクションルール作成/編集エディタ */}
       <ActionRuleEditor
-        rule={selectedRule}
+        rule={convertToScenarioActionRule(selectedRule)}
         isOpen={isEditorOpen}
         onClose={() => {
           setIsEditorOpen(false)
