@@ -1561,6 +1561,10 @@ export default function LineMarketingApp() {
         availableFrom: new Date(),
         status: 'qualified',
         source: 'agency',
+        certifications: [],
+        languages: [{ id: 'lang1', name: '日本語', level: 'native' }, { id: 'lang2', name: '英語', level: 'intermediate' }],
+        desiredPositions: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
+        tags: ['React', 'TypeScript', '即戦力'],
         createdAt: new Date('2024-10-01'),
         updatedAt: new Date()
       },
@@ -1604,6 +1608,10 @@ export default function LineMarketingApp() {
         availability: 'in_2_weeks',
         status: 'interviewing',
         source: 'agency',
+        certifications: [],
+        languages: [{ id: 'lang3', name: '日本語', level: 'native' }, { id: 'lang4', name: '英語', level: 'business' }],
+        desiredPositions: ['営業部長', 'セールスマネージャー'],
+        tags: ['営業', 'マネジメント', 'B2B'],
         createdAt: new Date('2024-09-15'),
         updatedAt: new Date()
       },
@@ -1647,6 +1655,10 @@ export default function LineMarketingApp() {
         availability: 'in_1_month',
         status: 'qualified',
         source: 'agency',
+        certifications: [],
+        languages: [{ id: 'lang5', name: '日本語', level: 'native' }, { id: 'lang6', name: '英語', level: 'intermediate' }],
+        desiredPositions: ['データアナリスト', 'データサイエンティスト'],
+        tags: ['Python', 'SQL', 'データ分析'],
         createdAt: new Date('2024-10-20'),
         updatedAt: new Date()
       },
@@ -1689,6 +1701,10 @@ export default function LineMarketingApp() {
         availability: 'in_3_months',
         status: 'new',
         source: 'agency',
+        certifications: [],
+        languages: [{ id: 'lang7', name: '日本語', level: 'native' }],
+        desiredPositions: ['バックエンドエンジニア', 'アーキテクト'],
+        tags: ['Java', 'Spring', 'AWS'],
         createdAt: new Date('2024-11-10'),
         updatedAt: new Date()
       },
@@ -1731,6 +1747,10 @@ export default function LineMarketingApp() {
         availability: 'in_1_month',
         status: 'interviewing',
         source: 'agency',
+        certifications: [],
+        languages: [{ id: 'lang8', name: '日本語', level: 'native' }, { id: 'lang9', name: '英語', level: 'business' }],
+        desiredPositions: ['プロダクトマネージャー', 'プロダクトオーナー'],
+        tags: ['PM', 'SaaS', 'アジャイル'],
         createdAt: new Date('2024-11-05'),
         updatedAt: new Date()
       }
