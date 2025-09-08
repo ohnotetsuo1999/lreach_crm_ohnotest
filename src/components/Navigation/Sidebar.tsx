@@ -22,7 +22,8 @@ import {
   UserCheck, 
   GanttChartSquare,
   UserPlus,
-  Building2
+  Building2,
+  Settings
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -51,6 +52,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'admin-home', label: '管理者ホーム', icon: Home },
     { id: 'admin-database', label: 'DB管理', icon: Database },
     { id: 'admin-messages', label: 'メッセージ', icon: MessageCircle },
+    { id: 'settings', label: '設定', icon: Settings },
   ]
 
   return (

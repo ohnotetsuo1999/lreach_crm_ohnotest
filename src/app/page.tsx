@@ -42,7 +42,7 @@ import {
   MaskedProfile,
   Company
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle, Briefcase, UserCheck, GanttChartSquare, ChevronDown, ChevronRight, Building2, Newspaper, Globe, FileSearch, BookOpen, Phone, History, ClipboardCheck, CheckCircle, X, Plus } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle, Briefcase, UserCheck, GanttChartSquare, ChevronDown, ChevronRight, Building2, Newspaper, Globe, FileSearch, BookOpen, Phone, History, ClipboardCheck, CheckCircle, X, Plus, Settings } from 'lucide-react'
 import { agentJobSeekersData } from '@/data/agentJobSeekers'
 import { agentsData } from '@/data/agents'
 import { mockApplicationsData } from '@/data/mockApplications'
@@ -89,18 +89,22 @@ import { CandidateCallList } from '@/components/ISCallManagement/CandidateCallLi
 import SelectionManagement from '@/components/CRM/Agent/SelectionManagement'
 import SimpleActionManagement from '@/components/CRM/Agent/SimpleActionManagement'
 import { AgentJobSeekerList } from '@/components/CRM/Agent/AgentJobSeekerList'
+import { GeneralSettings } from '@/components/Settings/GeneralSettings'
+import { MembersManagement } from '@/components/Settings/MembersManagement'
+import { StatusManagement } from '@/components/Settings/StatusManagement'
 
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings' | 'admin-home' | 'admin-database' | 'admin-applicants' | 'admin-messages' | 'crm-jobseekers' | 'crm-companies' | 'crm-jobs' | 'crm-agents' | 'agent-crm-recommendations' | 'crm-chat' | 'gantt-chart' | 'ats-masked-profiles' | 'ats-recommendation-request' | 'candidate-management' | 'applicants' | 'client-list' | 'cms-jobs' | 'cms-companies' | 'cms-content' | 'cms-applications' | 'job-portal' | 'job-listings' | 'content-portal' | 'is-call-management'>('crm-jobseekers')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings' | 'admin-home' | 'admin-database' | 'admin-applicants' | 'admin-messages' | 'crm-jobseekers' | 'crm-companies' | 'crm-jobs' | 'crm-agents' | 'agent-crm-recommendations' | 'crm-chat' | 'gantt-chart' | 'ats-masked-profiles' | 'ats-recommendation-request' | 'candidate-management' | 'applicants' | 'client-list' | 'cms-jobs' | 'cms-companies' | 'cms-content' | 'cms-applications' | 'job-portal' | 'job-listings' | 'content-portal' | 'is-call-management' | 'settings' | 'settings-general' | 'settings-members' | 'settings-status'>('crm-jobseekers')
   const [accountType, setAccountType] = useState<'hub' | 'crm'>('crm')
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'MA': false,
     '予約': false,
     'CRM': false,
     '送客代行': false,
-    'CMS': false
+    'CMS': false,
+    '設定': false
   })
   const [currentView, setCurrentView] = useState<'list' | 'edit' | 'detail'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
@@ -2589,7 +2593,16 @@ export default function LineMarketingApp() {
         // MA（マーケティング関連）
         ...allNavigationCategories
           .filter(category => category.title === 'マーケティング関連')
-          .map(category => ({ ...category, title: 'MA' }))
+          .map(category => ({ ...category, title: 'MA' })),
+        // 設定
+        {
+          title: '設定',
+          items: [
+            { id: 'settings-general', label: '一般設定', icon: Settings },
+            { id: 'settings-members', label: 'メンバー', icon: Users },
+            { id: 'settings-status', label: 'ステータス管理', icon: List }
+          ]
+        }
       ]
     : allNavigationCategories
 
@@ -3973,6 +3986,15 @@ export default function LineMarketingApp() {
             }}
           />
         )
+      
+      case 'settings-general':
+        return <GeneralSettings />
+      
+      case 'settings-members':
+        return <MembersManagement />
+      
+      case 'settings-status':
+        return <StatusManagement />
         
       default:
         return <div>Unknown tab</div>
@@ -4003,7 +4025,7 @@ export default function LineMarketingApp() {
             {navigationCategories.map((category, categoryIndex) => {
               // CRMモードで折りたたみ対象のカテゴリかどうか判定
               const isCollapsible = accountType === 'crm' && 
-                ['MA', '予約', 'CRM', '送客代行', 'CMS'].includes(category.title)
+                ['MA', '予約', 'CRM', '送客代行', 'CMS', '設定'].includes(category.title)
               const isExpanded = isCollapsible ? expandedCategories[category.title] : true
               
               return (
