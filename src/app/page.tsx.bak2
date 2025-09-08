@@ -3227,6 +3227,254 @@ export default function LineMarketingApp() {
         
       case 'crm-jobseekers':
         return <JobSeekerManagement />
+            jobSeekers={jobSeekers.length > 0 ? jobSeekers : [
+              {
+                id: 'js1',
+                name: '佐藤花子',
+                email: 'sato@example.com',
+                phone: '090-2345-6789',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk11', name: 'React', level: 'advanced', yearsOfExperience: 5 },
+                  { id: 'sk12', name: 'TypeScript', level: 'intermediate', yearsOfExperience: 3 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp1',
+                    position: 'フロントエンドエンジニア',
+                    company: 'Web開発会社',
+                    startDate: new Date('2019-04-01'),
+                    endDate: new Date('2024-10-31'),
+                    description: 'Reactを使用したWebアプリケーション開発',
+                    isCurrent: false
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu1',
+                    degree: '情報工学学士',
+                    school: '東京工業大学',
+                    startDate: new Date('2015-04-01'),
+                    endDate: new Date('2019-03-31'),
+                    isCurrent: false,
+                    field: 'コンピュータサイエンス'
+                  }
+                ],
+                desiredSalary: { min: 5000000, max: 7000000, currency: 'JPY' },
+                desiredLocation: ['東京都', '神奈川県'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'qualified' as const,
+                source: 'lp',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang1', name: '日本語', proficiency: 'native' }, { id: 'lang2', name: '英語', proficiency: 'conversational' }],
+                desiredPositions: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
+                tags: ['React', 'TypeScript', '即戦力'],
+                createdAt: new Date('2024-10-01'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js2',
+                name: '鈴木一郎',
+                email: 'suzuki@example.com',
+                phone: '090-3456-7890',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk1', name: 'B2B営業', level: 'expert', yearsOfExperience: 15 },
+                  { id: 'sk2', name: 'チームマネジメント', level: 'advanced', yearsOfExperience: 8 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp2',
+                    position: '営業部長',
+                    company: 'ITソリューション会社',
+                    startDate: new Date('2015-04-01'),
+                    description: '20名の営業チームを統括',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu2',
+                    degree: '経営学学士',
+                    school: '慶應義塾大学',
+                    startDate: new Date('2005-04-01'),
+                    endDate: new Date('2009-03-31'),
+                    isCurrent: false,
+                    field: '経営学'
+                  }
+                ],
+                desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+                desiredLocation: ['東京都'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'interviewing' as const,
+                source: 'ad',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang3', name: '日本語', proficiency: 'native' }, { id: 'lang4', name: '英語', proficiency: 'fluent' }],
+                desiredPositions: ['営業部長', 'セールスマネージャー'],
+                tags: ['営業', 'マネジメント', 'B2B'],
+                createdAt: new Date('2024-09-15'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js3',
+                name: '高橋美咲',
+                email: 'takahashi@example.com',
+                phone: '090-4567-8901',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk6', name: 'Python', level: 'intermediate', yearsOfExperience: 3 },
+                  { id: 'sk7', name: 'SQL', level: 'intermediate', yearsOfExperience: 3 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp3',
+                    position: 'データアナリスト',
+                    company: 'Eコマース企業',
+                    startDate: new Date('2021-04-01'),
+                    description: '売上データの分析とレポート作成',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu3',
+                    degree: '統計学修士',
+                    school: '東京大学',
+                    startDate: new Date('2019-04-01'),
+                    endDate: new Date('2021-03-31'),
+                    isCurrent: false,
+                    field: '統計学'
+                  }
+                ],
+                desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY' },
+                desiredLocation: ['東京都', '千葉県', '埼玉県'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'qualified' as const,
+                source: 'organic',
+                lineStatus: 'not_connected',
+                certifications: [],
+                languages: [{ id: 'lang5', name: '日本語', proficiency: 'native' }, { id: 'lang6', name: '英語', proficiency: 'conversational' }],
+                desiredPositions: ['データアナリスト', 'データサイエンティスト'],
+                tags: ['Python', 'SQL', 'データ分析'],
+                createdAt: new Date('2024-10-20'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js4',
+                name: '山田次郎',
+                email: 'yamada.jiro@example.com',
+                phone: '090-5678-9012',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk16', name: 'Java', level: 'expert', yearsOfExperience: 10 },
+                  { id: 'sk17', name: 'Spring', level: 'advanced', yearsOfExperience: 8 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp4',
+                    position: 'シニアバックエンドエンジニア',
+                    company: '金融システム会社',
+                    startDate: new Date('2014-04-01'),
+                    description: '決済システムの開発・保守',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu4',
+                    degree: '情報工学修士',
+                    school: '京都大学',
+                    startDate: new Date('2012-04-01'),
+                    endDate: new Date('2014-03-31'),
+                    isCurrent: false,
+                    field: 'ソフトウェア工学'
+                  }
+                ],
+                desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY' },
+                desiredLocation: ['東京都', '大阪府'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'new' as const,
+                source: 'qr',
+                lineStatus: 'blocked',
+                certifications: [],
+                languages: [{ id: 'lang7', name: '日本語', proficiency: 'native' }],
+                desiredPositions: ['バックエンドエンジニア', 'アーキテクト'],
+                tags: ['Java', 'Spring', 'AWS'],
+                createdAt: new Date('2024-11-10'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js5',
+                name: '田中美穂',
+                email: 'tanaka.miho@example.com',
+                phone: '090-6789-0123',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk20', name: 'プロダクトマネジメント', level: 'advanced', yearsOfExperience: 5 },
+                  { id: 'sk21', name: 'アジャイル開発', level: 'advanced', yearsOfExperience: 5 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp5',
+                    position: 'プロダクトマネージャー',
+                    company: 'SaaS企業',
+                    startDate: new Date('2019-04-01'),
+                    description: 'B2B SaaSプロダクトの企画・開発',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu5',
+                    degree: 'MBA',
+                    school: '一橋大学',
+                    startDate: new Date('2017-04-01'),
+                    endDate: new Date('2019-03-31'),
+                    isCurrent: false,
+                    field: '経営学'
+                  }
+                ],
+                desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+                desiredLocation: ['東京都'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'interviewing' as const,
+                source: 'sns',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang8', name: '日本語', proficiency: 'native' }, { id: 'lang9', name: '英語', proficiency: 'fluent' }],
+                desiredPositions: ['プロダクトマネージャー', 'プロダクトオーナー'],
+                tags: ['PM', 'SaaS', 'アジャイル'],
+                createdAt: new Date('2024-11-05'),
+                updatedAt: new Date()
+              }
+            ]}
+            jobApplications={jobApplications}
+            jobPostings={jobPostings}
+            onCreateJobSeeker={() => {
+              // TODO: Implement job seeker creation
+            }}
+            onEditJobSeeker={(jobSeeker) => {
+              // TODO: Implement job seeker editing
+            }}
+            onViewJobSeeker={(jobSeeker) => {
+              setSelectedJobSeeker(jobSeeker)
+              setCurrentView('detail')
+            }}
+            onDeleteJobSeeker={(jobSeekerId) => {
+              setJobSeekers(jobSeekers.filter(js => js.id !== jobSeekerId))
+            }}
+            onStartChat={(jobSeekerId) => {
+              setActiveTab('crm-chat')
+            }}
+          />
+        )
         
       case 'crm-companies':
         return currentView === 'detail' && selectedCompany ? (
@@ -3248,7 +3496,7 @@ export default function LineMarketingApp() {
           />
         ) : (
           <CompanyList
-            companies={mockCompanies as Company[]}
+            companies={mockCompanies}
             onCreateCompany={() => {
               // TODO: Implement company creation
               console.log('Create new company')
@@ -3389,6 +3637,134 @@ export default function LineMarketingApp() {
             <GanttChart jobSeekers={jobSeekers} />
           </div>
         )
+
+      case 'crm-resume-editor':
+        return jobSeekers && jobSeekers.length > 0 ? (
+          <ResumeEditor 
+            jobSeeker={jobSeekers[0]}
+            onSave={(data) => {
+              console.log('履歴書保存:', data)
+            }}
+            onMaskAndPublish={(resumeData) => {
+              console.log('マスク化して公開:', resumeData)
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">求職者データがありません</p>
+          </div>
+        )
+
+      case 'crm-line-sender':
+        return jobSeekers && jobSeekers.length > 0 ? (
+          <LineSender 
+            request={recommendationRequests[0] || {
+              id: 'req_1',
+              maskedProfileId: 'profile_1',
+              jobPostingId: 'jp1',
+              requesterCompany: '株式会社Example',
+              requesterName: '田中太郎',
+              message: '推薦したい候補者がいます',
+              requirements: ['React', 'TypeScript', 'Next.js'],
+              closingDate: new Date('2024-12-31'),
+                      priority: 'high',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }}
+            jobSeeker={jobSeekers[0]}
+            onSend={(message) => {
+              console.log('LINE送信:', message)
+            }}
+            onClose={() => {
+              console.log('閉じる')
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">求職者データがありません</p>
+          </div>
+        )
+
+      case 'crm-request-inbox':
+        // 動的に追加されたリクエストとモックデータを結合
+        const allRequests: RecommendationRequest[] = [
+          ...recommendationRequests,
+          {
+            id: 'req_1',
+            requesterId: 'hr_1',
+            requesterName: '田中太郎',
+            requesterCompany: '株式会社テック',
+            maskedProfileId: 'masked_1',
+            jobPostingId: 'job_1',
+            closingDate: new Date('2024-12-31'),
+            status: 'new' as const,
+            priority: 'high' as const,
+            message: '早急に優秀なフロントエンドエンジニアを探しています。',
+            createdAt: new Date('2024-11-20'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_2',
+            requesterId: 'hr_2',
+            requesterName: '佐藤花子',
+            requesterCompany: 'デジタル株式会社',
+            maskedProfileId: 'masked_2',
+            jobPostingId: 'job_2',
+            requirements: ['Python', 'SQL', '機械学習'],
+            closingDate: new Date('2024-12-15'),
+            status: 'viewed' as const,
+            priority: 'medium' as const,
+            message: 'データ分析のスペシャリストを募集しています。',
+            createdAt: new Date('2024-11-18'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_3',
+            requesterId: 'hr_3',
+            requesterName: '鈴木一郎',
+            requesterCompany: 'IT Solutions',
+            maskedProfileId: 'masked_3',
+            jobPostingId: 'job_3',
+            requirements: ['Java', 'Spring', 'AWS'],
+            closingDate: new Date('2025-01-15'),
+            status: 'sent_to_candidate' as const,
+            priority: 'low' as const,
+            message: 'Javaのエキスパートを探しています。',
+            createdAt: new Date('2024-11-15'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_4',
+            requesterId: 'hr_4',
+            requesterName: '山田花子',
+            requesterCompany: 'スタートアップA',
+            maskedProfileId: 'masked_4',
+            jobPostingId: 'job_4',
+            requirements: ['プロダクト企画', 'アジャイル', 'データ分析'],
+            closingDate: new Date('2024-12-20'),
+            status: 'new' as const,
+            priority: 'high' as const,
+            message: '成長中のSaaSプロダクトをリードできるPMを探しています。',
+            createdAt: new Date('2024-11-19'),
+            updatedAt: new Date()
+          } as RecommendationRequest
+        ]
+        
+        return (
+          <RequestInbox 
+            requests={allRequests}
+            onViewRequest={(request) => {
+              console.log('リクエスト表示:', request)
+            }}
+            onSendToLine={(requestId) => {
+              console.log('LINE送信:', requestId)
+            }}
+            onUpdateStatus={(requestId, status) => {
+              console.log('ステータス更新:', requestId, status)
+            }}
+          />
+        )
+
       case 'ats-masked-profiles':
         const mockMaskedProfiles: MaskedProfile[] = [
           {
@@ -3795,7 +4171,6 @@ export default function LineMarketingApp() {
             location: '東京都渋谷区',
             foundedYear: 2010,
             employeeCount: 500,
-            hiringStatus: 'active',
             createdAt: new Date('2024-01-01'),
             updatedAt: new Date()
           }
@@ -3840,8 +4215,9 @@ export default function LineMarketingApp() {
                 setShowRecommendationForm(false)
                 setSelectedProfileForRecommendation(null)
                 
-                // 推薦リクエスト送信
-                alert('推薦リクエストを送信しました！')
+                // 受信箱に移動
+                alert('推薦リクエストを送信しました！\n受信箱で確認してください。')
+                setActiveTab('crm-request-inbox')
               }}
               onCancel={() => {
                 setShowRecommendationForm(false)
@@ -3912,7 +4288,7 @@ export default function LineMarketingApp() {
           }
         ]
 
-        const localMockCompanies: Company[] = [
+        const mockCompanies: Company[] = [
           {
             id: 'company_001',
             name: '株式会社テックノバ',
@@ -3923,7 +4299,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都渋谷区',
             foundedYear: 2015,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           },
@@ -3937,7 +4312,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都港区',
             foundedYear: 2018,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           },
@@ -3951,7 +4325,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都中央区',
             foundedYear: 2012,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           }
@@ -3962,8 +4335,8 @@ export default function LineMarketingApp() {
             profile={mockMaskedProfilesForForm[0]}
             jobPostings={jobPostings}
             maskedProfiles={mockMaskedProfilesForForm}
-            companies={localMockCompanies}
-            company={localMockCompanies[0]}
+            companies={mockCompanies}
+            company={mockCompanies[0]}
             onSubmit={(request) => {
               console.log('推薦リクエスト送信:', request)
               alert('推薦リクエストを送信しました')

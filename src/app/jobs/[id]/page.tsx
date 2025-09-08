@@ -10,7 +10,8 @@ const mockJobPostings: JobPosting[] = [
   {
     id: 'jp1',
     title: 'フルスタックエンジニア',
-    company: 'テックカンパニー株式会社',
+    companyName: 'テックカンパニー株式会社',
+    companyId: 'company-001',
     department: '開発部',
     description: 'Webアプリケーション開発のフルスタックエンジニアを募集しています。最新技術を使った開発に携わることができます。',
     requirements: ['React/Vue.jsなどのフロントエンド開発経験3年以上', 'Node.js/Pythonなどのバックエンド開発経験', 'AWS/GCPなどのクラウド経験'],
@@ -40,7 +41,8 @@ const mockJobPostings: JobPosting[] = [
   {
     id: 'jp2',
     title: '営業マネージャー',
-    company: 'ビジネスソリューション株式会社',
+    companyName: 'ビジネスソリューション株式会社',
+    companyId: 'company-002',
     department: '営業部',
     description: 'B2B営業チームのマネージャーを募集。チーム管理と新規開拓の経験がある方を求めています。',
     requirements: ['営業経験5年以上', 'マネジメント経験3年以上', 'B2B営業の経験'],
@@ -73,7 +75,8 @@ const mockJobPostings: JobPosting[] = [
   {
     id: 'jp3',
     title: 'データサイエンティスト',
-    company: 'データ分析株式会社',
+    companyName: 'データ分析株式会社',
+    companyId: 'company-003',
     department: 'データサイエンス部',
     description: 'ビッグデータ分析と機械学習モデルの開発を担当するデータサイエンティストを募集しています。',
     requirements: ['Python/Rでのデータ分析経験3年以上', '機械学習の実務経験', 'SQLでのデータ操作スキル'],
@@ -169,12 +172,12 @@ export default function PublicJobPage() {
   }
 
   const companyInfo = {
-    name: jobPosting.company || jobPosting.department || '株式会社ビーバーズ',
-    description: jobPosting.company === 'データ分析株式会社' 
+    name: jobPosting.companyName || jobPosting.department || '株式会社ビーバーズ',
+    description: jobPosting.companyName === 'データ分析株式会社' 
       ? 'ビッグデータ分析とAI技術を活用したビジネスソリューションを提供しています。'
-      : jobPosting.company === 'ビジネスソリューション株式会社'
+      : jobPosting.companyName === 'ビジネスソリューション株式会社'
       ? '企業のIT戦略を支援する総合ソリューションを提供しています。'
-      : jobPosting.company === 'テックカンパニー株式会社'
+      : jobPosting.companyName === 'テックカンパニー株式会社'
       ? '最新技術を活用したWebサービス・アプリケーションを開発しています。'
       : '建設業界や製造業界における経営課題に対する総合ソリューション営業、コンサルティング営業を展開しています。',
     employees: '50-200名',

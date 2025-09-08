@@ -3389,6 +3389,83 @@ export default function LineMarketingApp() {
             <GanttChart jobSeekers={jobSeekers} />
           </div>
         )
+          ...recommendationRequests,
+          {
+            id: 'req_1',
+            requesterId: 'hr_1',
+            requesterName: '田中太郎',
+            requesterCompany: '株式会社テック',
+            maskedProfileId: 'masked_1',
+            jobPostingId: 'job_1',
+            closingDate: new Date('2024-12-31'),
+            status: 'new' as const,
+            priority: 'high' as const,
+            message: '早急に優秀なフロントエンドエンジニアを探しています。',
+            createdAt: new Date('2024-11-20'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_2',
+            requesterId: 'hr_2',
+            requesterName: '佐藤花子',
+            requesterCompany: 'デジタル株式会社',
+            maskedProfileId: 'masked_2',
+            jobPostingId: 'job_2',
+            requirements: ['Python', 'SQL', '機械学習'],
+            closingDate: new Date('2024-12-15'),
+            status: 'viewed' as const,
+            priority: 'medium' as const,
+            message: 'データ分析のスペシャリストを募集しています。',
+            createdAt: new Date('2024-11-18'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_3',
+            requesterId: 'hr_3',
+            requesterName: '鈴木一郎',
+            requesterCompany: 'IT Solutions',
+            maskedProfileId: 'masked_3',
+            jobPostingId: 'job_3',
+            requirements: ['Java', 'Spring', 'AWS'],
+            closingDate: new Date('2025-01-15'),
+            status: 'sent_to_candidate' as const,
+            priority: 'low' as const,
+            message: 'Javaのエキスパートを探しています。',
+            createdAt: new Date('2024-11-15'),
+            updatedAt: new Date()
+          } as RecommendationRequest,
+          {
+            id: 'req_4',
+            requesterId: 'hr_4',
+            requesterName: '山田花子',
+            requesterCompany: 'スタートアップA',
+            maskedProfileId: 'masked_4',
+            jobPostingId: 'job_4',
+            requirements: ['プロダクト企画', 'アジャイル', 'データ分析'],
+            closingDate: new Date('2024-12-20'),
+            status: 'new' as const,
+            priority: 'high' as const,
+            message: '成長中のSaaSプロダクトをリードできるPMを探しています。',
+            createdAt: new Date('2024-11-19'),
+            updatedAt: new Date()
+          } as RecommendationRequest
+        ]
+        
+        return (
+          <RequestInbox 
+            requests={allRequests}
+            onViewRequest={(request) => {
+              console.log('リクエスト表示:', request)
+            }}
+            onSendToLine={(requestId) => {
+              console.log('LINE送信:', requestId)
+            }}
+            onUpdateStatus={(requestId, status) => {
+              console.log('ステータス更新:', requestId, status)
+            }}
+          />
+        )
+
       case 'ats-masked-profiles':
         const mockMaskedProfiles: MaskedProfile[] = [
           {
@@ -3795,7 +3872,6 @@ export default function LineMarketingApp() {
             location: '東京都渋谷区',
             foundedYear: 2010,
             employeeCount: 500,
-            hiringStatus: 'active',
             createdAt: new Date('2024-01-01'),
             updatedAt: new Date()
           }
@@ -3840,8 +3916,9 @@ export default function LineMarketingApp() {
                 setShowRecommendationForm(false)
                 setSelectedProfileForRecommendation(null)
                 
-                // 推薦リクエスト送信
-                alert('推薦リクエストを送信しました！')
+                // 受信箱に移動
+                alert('推薦リクエストを送信しました！\n受信箱で確認してください。')
+                setActiveTab('crm-request-inbox')
               }}
               onCancel={() => {
                 setShowRecommendationForm(false)
@@ -3923,7 +4000,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都渋谷区',
             foundedYear: 2015,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           },
@@ -3937,7 +4013,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都港区',
             foundedYear: 2018,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           },
@@ -3951,7 +4026,6 @@ export default function LineMarketingApp() {
             logo: '',
             location: '東京都中央区',
             foundedYear: 2012,
-            hiringStatus: 'active',
             createdAt: new Date(),
             updatedAt: new Date()
           }
