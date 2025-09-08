@@ -30,10 +30,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-31'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-002',
@@ -64,10 +61,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-15'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-003',
@@ -98,10 +92,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-02-29'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-004',
@@ -132,10 +123,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-20'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-005',
@@ -166,10 +154,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-02-15'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-006',
@@ -200,10 +185,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-10'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-007',
@@ -234,10 +216,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-01-31'),
     status: 'closed',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-008',
@@ -268,10 +247,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-25'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-009',
@@ -302,10 +278,7 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-04-01'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   },
   {
     id: 'job-010',
@@ -336,9 +309,6 @@ export const mockJobPostingsData: JobPosting[] = [
     closingDate: new Date('2024-03-30'),
     status: 'active',
     numberOfOpenings: 1,
-    hiringProcess: [],
-    createdBy: "system",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-01")
+    hiringProcess: []
   }
 ]

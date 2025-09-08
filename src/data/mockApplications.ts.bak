@@ -8,21 +8,23 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'interviewing',
     source: 'agent',
     appliedAt: new Date('2024-01-15T10:00:00Z'),
-    agentId: 'agent1',
+    appliedBy: 'agent1',
     stage: '最終面接',
     notes: '技術力高く、即戦力として期待できる',
+    createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-20T14:00:00Z')
   },
   {
     id: 'app-002',
     jobSeekerId: 'js-agent-002',
     jobPostingId: 'job-002',
-    status: 'reviewing',
+    status: 'screening',
     source: 'agent',
     appliedAt: new Date('2024-01-18T11:00:00Z'),
-    agentId: 'agent1',
+    appliedBy: 'agent1',
     stage: '書類選考',
     notes: 'デザインポートフォリオが優秀',
+    createdAt: new Date('2024-01-18T11:00:00Z'),
     updatedAt: new Date('2024-01-19T09:00:00Z')
   },
   {
@@ -32,9 +34,10 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'offered',
     source: 'agent',
     appliedAt: new Date('2024-01-10T09:00:00Z'),
-    agentId: 'agent2',
+    appliedBy: 'agent2',
     stage: 'オファー提示済み',
     notes: 'PM経験豊富、条件交渉中',
+    createdAt: new Date('2024-01-10T09:00:00Z'),
     updatedAt: new Date('2024-01-22T16:00:00Z')
   },
   {
@@ -44,21 +47,23 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'applied',
     source: 'agent',
     appliedAt: new Date('2024-01-20T13:00:00Z'),
-    agentId: 'agent2',
+    appliedBy: 'agent2',
     stage: '応募済み',
     notes: 'マーケティング実績に期待',
+    createdAt: new Date('2024-01-20T13:00:00Z'),
     updatedAt: new Date('2024-01-20T13:00:00Z')
   },
   {
     id: 'app-005',
     jobSeekerId: 'js-agent-005',
     jobPostingId: 'job-005',
-    status: 'accepted',
+    status: 'hired',
     source: 'agent',
     appliedAt: new Date('2023-12-01T10:00:00Z'),
-    agentId: 'agent3',
+    appliedBy: 'agent3',
     stage: '採用決定',
     notes: '2024年2月1日入社予定',
+    createdAt: new Date('2023-12-01T10:00:00Z'),
     updatedAt: new Date('2024-01-15T14:00:00Z')
   },
   {
@@ -68,9 +73,10 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'rejected',
     source: 'agent',
     appliedAt: new Date('2023-12-15T14:00:00Z'),
-    agentId: 'agent3',
+    appliedBy: 'agent3',
     stage: '不採用',
     notes: '経験値が不足',
+    createdAt: new Date('2023-12-15T14:00:00Z'),
     updatedAt: new Date('2024-01-05T10:00:00Z')
   },
   {
@@ -80,9 +86,10 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'withdrawn',
     source: 'agent',
     appliedAt: new Date('2023-11-20T11:00:00Z'),
-    agentId: 'agent4',
+    appliedBy: 'agent4',
     stage: '辞退',
     notes: '他社でオファー受諾',
+    createdAt: new Date('2023-11-20T11:00:00Z'),
     updatedAt: new Date('2023-12-10T15:00:00Z')
   },
   {
@@ -92,21 +99,23 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'interviewing',
     source: 'agent',
     appliedAt: new Date('2024-01-12T10:00:00Z'),
-    agentId: 'agent4',
+    appliedBy: 'agent4',
     stage: '二次面接',
     notes: 'EC運営経験を評価',
+    createdAt: new Date('2024-01-12T10:00:00Z'),
     updatedAt: new Date('2024-01-19T14:00:00Z')
   },
   {
     id: 'app-009',
     jobSeekerId: 'js-agent-009',
     jobPostingId: 'job-009',
-    status: 'reviewing',
+    status: 'screening',
     source: 'agent',
     appliedAt: new Date('2024-01-16T09:00:00Z'),
-    agentId: 'agent5',
+    appliedBy: 'agent5',
     stage: '書類選考',
     notes: 'ゲーム開発実績を確認中',
+    createdAt: new Date('2024-01-16T09:00:00Z'),
     updatedAt: new Date('2024-01-17T11:00:00Z')
   },
   {
@@ -116,9 +125,10 @@ export const mockApplicationsData: JobApplication[] = [
     status: 'interviewing',
     source: 'agent',
     appliedAt: new Date('2024-01-14T13:00:00Z'),
-    agentId: 'agent5',
+    appliedBy: 'agent5',
     stage: '一次面接',
     notes: 'コンサルティング経験が合致',
+    createdAt: new Date('2024-01-14T13:00:00Z'),
     updatedAt: new Date('2024-01-21T10:00:00Z')
   }
 ]

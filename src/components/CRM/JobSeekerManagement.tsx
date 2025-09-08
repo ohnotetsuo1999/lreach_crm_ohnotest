@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { JobSeeker as ImportedJobSeeker, JobSeekerStatus } from '@/types'
 import { 
   Search, 
   Filter, 
@@ -22,7 +23,7 @@ import {
 import { UnifiedDetailModal } from '@/components/shared/UnifiedDetailModal'
 
 // 求職者の型定義
-interface JobSeeker {
+interface LocalJobSeeker {
   id: number
   name: string
   nameKana: string
@@ -52,10 +53,10 @@ export function JobSeekerManagement() {
   const [selectedLineStatus, setSelectedLineStatus] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [showDetail, setShowDetail] = useState(false)
-  const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null)
+  const [selectedJobSeeker, setSelectedJobSeeker] = useState<ImportedJobSeeker | null>(null)
   const [detailTab, setDetailTab] = useState<'info' | 'resume' | 'cv' | 'selection'>('info')
   const [showAddJobSeeker, setShowAddJobSeeker] = useState(false)
-  const [newJobSeeker, setNewJobSeeker] = useState<Partial<JobSeeker>>({
+  const [newJobSeeker, setNewJobSeeker] = useState<any>({
     name: '',
     nameKana: '',
     email: '',
@@ -86,7 +87,7 @@ export function JobSeekerManagement() {
       
       // Simulate PDF parsing and auto-fill (in real app, this would use a PDF parsing library)
       setTimeout(() => {
-        setNewJobSeeker(prev => ({
+        setNewJobSeeker((prev: any) => ({
           ...prev,
           name: '山田 太郎',
           nameKana: 'ヤマダ タロウ',
@@ -108,10 +109,10 @@ export function JobSeekerManagement() {
     }
   }
 
-  // 仮データ
-  const jobSeekers: JobSeeker[] = [
+  // 仮データ - 型の互換性のため必要なフィールドを追加
+  const mockJobSeekerData = [
     {
-      id: 1,
+      id: '1',
       name: '佐藤 花子',
       nameKana: 'サトウ ハナコ',
       email: 'sato.hanako@example.com',
@@ -550,18 +551,36 @@ export function JobSeekerManagement() {
     }
   ]
 
+  // JobSeeker型に変換（必須フィールドを追加）
+  const jobSeekers: ImportedJobSeeker[] = mockJobSeekerData.map(data => ({
+    ...data,
+    id: String(data.id),
+    phone: data.phone || '',
+    address: data.address || data.workLocation || '住所未登録',
+    skills: Array.isArray(data.skills) 
+      ? data.skills.map(skill => typeof skill === 'string' ? { id: skill, name: skill, level: 'intermediate' } : skill)
+      : [],
+    certifications: [],
+    languages: [],
+    desiredPositions: data.desiredPosition ? [data.desiredPosition] : [],
+    status: 'active' as JobSeekerStatus,
+    tags: [],
+    createdAt: new Date(data.registeredDate || '2024-01-01'),
+    updatedAt: new Date(data.lastContact || data.registeredDate || '2024-01-01')
+  } as unknown as ImportedJobSeeker))
+
   // フィルタリング
   const filteredJobSeekers = jobSeekers.filter(js => {
     const matchesSearch = searchQuery === '' || 
       js.name.includes(searchQuery) ||
-      js.nameKana.includes(searchQuery) ||
-      js.email.includes(searchQuery) ||
+      ((js as any).nameKana && (js as any).nameKana.includes(searchQuery)) ||
+      (js.email && js.email.includes(searchQuery)) ||
       js.phone.includes(searchQuery) ||
-      js.desiredPosition.includes(searchQuery) ||
-      js.skills.some(skill => skill.includes(searchQuery))
+      js.desiredPositions.some(pos => pos.includes(searchQuery)) ||
+      js.skills.some(skill => skill.name.includes(searchQuery))
     
-    const matchesSource = selectedSource === 'all' || js.source === selectedSource
-    const matchesLineStatus = selectedLineStatus === 'all' || js.lineStatus === selectedLineStatus
+    const matchesSource = selectedSource === 'all' || (js as any).source === selectedSource
+    const matchesLineStatus = selectedLineStatus === 'all' || (js as any).lineStatus === selectedLineStatus
     
     return matchesSearch && matchesSource && matchesLineStatus
   })
@@ -574,9 +593,9 @@ export function JobSeekerManagement() {
   // 統計情報
   const stats = {
     total: jobSeekers.length,
-    lineConnected: jobSeekers.filter(js => js.lineStatus === '連携済み').length,
-    lineNotConnected: jobSeekers.filter(js => js.lineStatus === '未連携').length,
-    lineBlocked: jobSeekers.filter(js => js.lineStatus === 'ブロック').length
+    lineConnected: jobSeekers.filter(js => (js as any).lineStatus === '連携済み').length,
+    lineNotConnected: jobSeekers.filter(js => (js as any).lineStatus === '未連携').length,
+    lineBlocked: jobSeekers.filter(js => (js as any).lineStatus === 'ブロック').length
   }
 
   const sourceColors: Record<string, string> = {
@@ -736,30 +755,30 @@ export function JobSeekerManagement() {
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{jobSeeker.name}</div>
-                      <div className="text-sm text-gray-500">{jobSeeker.age}歳 {jobSeeker.gender}</div>
+                      <div className="text-sm text-gray-500">{(jobSeeker as any).age}歳 {(jobSeeker as any).gender}</div>
                       <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <Phone className="w-3 h-3" />
                         {jobSeeker.phone}
                       </div>
                       <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="w-3 h-3" />
-                        {jobSeeker.address || jobSeeker.workLocation}
+                        {jobSeeker.address || (jobSeeker as any).workLocation}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${sourceColors[jobSeeker.source]}`}>
-                    {jobSeeker.source}
+                  <span className={`px-2 py-1 text-xs rounded-full ${sourceColors[(jobSeeker as any).source]}`}>
+                    {(jobSeeker as any).source}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${lineStatusColors[jobSeeker.lineStatus]}`}>
-                    {jobSeeker.lineStatus}
+                  <span className={`px-2 py-1 text-xs rounded-full ${lineStatusColors[(jobSeeker as any).lineStatus]}`}>
+                    {(jobSeeker as any).lineStatus}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {jobSeeker.registeredDate}
+                  {(jobSeeker as any).registeredDate}
                 </td>
               </tr>
             ))}
@@ -813,24 +832,7 @@ export function JobSeekerManagement() {
             setShowDetail(false)
             setDetailTab('info')
           }}
-          jobSeeker={{
-            id: selectedJobSeeker.id.toString(),
-            name: selectedJobSeeker.name,
-            email: selectedJobSeeker.email,
-            phone: selectedJobSeeker.phone,
-            address: selectedJobSeeker.address,
-            age: selectedJobSeeker.age,
-            currentPosition: selectedJobSeeker.currentPosition,
-            desiredPosition: selectedJobSeeker.desiredPosition,
-            skills: selectedJobSeeker.skills,
-            experience: selectedJobSeeker.experience,
-            education: selectedJobSeeker.education,
-            desiredSalary: selectedJobSeeker.desiredSalary,
-            workLocation: selectedJobSeeker.workLocation,
-            lineStatus: selectedJobSeeker.lineStatus,
-            createdAt: new Date(selectedJobSeeker.registeredDate),
-            memo: selectedJobSeeker.memo
-          }}
+          jobSeeker={selectedJobSeeker}
           initialTab={detailTab === 'selection' ? 'selection' : detailTab === 'resume' ? 'resume' : detailTab === 'cv' ? 'cv' : 'basic'}
           mode="jobseeker"
         />

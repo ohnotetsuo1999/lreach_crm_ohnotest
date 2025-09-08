@@ -236,7 +236,7 @@ export function UnifiedDetailModal({
     (typeof editingSelection?.jobPosting?.company === 'string' 
       ? editingSelection?.jobPosting?.company 
       : editingSelection?.jobPosting?.company?.name) || 
-    editingSelection?.jobPosting?.companyName || ''
+    (editingSelection?.jobPosting as any)?.companyName || ''
 
   // Always show all tabs for consistency
   const showSelectionTabs = true

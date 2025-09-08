@@ -33,7 +33,6 @@ export const agentJobSeekersData: JobSeeker[] = [
         description: 'Webアプリケーション開発、チームリード'
       },
       {
-        id: 'work-001-2',
         company: '株式会社デジタルイノベーション',
         position: 'エンジニア',
         startDate: new Date('2013-04-01'),
@@ -97,7 +96,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-002-1',
-        company: '株式会社クリエイティブデザイン',
+company: '株式会社クリエイティブデザイン',
         position: 'UIUXデザイナー',
         startDate: new Date('2019-04-01'),
         endDate: undefined,
@@ -156,7 +155,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-003-1',
-        company: '株式会社ビジネスソリューション',
+company: '株式会社ビジネスソリューション',
         position: 'プロジェクトマネージャー',
         startDate: new Date('2016-04-01'),
         endDate: undefined,
@@ -217,7 +216,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-004-1',
-        company: '株式会社マーケティングプロ',
+company: '株式会社マーケティングプロ',
         position: 'デジタルマーケター',
         startDate: new Date('2020-04-01'),
         endDate: undefined,
@@ -278,7 +277,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-005-1',
-        company: '株式会社セールスフォース',
+company: '株式会社セールスフォース',
         position: '営業部長',
         startDate: new Date('2017-04-01'),
         endDate: undefined,
@@ -336,7 +335,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-006-1',
-        company: '株式会社HR テック',
+company: '株式会社HR テック',
         position: '人事スペシャリスト',
         startDate: new Date('2019-04-01'),
         endDate: undefined,
@@ -404,7 +403,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-007-1',
-        company: 'フリーランス',
+company: 'フリーランス',
         position: 'データサイエンティスト',
         startDate: new Date('2020-04-01'),
         endDate: undefined,
@@ -465,7 +464,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-008-1',
-        company: '株式会社ファッションテック',
+company: '株式会社ファッションテック',
         position: 'ECマネージャー',
         startDate: new Date('2021-04-01'),
         endDate: undefined,
@@ -524,7 +523,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-009-1',
-        company: '株式会社ゲームスタジオ',
+company: '株式会社ゲームスタジオ',
         position: 'ゲームプログラマー',
         startDate: new Date('2017-04-01'),
         endDate: undefined,
@@ -582,7 +581,7 @@ export const agentJobSeekersData: JobSeeker[] = [
     workHistory: [
       {
         id: 'work-010-1',
-        company: '株式会社コンサルティングファーム',
+company: '株式会社コンサルティングファーム',
         position: 'ビジネスアナリスト',
         startDate: new Date('2020-04-01'),
         endDate: undefined,
