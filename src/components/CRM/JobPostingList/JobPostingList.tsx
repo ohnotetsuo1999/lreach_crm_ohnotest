@@ -21,7 +21,9 @@ import {
   BarChart3,
   Building,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  X
 } from 'lucide-react'
 
 interface JobPostingListProps {
@@ -36,10 +38,10 @@ interface JobPostingListProps {
 
 const statusLabels: Record<JobPostingStatus, { label: string; color: string }> = {
   draft: { label: '下書き', color: 'bg-gray-100 text-gray-800' },
-  published: { label: '公開中', color: 'bg-green-100 text-green-800' },
+  published: { label: 'アクティブ', color: 'bg-green-100 text-green-800' },
   active: { label: 'アクティブ', color: 'bg-green-100 text-green-800' },
-  closed: { label: '募集終了', color: 'bg-red-100 text-red-800' },
-  on_hold: { label: '一時停止', color: 'bg-yellow-100 text-yellow-800' },
+  closed: { label: '停止', color: 'bg-red-100 text-red-800' },
+  on_hold: { label: '保留', color: 'bg-yellow-100 text-yellow-800' },
   filled: { label: '採用済み', color: 'bg-blue-100 text-blue-800' }
 }
 
@@ -67,21 +69,75 @@ export function JobPostingList({
   const [currentPage, setCurrentPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'applications'>('newest')
+  const [showAddJobPosting, setShowAddJobPosting] = useState(false)
+  const [uploadedPdf, setUploadedPdf] = useState<File | null>(null)
+  const [newJobPosting, setNewJobPosting] = useState<Partial<JobPosting>>({
+    title: '',
+    companyName: '',
+    description: '',
+    requirements: [],
+    benefits: [],
+    salary: '',
+    location: '',
+    employmentType: 'full-time',
+    department: '',
+    experience_required: '',
+    status: 'draft' as JobPostingStatus,
+    skills_required: []
+  })
   
   const itemsPerPage = 10
 
+  // Handle PDF upload and auto-fill for job posting
+  const handleJobPdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type === 'application/pdf') {
+      setUploadedPdf(file)
+      
+      // Simulate PDF parsing and auto-fill
+      setTimeout(() => {
+        setNewJobPosting(prev => ({
+          ...prev,
+          title: 'シニアフロントエンドエンジニア',
+          companyName: '株式会社テックカンパニー',
+          description: 'React/Next.jsを用いた大規模Webアプリケーションの開発をリードしていただきます。',
+          requirements: [
+            'React/Next.jsでの開発経験3年以上',
+            'TypeScriptの実務経験',
+            'チーム開発経験',
+            'アジャイル開発の経験'
+          ],
+          benefits: [
+            'リモートワーク可',
+            'フレックスタイム制',
+            '書籍購入支援',
+            '資格取得支援'
+          ],
+          salary: '600-900万円',
+          location: '東京都渋谷区',
+          employmentType: 'full-time',
+          department: '開発部',
+          experience_required: '5年以上',
+          skills_required: ['React', 'Next.js', 'TypeScript', 'Git']
+        }))
+        alert('PDFから求人情報を読み取りました')
+      }, 1000)
+    }
+  }
+
   // すべての部門を抽出
   const departments = Array.from(
-    new Set(jobPostings.map(jp => jp.department).filter(Boolean))
+    new Set((jobPostings || []).map(jp => jp && jp.department).filter(Boolean))
   ) as string[]
 
   // フィルタリング
-  const filteredJobPostings = jobPostings.filter(jobPosting => {
+  const filteredJobPostings = (jobPostings || []).filter(jobPosting => {
+    if (!jobPosting) return false
     const matchesSearch = 
-      jobPosting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobPosting.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobPosting.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobPosting.department?.toLowerCase().includes(searchQuery.toLowerCase())
+      (jobPosting.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (jobPosting.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (jobPosting.location || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (jobPosting.department || '').toLowerCase().includes(searchQuery.toLowerCase())
     
     const matchesStatus = selectedStatus === 'all' || jobPosting.status === selectedStatus
     const matchesDepartment = selectedDepartment === 'all' || jobPosting.department === selectedDepartment
@@ -112,10 +168,10 @@ export function JobPostingList({
 
   // 統計情報
   const stats = {
-    total: jobPostings.length,
-    published: jobPostings.filter(jp => jp.status === 'published').length,
-    totalApplications: jobPostings.reduce((sum, jp) => sum + (jp.applications?.length || 0), 0),
-    totalOpenings: jobPostings.reduce((sum, jp) => sum + jp.numberOfOpenings, 0)
+    total: (jobPostings || []).length,
+    published: (jobPostings || []).filter(jp => jp && jp.status === 'published').length,
+    totalApplications: (jobPostings || []).reduce((sum, jp) => sum + (jp && jp.applications?.length || 0), 0),
+    totalOpenings: (jobPostings || []).reduce((sum, jp) => sum + (jp && jp.numberOfOpenings || 0), 0)
   }
 
   return (
@@ -129,7 +185,7 @@ export function JobPostingList({
           </p>
         </div>
         <button
-          onClick={onCreateJobPosting}
+          onClick={() => setShowAddJobPosting(true)}
           className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -138,7 +194,7 @@ export function JobPostingList({
       </div>
 
       {/* 統計カード */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -164,15 +220,6 @@ export function JobPostingList({
               <p className="text-2xl font-bold text-blue-600">{stats.totalApplications}</p>
             </div>
             <Users className="w-8 h-8 text-blue-400" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">募集人数</p>
-              <p className="text-2xl font-bold text-purple-600">{stats.totalOpenings}</p>
-            </div>
-            <Users className="w-8 h-8 text-purple-400" />
           </div>
         </div>
       </div>
@@ -273,10 +320,10 @@ export function JobPostingList({
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  求人情報
+                  企業名
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  部門
+                  求人情報
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   勤務地
@@ -288,42 +335,51 @@ export function JobPostingList({
                   給与
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  応募数/募集数
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ステータス
+                  状況
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   公開日
                 </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentJobPostings.map((jobPosting) => (
-                <tr key={jobPosting.id} className="hover:bg-gray-50">
+              {currentJobPostings.map((jobPosting) => {
+                if (!jobPosting) return null
+                return (
+                <tr 
+                  key={jobPosting.id} 
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onViewJobPosting(jobPosting)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Building className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {jobPosting.companyName || jobPosting.company || '企業名未設定'}
+                        </div>
+                        {jobPosting.department && (
+                          <div className="text-xs text-gray-500">
+                            {jobPosting.department}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
                         {jobPosting.title}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {jobPosting.requiredExperience ? `${jobPosting.requiredExperience}年以上` : '経験不問'}
+                        {jobPosting.requiredExperience ? `経験${jobPosting.requiredExperience}年以上` : '経験不問'}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-1 text-sm text-gray-900">
-                      <Building className="w-4 h-4 text-gray-400" />
-                      {jobPosting.department || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1 text-sm text-gray-900">
                       <MapPin className="w-4 h-4 text-gray-400" />
-                      {jobPosting.location}
+                      {jobPosting.location || '未設定'}
                     </div>
                     {jobPosting.remoteOption && (
                       <div className="text-xs text-gray-500">
@@ -364,15 +420,6 @@ export function JobPostingList({
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      <span className="font-medium">{jobPosting.applications?.length || 0}</span>
-                      <span className="text-gray-500"> / {jobPosting.numberOfOpenings}</span>
-                    </div>
-                    {jobPosting.applications && jobPosting.applications.length >= jobPosting.numberOfOpenings && (
-                      <div className="text-xs text-orange-600">定員到達</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                       statusLabels[jobPosting.status].color
                     }`}>
@@ -392,28 +439,9 @@ export function JobPostingList({
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => onViewJobPosting(jobPosting)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        詳細
-                      </button>
-                      {(jobPosting.status === 'published' || jobPosting.status === 'active') && (
-                        <button
-                          onClick={() => window.open(`/jobs/${jobPosting.id}`, '_blank')}
-                          className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-                          title="公開URL"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          <span>公開URL</span>
-                        </button>
-                      )}
-                    </div>
-                  </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -458,6 +486,271 @@ export function JobPostingList({
           </div>
         )}
       </div>
+
+      {/* 新規求人追加モーダル */}
+      {showAddJobPosting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">新規求人作成</h3>
+                <button
+                  onClick={() => {
+                    setShowAddJobPosting(false)
+                    setNewJobPosting({
+                      title: '',
+                      companyName: '',
+                      description: '',
+                      requirements: [],
+                      benefits: [],
+                      salary: '',
+                      location: '',
+                      employmentType: 'full-time',
+                      department: '',
+                      experience_required: '',
+                      status: 'draft' as JobPostingStatus,
+                      skills_required: []
+                    })
+                    setUploadedPdf(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* PDF Upload */}
+              <div className="mb-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 mb-2">求人票（PDF）をアップロードして自動入力</p>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleJobPdfUpload}
+                    className="hidden"
+                    id="job-pdf-upload"
+                  />
+                  <label
+                    htmlFor="job-pdf-upload"
+                    className="inline-block px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600"
+                  >
+                    PDFを選択
+                  </label>
+                  {uploadedPdf && (
+                    <p className="mt-2 text-sm text-green-600">
+                      ✓ {uploadedPdf.name} をアップロードしました
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">企業名 *</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.companyName || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, companyName: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: 株式会社〇〇"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">職種名 *</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.title || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, title: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: フロントエンドエンジニア"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">雇用形態</label>
+                    <select
+                      value={newJobPosting.employmentType || 'full-time'}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, employmentType: e.target.value as any})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="full-time">正社員</option>
+                      <option value="part-time">パート・アルバイト</option>
+                      <option value="contract">契約社員</option>
+                      <option value="freelance">フリーランス</option>
+                      <option value="internship">インターン</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">職務内容 *</label>
+                  <textarea
+                    value={newJobPosting.description || ''}
+                    onChange={(e) => setNewJobPosting({...newJobPosting, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={4}
+                    placeholder="業務内容の詳細を記入してください"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">給与</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.salary || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, salary: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: 500-800万円"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">勤務地</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.location || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, location: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: 東京都渋谷区"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">部署</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.department || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, department: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: 開発部"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">必要経験年数</label>
+                    <input
+                      type="text"
+                      value={newJobPosting.experience_required || ''}
+                      onChange={(e) => setNewJobPosting({...newJobPosting, experience_required: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例: 3年以上"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">応募要件（1行1項目）</label>
+                  <textarea
+                    value={newJobPosting.requirements?.join('\n') || ''}
+                    onChange={(e) => setNewJobPosting({...newJobPosting, requirements: e.target.value.split('\n').filter(r => r.trim())})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={4}
+                    placeholder="例:&#10;React/Next.jsでの開発経験&#10;TypeScriptの実務経験"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">福利厚生（1行1項目）</label>
+                  <textarea
+                    value={newJobPosting.benefits?.join('\n') || ''}
+                    onChange={(e) => setNewJobPosting({...newJobPosting, benefits: e.target.value.split('\n').filter(b => b.trim())})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="例:&#10;リモートワーク可&#10;フレックスタイム制"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">必要スキル（カンマ区切り）</label>
+                  <input
+                    type="text"
+                    value={newJobPosting.skills_required?.join(', ') || ''}
+                    onChange={(e) => setNewJobPosting({...newJobPosting, skills_required: e.target.value.split(',').map(s => s.trim())})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="例: React, TypeScript, Git"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
+                  <select
+                    value={newJobPosting.status || 'draft'}
+                    onChange={(e) => setNewJobPosting({...newJobPosting, status: e.target.value as JobPostingStatus})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="draft">下書き</option>
+                    <option value="published">公開</option>
+                    <option value="on_hold">保留</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowAddJobPosting(false)
+                    setNewJobPosting({
+                      title: '',
+                      companyName: '',
+                      description: '',
+                      requirements: [],
+                      benefits: [],
+                      salary: '',
+                      location: '',
+                      employmentType: 'full-time',
+                      department: '',
+                      experience_required: '',
+                      status: 'draft' as JobPostingStatus,
+                      skills_required: []
+                    })
+                    setUploadedPdf(null)
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={() => {
+                    if (newJobPosting.title && newJobPosting.companyName && newJobPosting.description) {
+                      alert(`求人「${newJobPosting.title}」を作成しました（デモ）`)
+                      setShowAddJobPosting(false)
+                      onCreateJobPosting()
+                      setNewJobPosting({
+                        title: '',
+                        description: '',
+                        requirements: [],
+                        benefits: [],
+                        salary: '',
+                        location: '',
+                        employmentType: 'full-time',
+                        department: '',
+                        experience_required: '',
+                        status: 'draft' as JobPostingStatus,
+                        skills_required: []
+                      })
+                      setUploadedPdf(null)
+                    } else {
+                      alert('企業名、職種名、職務内容は必須です')
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                >
+                  作成
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -740,7 +740,7 @@ export interface TemplateRecommendation {
 export interface JobSeeker {
   id: string
   name: string
-  email: string
+  email?: string
   phone: string
   lineUserId?: string
   profileImageUrl?: string
@@ -789,7 +789,8 @@ export interface JobSeeker {
   applications?: JobApplication[]
   
   // システム情報
-  source?: 'line' | 'web' | 'referral' | 'direct' | 'agency'
+  source?: 'lp' | 'ad' | 'organic' | 'qr' | 'referral' | 'direct' | 'sns' | 'email'
+  lineStatus?: 'connected' | 'not_connected' | 'blocked'
   createdAt: Date
   updatedAt: Date
   lastContactedAt?: Date
@@ -863,7 +864,9 @@ export interface Attachment {
 export interface JobPosting {
   id: string
   title: string
-  company?: string
+  companyId: string
+  company?: Company // Populated company object
+  companyName?: string // For backward compatibility
   department?: string
   
   // 求人詳細
@@ -1521,6 +1524,20 @@ export interface Company {
   employeeCount?: number
   culture?: string
   benefits?: string[]
+  
+  // 連絡先情報
+  contactPerson?: string
+  contactEmail?: string
+  contactPhone?: string
+  address?: string
+  
+  // 採用関連
+  hiringStatus: 'active' | 'inactive' | 'paused'
+  activeJobPostings?: number
+  totalHires?: number
+  
+  // システム情報
   createdAt: Date
   updatedAt: Date
+  notes?: string
 }

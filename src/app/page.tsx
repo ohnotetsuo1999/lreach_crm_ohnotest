@@ -42,7 +42,12 @@ import {
   MaskedProfile,
   Company
 } from '@/types'
-import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle, Briefcase, UserCheck, GanttChartSquare } from 'lucide-react'
+import { LayoutDashboard, Users, Target, List, BarChart3, Settings2, Tags, Send, Bell, Database, Columns3, Calendar, FileText, FileCheck, UserCog, Home, MessageCircle, Briefcase, UserCheck, GanttChartSquare, ChevronDown, ChevronRight, Building2, Newspaper, Globe, FileSearch, BookOpen, Phone, History, ClipboardCheck, CheckCircle, X, Plus } from 'lucide-react'
+import { agentJobSeekersData } from '@/data/agentJobSeekers'
+import { agentsData } from '@/data/agents'
+import { mockApplicationsData } from '@/data/mockApplications'
+import { mockJobPostingsData } from '@/data/mockJobPostings'
+import { mockCompanies } from '@/data/mockCompanies'
 import { Reports } from '@/components/Reports/Reports'
 import { BroadcastPage } from '@/components/Broadcast/BroadcastPage'
 import { ReminderList } from '@/components/ReminderManagement/ReminderList'
@@ -52,7 +57,6 @@ import { DatabaseSchema } from '@/components/DatabaseSchema/DatabaseSchema'
 import { BulkTestSendModal } from '@/components/Common/BulkTestSendModal'
 import { AdAnalytics } from '@/components/AdAnalytics/AdAnalytics'
 import {
-  InterviewDashboard,
   BookingFormSettings,
   FormTemplateSettings,
   InterviewBooking,
@@ -61,28 +65,43 @@ import {
 import { DatabaseManagement } from '@/components/DatabaseManagement/DatabaseManagement'
 import { ApplicantManagement } from '@/components/ApplicantManagement/ApplicantManagement'
 import { MessageManagement } from '@/components/MessageManagement/MessageManagement'
-import { JobSeekerList } from '@/components/CRM/JobSeekerList/JobSeekerList'
-import { JobSeekerDetail } from '@/components/CRM/JobSeekerDetail/JobSeekerDetail'
+import { JobSeekerManagement } from '@/components/CRM/JobSeekerManagement'
 import { JobPostingList } from '@/components/CRM/JobPostingList/JobPostingList'
 import { JobPostingDetail } from '@/components/CRM/JobPostingDetail/JobPostingDetail'
-import { AgentList } from '@/components/CRM/AgentList/AgentList'
-import { AgentDetail } from '@/components/CRM/AgentDetail/AgentDetail'
+import { CompanyList } from '@/components/CRM/CompanyManagement/CompanyList'
+import { CompanyDetail } from '@/components/CRM/CompanyManagement/CompanyDetail'
 import { ChatInterface } from '@/components/CRM/Chat/ChatInterface'
-import { AgentJobSeekerList } from '@/components/CRM/Agent/AgentJobSeekerList'
-import { AgentJobList } from '@/components/CRM/Agent/AgentJobList'
-import { AgentJobDetail } from '@/components/CRM/Agent/AgentJobDetail'
-import { AgentRecommendationList } from '@/components/CRM/Agent/AgentRecommendationList'
-import { AgentRecommendationModal } from '@/components/CRM/Agent/AgentRecommendationModal'
 import { GanttChart } from '@/components/GanttChart/GanttChart'
-import ResumeEditor from '@/components/CRM/ResumeEditor'
-import LineSender from '@/components/CRM/LineSender'
-import RequestInbox from '@/components/CRM/RequestInbox'
 import MaskedProfileList from '@/components/ATS/MaskedProfileList'
 import RecommendationRequestForm from '@/components/ATS/RecommendationRequestForm'
+import { CandidateManagement } from '@/components/CandidateManagement/CandidateManagement'
+import { ClientList } from '@/components/ClientManagement/ClientList'
+import { JobManagement } from '@/components/CMS/JobManagement'
+import { CompanyManagement } from '@/components/CMS/CompanyManagement'
+import { ApplicationManagement } from '@/components/CMS/ApplicationManagement'
+import { ContentManagement } from '@/components/CMS/ContentManagement'
+import { JobPortalTop } from '@/components/JobPortal/JobPortalTop'
+import { JobListings } from '@/components/JobPortal/JobListings'
+import { JobDetail } from '@/components/JobPortal/JobDetail'
+import { ContentList } from '@/components/ContentPortal/ContentList'
+import { ContentDetail } from '@/components/ContentPortal/ContentDetail'
+import { CandidateCallList } from '@/components/ISCallManagement/CandidateCallList'
+import SelectionManagement from '@/components/CRM/Agent/SelectionManagement'
+import SimpleActionManagement from '@/components/CRM/Agent/SimpleActionManagement'
+import { AgentJobSeekerList } from '@/components/CRM/Agent/AgentJobSeekerList'
+
 
 export default function LineMarketingApp() {
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'interview-dashboard' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings' | 'admin-home' | 'admin-database' | 'admin-applicants' | 'admin-messages' | 'crm-jobseekers' | 'crm-jobs' | 'crm-agents' | 'crm-chat' | 'agent-crm-jobseekers' | 'agent-crm-jobs' | 'agent-crm-recommendations' | 'gantt-chart' | 'crm-resume-editor' | 'crm-line-sender' | 'crm-request-inbox' | 'ats-masked-profiles' | 'ats-recommendation-request'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'segments' | 'scenarios' | 'templates' | 'tags' | 'reports' | 'broadcast' | 'reminders' | 'supabase-test' | 'database-schema' | 'booking-form' | 'form-template' | 'interview-booking' | 'account-settings' | 'admin-home' | 'admin-database' | 'admin-applicants' | 'admin-messages' | 'crm-jobseekers' | 'crm-companies' | 'crm-jobs' | 'crm-agents' | 'agent-crm-recommendations' | 'crm-chat' | 'gantt-chart' | 'ats-masked-profiles' | 'ats-recommendation-request' | 'candidate-management' | 'applicants' | 'client-list' | 'cms-jobs' | 'cms-companies' | 'cms-content' | 'cms-applications' | 'job-portal' | 'job-listings' | 'content-portal' | 'is-call-management'>('crm-jobseekers')
+  const [accountType, setAccountType] = useState<'hub' | 'crm'>('crm')
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'MA': false,
+    '予約': false,
+    'CRM': false,
+    '送客代行': false,
+    'CMS': false
+  })
   const [currentView, setCurrentView] = useState<'list' | 'edit' | 'detail'>('list')
   const [editingItem, setEditingItem] = useState<Scenario | Template | User | null>(null)
   const [editingPack, setEditingPack] = useState<TemplatePack | null>(null)
@@ -114,23 +133,264 @@ export default function LineMarketingApp() {
   const [showBulkTestSendModal, setShowBulkTestSendModal] = useState(false)
   
   // CRM state
-  const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([])
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([])
+  const [jobSeekers, setJobSeekers] = useState<JobSeeker[]>([
+    ...agentJobSeekersData,
+    {
+      id: 'js1',
+      name: '佐藤花子',
+      email: 'sato@example.com',
+      phone: '090-2345-6789',
+      profileImageUrl: '/api/placeholder/150/150',
+      skills: [
+        { id: 'sk11', name: 'React', level: 'advanced', yearsOfExperience: 5 },
+        { id: 'sk12', name: 'TypeScript', level: 'intermediate', yearsOfExperience: 3 },
+      ],
+      experiences: [
+        {
+          id: 'exp1',
+          position: 'フロントエンドエンジニア',
+          company: 'Web開発会社',
+          startDate: new Date('2019-04-01'),
+          endDate: new Date('2024-10-31'),
+          description: 'Reactを使用したWebアプリケーション開発',
+          isCurrent: false
+        }
+      ],
+      education: [
+        {
+          id: 'edu1',
+          degree: '情報工学学士',
+          school: '東京工業大学',
+          startDate: new Date('2015-04-01'),
+          endDate: new Date('2019-03-31'),
+          isCurrent: false,
+          field: 'コンピュータサイエンス'
+        }
+      ],
+      desiredSalary: { min: 5000000, max: 7000000, currency: 'JPY' },
+      desiredLocation: ['東京都', '神奈川県'],
+      workStyle: 'full-time',
+      availableFrom: new Date(),
+      status: 'qualified' as const,
+      source: 'lp',
+      lineStatus: 'connected',
+      certifications: [],
+      languages: [{ id: 'lang1', name: '日本語', proficiency: 'native' }, { id: 'lang2', name: '英語', proficiency: 'conversational' }],
+      desiredPositions: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
+      tags: ['React', 'TypeScript', '即戦力'],
+      createdAt: new Date('2024-10-01'),
+      updatedAt: new Date()
+    },
+    {
+      id: 'js2',
+      name: '鈴木一郎',
+      email: 'suzuki@example.com',
+      phone: '090-3456-7890',
+      profileImageUrl: '/api/placeholder/150/150',
+      skills: [
+        { id: 'sk1', name: 'B2B営業', level: 'expert', yearsOfExperience: 15 },
+        { id: 'sk2', name: 'チームマネジメント', level: 'advanced', yearsOfExperience: 8 },
+      ],
+      experiences: [
+        {
+          id: 'exp2',
+          position: '営業部長',
+          company: 'ITソリューション会社',
+          startDate: new Date('2015-04-01'),
+          description: '20名の営業チームを統括',
+          isCurrent: true
+        }
+      ],
+      education: [
+        {
+          id: 'edu2',
+          degree: '経営学学士',
+          school: '慶應義塾大学',
+          startDate: new Date('2005-04-01'),
+          endDate: new Date('2009-03-31'),
+          isCurrent: false,
+          field: '経営学'
+        }
+      ],
+      desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+      desiredLocation: ['東京都'],
+      workStyle: 'full-time',
+      availableFrom: new Date(),
+      status: 'interviewing' as const,
+      source: 'ad',
+      lineStatus: 'connected',
+      certifications: [],
+      languages: [{ id: 'lang3', name: '日本語', proficiency: 'native' }, { id: 'lang4', name: '英語', proficiency: 'fluent' }],
+      desiredPositions: ['営業部長', 'セールスマネージャー'],
+      tags: ['営業', 'マネジメント', 'B2B'],
+      createdAt: new Date('2024-09-15'),
+      updatedAt: new Date()
+    },
+    {
+      id: 'js3',
+      name: '高橋美咲',
+      email: 'takahashi@example.com',
+      phone: '090-4567-8901',
+      profileImageUrl: '/api/placeholder/150/150',
+      skills: [
+        { id: 'sk6', name: 'Python', level: 'intermediate', yearsOfExperience: 3 },
+        { id: 'sk7', name: 'SQL', level: 'intermediate', yearsOfExperience: 3 },
+      ],
+      experiences: [
+        {
+          id: 'exp3',
+          position: 'データアナリスト',
+          company: 'Eコマース企業',
+          startDate: new Date('2021-04-01'),
+          description: '売上データの分析とレポート作成',
+          isCurrent: true
+        }
+      ],
+      education: [
+        {
+          id: 'edu3',
+          degree: '統計学修士',
+          school: '東京大学',
+          startDate: new Date('2019-04-01'),
+          endDate: new Date('2021-03-31'),
+          isCurrent: false,
+          field: '統計学'
+        }
+      ],
+      desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY' },
+      desiredLocation: ['東京都', '千葉県', '埼玉県'],
+      workStyle: 'full-time',
+      availableFrom: new Date(),
+      status: 'qualified' as const,
+      source: 'organic',
+      lineStatus: 'not_connected',
+      certifications: [],
+      languages: [{ id: 'lang5', name: '日本語', proficiency: 'native' }, { id: 'lang6', name: '英語', proficiency: 'conversational' }],
+      desiredPositions: ['データアナリスト', 'データサイエンティスト'],
+      tags: ['Python', 'SQL', 'データ分析'],
+      createdAt: new Date('2024-10-20'),
+      updatedAt: new Date()
+    },
+    {
+      id: 'js4',
+      name: '山田次郎',
+      email: 'yamada.jiro@example.com',
+      phone: '090-5678-9012',
+      profileImageUrl: '/api/placeholder/150/150',
+      skills: [
+        { id: 'sk16', name: 'Java', level: 'expert', yearsOfExperience: 10 },
+        { id: 'sk17', name: 'Spring', level: 'advanced', yearsOfExperience: 8 },
+      ],
+      experiences: [
+        {
+          id: 'exp4',
+          position: 'シニアバックエンドエンジニア',
+          company: '金融システム会社',
+          startDate: new Date('2014-04-01'),
+          description: '決済システムの開発・保守',
+          isCurrent: true
+        }
+      ],
+      education: [
+        {
+          id: 'edu4',
+          degree: '情報工学修士',
+          school: '京都大学',
+          startDate: new Date('2012-04-01'),
+          endDate: new Date('2014-03-31'),
+          isCurrent: false,
+          field: 'ソフトウェア工学'
+        }
+      ],
+      desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY' },
+      desiredLocation: ['東京都', '大阪府'],
+      workStyle: 'full-time',
+      availableFrom: new Date(),
+      status: 'new' as const,
+      source: 'qr',
+      lineStatus: 'blocked',
+      certifications: [],
+      languages: [{ id: 'lang7', name: '日本語', proficiency: 'native' }],
+      desiredPositions: ['バックエンドエンジニア', 'アーキテクト'],
+      tags: ['Java', 'Spring', 'AWS'],
+      createdAt: new Date('2024-11-10'),
+      updatedAt: new Date()
+    },
+    {
+      id: 'js5',
+      name: '田中美穂',
+      email: 'tanaka.miho@example.com',
+      phone: '090-6789-0123',
+      profileImageUrl: '/api/placeholder/150/150',
+      skills: [
+        { id: 'sk20', name: 'プロダクトマネジメント', level: 'advanced', yearsOfExperience: 5 },
+        { id: 'sk21', name: 'アジャイル開発', level: 'advanced', yearsOfExperience: 5 },
+      ],
+      experiences: [
+        {
+          id: 'exp5',
+          position: 'プロダクトマネージャー',
+          company: 'SaaS企業',
+          startDate: new Date('2019-04-01'),
+          description: 'B2B SaaSプロダクトの企画・開発',
+          isCurrent: true
+        }
+      ],
+      education: [
+        {
+          id: 'edu5',
+          degree: 'MBA',
+          school: '一橋大学',
+          startDate: new Date('2017-04-01'),
+          endDate: new Date('2019-03-31'),
+          isCurrent: false,
+          field: '経営学'
+        }
+      ],
+      desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+      desiredLocation: ['東京都'],
+      workStyle: 'full-time',
+      availableFrom: new Date(),
+      status: 'interviewing' as const,
+      source: 'sns',
+      lineStatus: 'connected',
+      certifications: [],
+      languages: [{ id: 'lang8', name: '日本語', proficiency: 'native' }, { id: 'lang9', name: '英語', proficiency: 'fluent' }],
+      desiredPositions: ['プロダクトマネージャー', 'プロダクトオーナー'],
+      tags: ['PM', 'SaaS', 'アジャイル'],
+      createdAt: new Date('2024-11-05'),
+      updatedAt: new Date()
+    }
+  ])
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>(mockJobPostingsData)
   
   // ATS state
   const [recommendationRequests, setRecommendationRequests] = useState<RecommendationRequest[]>([])
   const [showRecommendationForm, setShowRecommendationForm] = useState(false)
   const [selectedProfileForRecommendation, setSelectedProfileForRecommendation] = useState<MaskedProfile | null>(null)
   const [selectedJobForRecommendation, setSelectedJobForRecommendation] = useState<JobPosting | null>(null)
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [jobApplications, setJobApplications] = useState<JobApplication[]>([])
+  const [agents, setAgents] = useState<Agent[]>(agentsData.map(a => ({
+    ...a,
+    status: 'active' as AgentStatus,
+    permissions: ['manage_candidates', 'view_jobs'] as AgentPermission[],
+    managedJobSeekers: [],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })))
+  const [jobApplications, setJobApplications] = useState<JobApplication[]>(mockApplicationsData)
   const [chatConversations, setChatConversations] = useState<ChatConversation[]>([])
   const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null)
   const [selectedJobPosting, setSelectedJobPosting] = useState<JobPosting | null>(null)
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null) // ログイン中のエージェント
   const [showRecommendationModal, setShowRecommendationModal] = useState(false)
   const [recommendationTarget, setRecommendationTarget] = useState<{ jobSeeker?: JobSeeker; jobPosting?: JobPosting }>({})
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [showCreateJobPosting, setShowCreateJobPosting] = useState(false)
+  const [newJobPostingCompany, setNewJobPostingCompany] = useState<Company | null>(null)
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(null)
+  const [showJobListings, setShowJobListings] = useState(false)
 
   // Initialize data
   useEffect(() => {
@@ -1518,252 +1778,14 @@ export default function LineMarketingApp() {
     setAgents(mockAgents)
     // Set first agent as current agent for demo
     setCurrentAgent(mockAgents[0])
-    
-    const mockJobSeekers: JobSeeker[] = [
-      {
-        id: 'js1',
-        name: '佐藤花子',
-        email: 'sato@example.com',
-        phone: '090-2345-6789',
-        profileImageUrl: '/api/placeholder/150/150',
-        skills: [
-          { id: 'sk11', name: 'React', level: 'advanced', yearsOfExperience: 5 },
-          { id: 'sk12', name: 'TypeScript', level: 'intermediate', yearsOfExperience: 3 },
-          { id: 'sk13', name: 'JavaScript', level: 'advanced', yearsOfExperience: 6 },
-          { id: 'sk14', name: 'CSS', level: 'advanced', yearsOfExperience: 6 },
-          { id: 'sk15', name: 'HTML', level: 'advanced', yearsOfExperience: 6 }
-        ],
-        experiences: [
-          {
-            id: 'exp1',
-            position: 'フロントエンドエンジニア',
-            company: 'Web開発会社',
-            startDate: new Date('2019-04-01'),
-            endDate: new Date('2024-10-31'),
-            description: 'Reactを使用したWebアプリケーション開発',
-            isCurrent: false
-          }
-        ],
-        education: [
-          {
-            id: 'edu1',
-            degree: '情報工学学士',
-            school: '東京工業大学',
-            startDate: new Date('2015-04-01'),
-            endDate: new Date('2019-03-31'),
-            isCurrent: false,
-            field: 'コンピュータサイエンス'
-          }
-        ],
-        desiredSalary: { min: 5000000, max: 7000000, currency: 'JPY' },
-        desiredLocation: ['東京都', '神奈川県'],
-        workStyle: 'full-time',
-        availableFrom: new Date(),
-        status: 'qualified',
-        source: 'agency',
-        certifications: [],
-        languages: [{ id: 'lang1', name: '日本語', proficiency: 'native' }, { id: 'lang2', name: '英語', proficiency: 'conversational' }],
-        desiredPositions: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
-        tags: ['React', 'TypeScript', '即戦力'],
-        createdAt: new Date('2024-10-01'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'js2',
-        name: '鈴木一郎',
-        email: 'suzuki@example.com',
-        phone: '090-3456-7890',
-        profileImageUrl: '/api/placeholder/150/150',
-        skills: [
-          { id: 'sk1', name: 'B2B営業', level: 'expert', yearsOfExperience: 15 },
-          { id: 'sk2', name: 'チームマネジメント', level: 'advanced', yearsOfExperience: 8 },
-          { id: 'sk3', name: 'プレゼンテーション', level: 'expert', yearsOfExperience: 10 },
-          { id: 'sk4', name: '交渉', level: 'expert', yearsOfExperience: 15 },
-          { id: 'sk5', name: 'CRM', level: 'advanced', yearsOfExperience: 5 }
-        ],
-        experiences: [
-          {
-            id: 'exp2',
-            position: '営業部長',
-            company: 'ITソリューション会社',
-            startDate: new Date('2015-04-01'),
-            description: '20名の営業チームを統括',
-            isCurrent: true
-          }
-        ],
-        education: [
-          {
-            id: 'edu2',
-            degree: '経営学学士',
-            school: '慶應義塾大学',
-            startDate: new Date('2005-04-01'),
-            endDate: new Date('2009-03-31'),
-            isCurrent: false,
-            field: '経営学'
-          }
-        ],
-        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
-        desiredLocation: ['東京都'],
-        workStyle: 'full-time',
-        availableFrom: new Date(),
-        status: 'interviewing',
-        source: 'agency',
-        certifications: [],
-        languages: [{ id: 'lang3', name: '日本語', proficiency: 'native' }, { id: 'lang4', name: '英語', proficiency: 'fluent' }],
-        desiredPositions: ['営業部長', 'セールスマネージャー'],
-        tags: ['営業', 'マネジメント', 'B2B'],
-        createdAt: new Date('2024-09-15'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'js3',
-        name: '高橋美咲',
-        email: 'takahashi@example.com',
-        phone: '090-4567-8901',
-        profileImageUrl: '/api/placeholder/150/150',
-        skills: [
-          { id: 'sk6', name: 'Python', level: 'intermediate', yearsOfExperience: 3 },
-          { id: 'sk7', name: 'SQL', level: 'intermediate', yearsOfExperience: 3 },
-          { id: 'sk8', name: 'Tableau', level: 'intermediate', yearsOfExperience: 2 },
-          { id: 'sk9', name: 'Excel', level: 'advanced', yearsOfExperience: 5 },
-          { id: 'sk10', name: '統計学', level: 'intermediate', yearsOfExperience: 3 }
-        ],
-        experiences: [
-          {
-            id: 'exp3',
-            position: 'データアナリスト',
-            company: 'Eコマース企業',
-            startDate: new Date('2021-04-01'),
-            description: '売上データの分析とレポート作成',
-            isCurrent: true
-          }
-        ],
-        education: [
-          {
-            id: 'edu3',
-            degree: '統計学修士',
-            school: '東京大学',
-            startDate: new Date('2019-04-01'),
-            endDate: new Date('2021-03-31'),
-            isCurrent: false,
-            field: '統計学'
-          }
-        ],
-        desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY' },
-        desiredLocation: ['東京都', '千葉県', '埼玉県'],
-        workStyle: 'full-time',
-        availableFrom: new Date(),
-        status: 'qualified',
-        source: 'agency',
-        certifications: [],
-        languages: [{ id: 'lang5', name: '日本語', proficiency: 'native' }, { id: 'lang6', name: '英語', proficiency: 'conversational' }],
-        desiredPositions: ['データアナリスト', 'データサイエンティスト'],
-        tags: ['Python', 'SQL', 'データ分析'],
-        createdAt: new Date('2024-10-20'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'js4',
-        name: '山田次郎',
-        email: 'yamada@example.com',
-        phone: '090-5678-9012',
-        profileImageUrl: '/api/placeholder/150/150',
-        skills: [
-          { id: 'sk16', name: 'Java', level: 'expert', yearsOfExperience: 10 },
-          { id: 'sk17', name: 'Spring', level: 'advanced', yearsOfExperience: 8 },
-          { id: 'sk18', name: 'MySQL', level: 'advanced', yearsOfExperience: 10 },
-          { id: 'sk19', name: 'AWS', level: 'intermediate', yearsOfExperience: 5 }
-        ],
-        experiences: [
-          {
-            id: 'exp4',
-            position: 'シニアバックエンドエンジニア',
-            company: '金融システム会社',
-            startDate: new Date('2014-04-01'),
-            description: '決済システムの開発・保守',
-            isCurrent: true
-          }
-        ],
-        education: [
-          {
-            id: 'edu4',
-            degree: '情報工学修士',
-            school: '京都大学',
-            startDate: new Date('2012-04-01'),
-            endDate: new Date('2014-03-31'),
-            isCurrent: false,
-            field: 'ソフトウェア工学'
-          }
-        ],
-        desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY' },
-        desiredLocation: ['東京都', '大阪府'],
-        workStyle: 'full-time',
-        availableFrom: new Date(),
-        status: 'new',
-        source: 'agency',
-        certifications: [],
-        languages: [{ id: 'lang7', name: '日本語', proficiency: 'native' }],
-        desiredPositions: ['バックエンドエンジニア', 'アーキテクト'],
-        tags: ['Java', 'Spring', 'AWS'],
-        createdAt: new Date('2024-11-10'),
-        updatedAt: new Date()
-      },
-      {
-        id: 'js5',
-        name: '田中美穂',
-        email: 'tanaka.miho@example.com',
-        phone: '090-6789-0123',
-        profileImageUrl: '/api/placeholder/150/150',
-        skills: [
-          { id: 'sk20', name: 'プロダクトマネジメント', level: 'advanced', yearsOfExperience: 5 },
-          { id: 'sk21', name: 'アジャイル開発', level: 'advanced', yearsOfExperience: 5 },
-          { id: 'sk22', name: 'データ分析', level: 'intermediate', yearsOfExperience: 4 },
-          { id: 'sk23', name: 'UI/UX', level: 'intermediate', yearsOfExperience: 3 }
-        ],
-        experiences: [
-          {
-            id: 'exp5',
-            position: 'プロダクトマネージャー',
-            company: 'SaaS企業',
-            startDate: new Date('2019-04-01'),
-            description: 'B2B SaaSプロダクトの企画・開発',
-            isCurrent: true
-          }
-        ],
-        education: [
-          {
-            id: 'edu5',
-            degree: 'MBA',
-            school: '一橋大学',
-            startDate: new Date('2017-04-01'),
-            endDate: new Date('2019-03-31'),
-            isCurrent: false,
-            field: '経営学'
-          }
-        ],
-        desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
-        desiredLocation: ['東京都'],
-        workStyle: 'full-time',
-        availableFrom: new Date(),
-        status: 'interviewing',
-        source: 'agency',
-        certifications: [],
-        languages: [{ id: 'lang8', name: '日本語', proficiency: 'native' }, { id: 'lang9', name: '英語', proficiency: 'fluent' }],
-        desiredPositions: ['プロダクトマネージャー', 'プロダクトオーナー'],
-        tags: ['PM', 'SaaS', 'アジャイル'],
-        createdAt: new Date('2024-11-05'),
-        updatedAt: new Date()
-      }
-    ]
-    if (mockJobSeekers && mockJobSeekers.length > 0) {
-      setJobSeekers(mockJobSeekers)
-    }
+    // mockJobSeekersは初期値で直接設定済みのため削除
     
     const mockJobPostings: JobPosting[] = [
       {
         id: 'jp1',
         title: 'フルスタックエンジニア',
-        company: 'テックカンパニー株式会社',
+        company: '株式会社イノベーション',
+        companyId: 'company-001',
         department: '開発部',
         description: 'Webアプリケーション開発のフルスタックエンジニアを募集しています。最新技術を使った開発に携わることができます。',
         requirements: ['React/Vue.jsなどのフロントエンド開発経験3年以上', 'Node.js/Pythonなどのバックエンド開発経験', 'AWS/GCPなどのクラウド経験'],
@@ -1793,7 +1815,8 @@ export default function LineMarketingApp() {
       {
         id: 'jp2',
         title: '営業マネージャー',
-        company: 'ビジネスソリューション株式会社',
+        company: '株式会社ビジネスソリューション',
+        companyId: 'company-005',
         department: '営業部',
         description: 'B2B営業チームのマネージャーを募集。チーム管理と新規開拓の経験がある方を求めています。',
         requirements: ['営業経験5年以上', 'マネジメント経験3年以上', 'B2B営業の経験'],
@@ -1852,6 +1875,58 @@ export default function LineMarketingApp() {
         createdBy: 'hr2',
         createdAt: new Date('2024-11-01'),
         updatedAt: new Date()
+      },
+      {
+        id: 'jp4',
+        title: 'UIデザイナー',
+        company: '株式会社クリエイティブラボ',
+        companyId: 'company-002',
+        department: 'デザイン部',
+        description: 'ユーザー体験を重視したUIデザインを担当していただきます。',
+        requirements: ['UIデザイン経験3年以上', 'Figma/Sketchの使用経験', 'モバイルアプリのデザイン経験'],
+        responsibilities: ['UIデザインの企画・制作', 'デザインシステムの構築', 'プロトタイプ作成'],
+        employmentType: 'full-time',
+        jobType: 'full_time',
+        location: '東京都港区',
+        locationType: 'hybrid',
+        remoteOption: 'hybrid',
+        salary: { min: 5000000, max: 8000000, currency: 'JPY', period: 'yearly' },
+        salaryRange: { min: 5000000, max: 8000000, currency: 'JPY', period: 'yearly' },
+        requiredSkills: ['Figma', 'UI Design', 'Prototyping'],
+        preferredSkills: ['After Effects', 'Illustration', 'HTML/CSS'],
+        status: 'published',
+        publishedAt: new Date('2024-11-05'),
+        postedAt: new Date('2024-11-05'),
+        numberOfOpenings: 2,
+        createdBy: 'agent1',
+        createdAt: new Date('2024-11-01'),
+        updatedAt: new Date()
+      },
+      {
+        id: 'jp5',
+        title: 'データサイエンティスト',
+        company: '株式会社AIイノベーション',
+        companyId: 'company-007',
+        department: '研究開発部',
+        description: '機械学習モデルの開発と実装を担当していただきます。',
+        requirements: ['Python/R言語の実務経験', '機械学習の知識と実装経験', '統計学の知識'],
+        responsibilities: ['データ分析・モデル開発', 'AIアルゴリズムの研究', 'ビジネスへの実装提案'],
+        employmentType: 'full-time',
+        jobType: 'full_time',
+        location: '東京都千代田区',
+        locationType: 'remote',
+        remoteOption: 'full',
+        salary: { min: 7000000, max: 12000000, currency: 'JPY', period: 'yearly' },
+        salaryRange: { min: 7000000, max: 12000000, currency: 'JPY', period: 'yearly' },
+        requiredSkills: ['Python', 'Machine Learning', 'Statistics'],
+        preferredSkills: ['TensorFlow', 'PyTorch', 'Cloud ML'],
+        status: 'published',
+        publishedAt: new Date('2024-11-10'),
+        postedAt: new Date('2024-11-10'),
+        numberOfOpenings: 1,
+        createdBy: 'agent2',
+        createdAt: new Date('2024-11-08'),
+        updatedAt: new Date()
       }
     ]
     setJobPostings(mockJobPostings)
@@ -1862,7 +1937,7 @@ export default function LineMarketingApp() {
         id: 'app1',
         jobPostingId: 'jp1',
         jobSeekerId: 'js1',
-        status: 'interviewing',
+        status: 'active',
         stage: 'technical_interview',
         appliedAt: new Date('2024-11-10'),
         source: 'agent',
@@ -1949,6 +2024,15 @@ export default function LineMarketingApp() {
     setSelectedJobSeeker(null)
     setSelectedJobPosting(null)
     setSelectedAgent(null)
+    // Reset job portal states when changing tabs
+    if (tab !== 'job-portal') {
+      setShowJobListings(false)
+      setSelectedJobId(null)
+    }
+    // Reset content portal states when changing tabs
+    if (tab !== 'content-portal') {
+      setSelectedContentId(null)
+    }
     if (tab === 'segments') {
       setSegmentView('list')
       setEditingSegment(null)
@@ -2400,14 +2484,16 @@ export default function LineMarketingApp() {
     clickRate: deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length > 0 ? (deliveryLogs.filter(log => log.status === 'CLICKED').length / deliveryLogs.filter(log => ['OPENED', 'CLICKED'].includes(log.status)).length) * 100 : 0
   }
   
-  const navigationCategories = [
+  const allNavigationCategories = [
     {
       title: '管理機能',
       items: [
         { id: 'admin-home', label: '広告分析', icon: Home },
         { id: 'admin-database', label: 'データベース管理', icon: Database },
         { id: 'admin-applicants', label: '求職者管理（CA）', icon: Users },
-        { id: 'admin-messages', label: 'メッセージ', icon: MessageCircle }
+        { id: 'admin-messages', label: 'メッセージ', icon: MessageCircle },
+        { id: 'candidate-management', label: '候補者管理', icon: UserCheck },
+        { id: 'applicants', label: '求職者調整', icon: Users }
       ]
     },
     {
@@ -2433,30 +2519,9 @@ export default function LineMarketingApp() {
     {
       title: '予約・イベント関連',
       items: [
-        { id: 'interview-dashboard', label: '面談予約ダッシュボード', icon: Calendar },
         { id: 'booking-form', label: '予約フォーム設定', icon: FileText },
         { id: 'form-template', label: 'フォームテンプレート設定', icon: FileCheck },
         { id: 'interview-booking', label: '面談予約', icon: Calendar }
-      ]
-    },
-    {
-      title: 'CRM関連',
-      items: [
-        { id: 'crm-jobseekers', label: '求職者情報', icon: Users },
-        { id: 'crm-jobs', label: '求人管理', icon: Briefcase },
-        { id: 'crm-agents', label: 'エージェント管理', icon: UserCheck },
-        { id: 'crm-chat', label: 'チャット', icon: MessageCircle },
-        { id: 'crm-resume-editor', label: '履歴書・職務経歴書作成', icon: FileText },
-        { id: 'crm-line-sender', label: 'LINE送信機能', icon: Send },
-        { id: 'crm-request-inbox', label: 'リクエスト受信箱', icon: Bell }
-      ]
-    },
-    {
-      title: 'エージェント版CRM関連',
-      items: [
-        { id: 'agent-crm-jobseekers', label: '求職者管理', icon: Users },
-        { id: 'agent-crm-jobs', label: '求人管理', icon: Briefcase },
-        { id: 'agent-crm-recommendations', label: '推薦管理', icon: UserCheck }
       ]
     },
     {
@@ -2475,6 +2540,53 @@ export default function LineMarketingApp() {
       ]
     }
   ] as const
+
+  // CRMアカウントの場合は特定のカテゴリのみ表示し、名前を変更、順番を調整
+  const navigationCategories = accountType === 'crm' 
+    ? [
+        // CRM
+        {
+          title: 'CRM',
+          items: [
+            { id: 'crm-jobseekers', label: '求職者管理', icon: Users },
+            { id: 'crm-companies', label: '企業管理', icon: Building2 },
+            { id: 'crm-jobs', label: '求人管理', icon: Briefcase },
+            { id: 'crm-agents', label: 'アクション管理', icon: UserCog },
+            { id: 'agent-crm-recommendations', label: '選考管理', icon: ClipboardCheck },
+            { id: 'crm-chat', label: 'チャット', icon: MessageCircle },
+            { id: 'is-call-management', label: '架電管理', icon: Phone }
+          ]
+        },
+        // 送客代行
+        {
+          title: '送客代行',
+          items: [
+            { id: 'client-list', label: '送客一覧', icon: FileText },
+            { id: 'applicants', label: '求職者調整', icon: Users }
+          ]
+        },
+        // CMS（求人サイト管理）
+        {
+          title: 'CMS',
+          items: [
+            { id: 'cms-jobs', label: '掲載求人管理', icon: Briefcase },
+            { id: 'cms-companies', label: '企業管理', icon: Building2 },
+            { id: 'cms-applications', label: '応募管理', icon: FileSearch },
+            { id: 'cms-content', label: 'コンテンツ管理', icon: Newspaper },
+            { id: 'job-portal', label: '求人ポータル（ユーザー向け）', icon: Globe },
+            { id: 'content-portal', label: 'コンテンツ（ユーザー向け）', icon: BookOpen }
+          ]
+        },
+        // 予約（予約・イベント関連）
+        ...allNavigationCategories
+          .filter(category => category.title === '予約・イベント関連')
+          .map(category => ({ ...category, title: '予約' })),
+        // MA（マーケティング関連）
+        ...allNavigationCategories
+          .filter(category => category.title === 'マーケティング関連')
+          .map(category => ({ ...category, title: 'MA' }))
+      ]
+    : allNavigationCategories
 
   const renderMainContent = () => {
     if (activeTab === 'scenarios' && currentView === 'edit') {
@@ -3018,8 +3130,6 @@ export default function LineMarketingApp() {
           />
         )
         
-      case 'interview-dashboard':
-        return <InterviewDashboard />
         
       case 'booking-form':
         return <BookingFormSettings />
@@ -3045,7 +3155,75 @@ export default function LineMarketingApp() {
       case 'admin-messages':
         return <MessageManagement />
         
+      case 'candidate-management':
+        return <CandidateManagement />
+      
+      case 'applicants':
+        const ApplicantsPage = require('./applicants/page').default
+        return <ApplicantsPage />
+      
+      case 'client-list':
+        return <ClientList />
+        
+      case 'cms-jobs':
+        return <JobManagement />
+      
+      case 'cms-companies':
+        return <CompanyManagement />
+      
+      case 'cms-applications':
+        return <ApplicationManagement />
+      
+      case 'cms-content':
+        return <ContentManagement />
+      
+      case 'job-portal':
+        return showJobListings ? (
+          selectedJobId ? (
+            <JobDetail 
+              jobId={selectedJobId} 
+              onBack={() => setSelectedJobId(null)} 
+            />
+          ) : (
+            <JobListings onSelectJob={setSelectedJobId} />
+          )
+        ) : (
+          <JobPortalTop 
+            onViewAll={() => setShowJobListings(true)} 
+            onSelectJob={(jobId) => {
+              setSelectedJobId(jobId)
+              setShowJobListings(true)
+            }} 
+          />
+        )
+      
+      case 'job-listings':
+        return selectedJobId ? (
+          <JobDetail 
+            jobId={selectedJobId} 
+            onBack={() => setSelectedJobId(null)} 
+          />
+        ) : (
+          <JobListings onSelectJob={setSelectedJobId} />
+        )
+      
+      case 'content-portal':
+        return selectedContentId ? (
+          <ContentDetail 
+            contentId={selectedContentId} 
+            onBack={() => setSelectedContentId(null)} 
+          />
+        ) : (
+          <ContentList onSelectContent={setSelectedContentId} />
+        )
+
+      case 'is-call-management':
+        return <CandidateCallList />
+        
       case 'crm-jobseekers':
+        return <JobSeekerManagement />
+        
+      case 'crm-jobseekers-old-disabled':
         return currentView === 'detail' && selectedJobSeeker ? (
           <JobSeekerDetail
             jobSeeker={selectedJobSeeker}
@@ -3089,7 +3267,234 @@ export default function LineMarketingApp() {
           />
         ) : (
           <JobSeekerList
-            jobSeekers={jobSeekers}
+            jobSeekers={jobSeekers.length > 0 ? jobSeekers : [
+              {
+                id: 'js1',
+                name: '佐藤花子',
+                email: 'sato@example.com',
+                phone: '090-2345-6789',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk11', name: 'React', level: 'advanced', yearsOfExperience: 5 },
+                  { id: 'sk12', name: 'TypeScript', level: 'intermediate', yearsOfExperience: 3 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp1',
+                    position: 'フロントエンドエンジニア',
+                    company: 'Web開発会社',
+                    startDate: new Date('2019-04-01'),
+                    endDate: new Date('2024-10-31'),
+                    description: 'Reactを使用したWebアプリケーション開発',
+                    isCurrent: false
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu1',
+                    degree: '情報工学学士',
+                    school: '東京工業大学',
+                    startDate: new Date('2015-04-01'),
+                    endDate: new Date('2019-03-31'),
+                    isCurrent: false,
+                    field: 'コンピュータサイエンス'
+                  }
+                ],
+                desiredSalary: { min: 5000000, max: 7000000, currency: 'JPY' },
+                desiredLocation: ['東京都', '神奈川県'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'qualified' as const,
+                source: 'lp',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang1', name: '日本語', proficiency: 'native' }, { id: 'lang2', name: '英語', proficiency: 'conversational' }],
+                desiredPositions: ['フロントエンドエンジニア', 'フルスタックエンジニア'],
+                tags: ['React', 'TypeScript', '即戦力'],
+                createdAt: new Date('2024-10-01'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js2',
+                name: '鈴木一郎',
+                email: 'suzuki@example.com',
+                phone: '090-3456-7890',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk1', name: 'B2B営業', level: 'expert', yearsOfExperience: 15 },
+                  { id: 'sk2', name: 'チームマネジメント', level: 'advanced', yearsOfExperience: 8 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp2',
+                    position: '営業部長',
+                    company: 'ITソリューション会社',
+                    startDate: new Date('2015-04-01'),
+                    description: '20名の営業チームを統括',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu2',
+                    degree: '経営学学士',
+                    school: '慶應義塾大学',
+                    startDate: new Date('2005-04-01'),
+                    endDate: new Date('2009-03-31'),
+                    isCurrent: false,
+                    field: '経営学'
+                  }
+                ],
+                desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+                desiredLocation: ['東京都'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'interviewing' as const,
+                source: 'ad',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang3', name: '日本語', proficiency: 'native' }, { id: 'lang4', name: '英語', proficiency: 'fluent' }],
+                desiredPositions: ['営業部長', 'セールスマネージャー'],
+                tags: ['営業', 'マネジメント', 'B2B'],
+                createdAt: new Date('2024-09-15'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js3',
+                name: '高橋美咲',
+                email: 'takahashi@example.com',
+                phone: '090-4567-8901',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk6', name: 'Python', level: 'intermediate', yearsOfExperience: 3 },
+                  { id: 'sk7', name: 'SQL', level: 'intermediate', yearsOfExperience: 3 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp3',
+                    position: 'データアナリスト',
+                    company: 'Eコマース企業',
+                    startDate: new Date('2021-04-01'),
+                    description: '売上データの分析とレポート作成',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu3',
+                    degree: '統計学修士',
+                    school: '東京大学',
+                    startDate: new Date('2019-04-01'),
+                    endDate: new Date('2021-03-31'),
+                    isCurrent: false,
+                    field: '統計学'
+                  }
+                ],
+                desiredSalary: { min: 5500000, max: 7500000, currency: 'JPY' },
+                desiredLocation: ['東京都', '千葉県', '埼玉県'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'qualified' as const,
+                source: 'organic',
+                lineStatus: 'not_connected',
+                certifications: [],
+                languages: [{ id: 'lang5', name: '日本語', proficiency: 'native' }, { id: 'lang6', name: '英語', proficiency: 'conversational' }],
+                desiredPositions: ['データアナリスト', 'データサイエンティスト'],
+                tags: ['Python', 'SQL', 'データ分析'],
+                createdAt: new Date('2024-10-20'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js4',
+                name: '山田次郎',
+                email: 'yamada.jiro@example.com',
+                phone: '090-5678-9012',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk16', name: 'Java', level: 'expert', yearsOfExperience: 10 },
+                  { id: 'sk17', name: 'Spring', level: 'advanced', yearsOfExperience: 8 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp4',
+                    position: 'シニアバックエンドエンジニア',
+                    company: '金融システム会社',
+                    startDate: new Date('2014-04-01'),
+                    description: '決済システムの開発・保守',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu4',
+                    degree: '情報工学修士',
+                    school: '京都大学',
+                    startDate: new Date('2012-04-01'),
+                    endDate: new Date('2014-03-31'),
+                    isCurrent: false,
+                    field: 'ソフトウェア工学'
+                  }
+                ],
+                desiredSalary: { min: 7000000, max: 10000000, currency: 'JPY' },
+                desiredLocation: ['東京都', '大阪府'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'new' as const,
+                source: 'qr',
+                lineStatus: 'blocked',
+                certifications: [],
+                languages: [{ id: 'lang7', name: '日本語', proficiency: 'native' }],
+                desiredPositions: ['バックエンドエンジニア', 'アーキテクト'],
+                tags: ['Java', 'Spring', 'AWS'],
+                createdAt: new Date('2024-11-10'),
+                updatedAt: new Date()
+              },
+              {
+                id: 'js5',
+                name: '田中美穂',
+                email: 'tanaka.miho@example.com',
+                phone: '090-6789-0123',
+                profileImageUrl: '/api/placeholder/150/150',
+                skills: [
+                  { id: 'sk20', name: 'プロダクトマネジメント', level: 'advanced', yearsOfExperience: 5 },
+                  { id: 'sk21', name: 'アジャイル開発', level: 'advanced', yearsOfExperience: 5 },
+                ],
+                experiences: [
+                  {
+                    id: 'exp5',
+                    position: 'プロダクトマネージャー',
+                    company: 'SaaS企業',
+                    startDate: new Date('2019-04-01'),
+                    description: 'B2B SaaSプロダクトの企画・開発',
+                    isCurrent: true
+                  }
+                ],
+                education: [
+                  {
+                    id: 'edu5',
+                    degree: 'MBA',
+                    school: '一橋大学',
+                    startDate: new Date('2017-04-01'),
+                    endDate: new Date('2019-03-31'),
+                    isCurrent: false,
+                    field: '経営学'
+                  }
+                ],
+                desiredSalary: { min: 8000000, max: 12000000, currency: 'JPY' },
+                desiredLocation: ['東京都'],
+                workStyle: 'full-time',
+                availableFrom: new Date(),
+                status: 'interviewing' as const,
+                source: 'sns',
+                lineStatus: 'connected',
+                certifications: [],
+                languages: [{ id: 'lang8', name: '日本語', proficiency: 'native' }, { id: 'lang9', name: '英語', proficiency: 'fluent' }],
+                desiredPositions: ['プロダクトマネージャー', 'プロダクトオーナー'],
+                tags: ['PM', 'SaaS', 'アジャイル'],
+                createdAt: new Date('2024-11-05'),
+                updatedAt: new Date()
+              }
+            ]}
             jobApplications={jobApplications}
             jobPostings={jobPostings}
             onCreateJobSeeker={() => {
@@ -3111,6 +3516,42 @@ export default function LineMarketingApp() {
           />
         )
         
+      case 'crm-companies':
+        return currentView === 'detail' && selectedCompany ? (
+          <CompanyDetail
+            company={selectedCompany}
+            jobPostings={jobPostings.filter(jp => jp.companyId === selectedCompany.id)}
+            onBack={() => {
+              setCurrentView('list')
+              setSelectedCompany(null)
+            }}
+            onEdit={() => {
+              // TODO: Implement company editing
+              console.log('Edit company:', selectedCompany)
+            }}
+            onCreateJobPosting={() => {
+              setShowCreateJobPosting(true)
+              setNewJobPostingCompany(selectedCompany)
+            }}
+          />
+        ) : (
+          <CompanyList
+            companies={mockCompanies}
+            onCreateCompany={() => {
+              // TODO: Implement company creation
+              console.log('Create new company')
+            }}
+            onEditCompany={(company) => {
+              // TODO: Implement company editing
+              console.log('Edit company:', company)
+            }}
+            onViewCompany={(company) => {
+              setSelectedCompany(company)
+              setCurrentView('detail')
+            }}
+          />
+        )
+
       case 'crm-jobs':
         return currentView === 'detail' && selectedJobPosting ? (
           <JobPostingDetail
@@ -3200,69 +3641,7 @@ export default function LineMarketingApp() {
         )
         
       case 'crm-agents':
-        return currentView === 'detail' && selectedAgent ? (
-          <AgentDetail
-            agent={selectedAgent}
-            managedJobSeekers={jobSeekers.filter(js => 
-              // エージェントが管理している求職者をフィルタリング（実際にはリレーションテーブルが必要）
-              true
-            )}
-            placedCandidates={jobSeekers.filter(js => js.status === 'hired')}
-            activeJobPostings={jobPostings.filter(jp => jp.status === 'published')}
-            onBack={() => {
-              setCurrentView('list')
-              setSelectedAgent(null)
-            }}
-            onEdit={(agent) => {
-              // TODO: Implement agent editing
-            }}
-            onUpdateStatus={(agentId, status) => {
-              setAgents(agents.map(a =>
-                a.id === agentId ? { ...a, status } : a
-              ))
-            }}
-            onUpdatePermissions={(agentId, permissions) => {
-              setAgents(agents.map(a =>
-                a.id === agentId ? { ...a, permissions } : a
-              ))
-            }}
-            onStartChat={(agentId) => {
-              setActiveTab('crm-chat')
-            }}
-            onViewJobSeeker={(jobSeeker) => {
-              setSelectedJobSeeker(jobSeeker)
-              setActiveTab('crm-jobseekers')
-              setCurrentView('detail')
-            }}
-            onViewJobPosting={(jobPosting) => {
-              setSelectedJobPosting(jobPosting)
-              setActiveTab('crm-jobs')
-              setCurrentView('detail')
-            }}
-          />
-        ) : (
-          <AgentList
-            agents={agents}
-            onCreateAgent={() => {
-              // TODO: Implement agent creation
-            }}
-            onEditAgent={(agent) => {
-              // TODO: Implement agent editing
-            }}
-            onViewAgent={(agent) => {
-              setSelectedAgent(agent)
-              setCurrentView('detail')
-            }}
-            onUpdateStatus={(agentId, status) => {
-              setAgents(agents.map(a =>
-                a.id === agentId ? { ...a, status } : a
-              ))
-            }}
-            onStartChat={(agentId) => {
-              setActiveTab('crm-chat')
-            }}
-          />
-        )
+        return <SimpleActionManagement />
         
       case 'crm-chat':
         return (
@@ -3285,166 +3664,9 @@ export default function LineMarketingApp() {
           />
         )
 
-      // Agent CRM sections
-      case 'agent-crm-jobseekers':
-        return currentAgent ? (
-          <AgentJobSeekerList
-            jobSeekers={jobSeekers}
-            jobApplications={jobApplications}
-            jobPostings={jobPostings}
-            currentAgentId={currentAgent.id}
-            onCreateJobSeeker={() => {
-              // TODO: Implement job seeker creation for agents
-            }}
-            onEditJobSeeker={(jobSeeker) => {
-              // TODO: Implement job seeker editing for agents
-            }}
-            onViewJobSeeker={(jobSeeker) => {
-              setSelectedJobSeeker(jobSeeker)
-              setCurrentView('detail')
-            }}
-            onDeleteJobSeeker={(jobSeekerId) => {
-              setJobSeekers(jobSeekers.filter(js => js.id !== jobSeekerId))
-            }}
-            onRecommendJobSeeker={(jobSeekerId) => {
-              const jobSeeker = jobSeekers.find(js => js.id === jobSeekerId)
-              if (jobSeeker) {
-                setRecommendationTarget({ jobSeeker })
-                setShowRecommendationModal(true)
-              }
-            }}
-          />
-        ) : (
-          <div className="text-center py-8">エージェントとしてログインしてください</div>
-        )
-
-      case 'agent-crm-jobs':
-        return currentAgent ? (
-          <>
-            {currentView === 'detail' && selectedJobPosting ? (
-              <AgentJobDetail
-                jobPosting={selectedJobPosting}
-                jobApplications={jobApplications}
-                currentAgentId={currentAgent.id}
-                onBack={() => {
-                  setCurrentView('list')
-                  setSelectedJobPosting(null)
-                }}
-                onRecommend={() => {
-                  setRecommendationTarget({ jobPosting: selectedJobPosting })
-                  setShowRecommendationModal(true)
-                }}
-              />
-            ) : (
-              <AgentJobList
-                jobPostings={jobPostings}
-                jobApplications={jobApplications}
-                currentAgentId={currentAgent.id}
-                onViewJobPosting={(jobPosting) => {
-                  setSelectedJobPosting(jobPosting)
-                  setCurrentView('detail')
-                }}
-                onRecommendToJob={(jobPostingId) => {
-                  const jobPosting = jobPostings.find(jp => jp.id === jobPostingId)
-                  if (jobPosting) {
-                    setRecommendationTarget({ jobPosting })
-                    setShowRecommendationModal(true)
-                  }
-                }}
-              />
-            )}
-            {showRecommendationModal && (
-              <AgentRecommendationModal
-                jobPostings={jobPostings.filter(jp => 
-                  jp.status === 'published' || jp.status === 'active'
-                )}
-                jobSeekers={jobSeekers.filter(js => 
-                  js.source === 'agency'
-                )}
-                preselectedJobId={recommendationTarget.jobPosting?.id}
-                onClose={() => {
-                  setShowRecommendationModal(false)
-                  setRecommendationTarget({})
-                }}
-                onSubmit={(data) => {
-                  const newRecommendation: JobApplication = {
-                    id: `app${Date.now()}`,
-                    jobPostingId: data.jobPostingId,
-                    jobSeekerId: data.jobSeekerId,
-                    status: 'new',
-                    appliedAt: new Date(),
-                    source: 'agent',
-                    agentId: currentAgent.id,
-                    activities: [],
-                    stage: 'initial',
-                    updatedAt: new Date()
-                  }
-                  setJobApplications([...jobApplications, newRecommendation])
-                  setShowRecommendationModal(false)
-                  setRecommendationTarget({})
-                  // 成功メッセージを表示
-                  alert('候補者の推薦が完了しました')
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <div className="text-center py-8">エージェントとしてログインしてください</div>
-        )
-
       case 'agent-crm-recommendations':
-        return currentAgent ? (
-          <>
-            <AgentRecommendationList
-              recommendations={jobApplications}
-              jobSeekers={jobSeekers}
-              jobPostings={jobPostings}
-              currentAgentId={currentAgent.id}
-              onViewRecommendation={(recommendation) => {
-                // TODO: Show recommendation detail
-              }}
-              onCreateRecommendation={() => {
-                setRecommendationTarget({})
-                setShowRecommendationModal(true)
-              }}
-            />
-            {showRecommendationModal && (
-              <AgentRecommendationModal
-                jobPostings={jobPostings.filter(jp => 
-                  jp.status === 'published' || jp.status === 'active'
-                )}
-                jobSeekers={jobSeekers.filter(js => 
-                  js.source === 'agency'
-                )}
-                preselectedJobId={recommendationTarget.jobPosting?.id}
-                onClose={() => {
-                  setShowRecommendationModal(false)
-                  setRecommendationTarget({})
-                }}
-                onSubmit={(data) => {
-                  const newRecommendation: JobApplication = {
-                    id: `app${Date.now()}`,
-                    jobPostingId: data.jobPostingId,
-                    jobSeekerId: data.jobSeekerId,
-                    status: 'new',
-                    appliedAt: new Date(),
-                    source: 'agent',
-                    agentId: currentAgent.id,
-                    activities: [],
-                    stage: 'initial',
-                    updatedAt: new Date()
-                  }
-                  setJobApplications([...jobApplications, newRecommendation])
-                  setShowRecommendationModal(false)
-                  setRecommendationTarget({})
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <div className="text-center py-8">エージェントとしてログインしてください</div>
-        )
-        
+        return <SelectionManagement />
+
       case 'gantt-chart':
         return (
           <div>
@@ -3485,8 +3707,7 @@ export default function LineMarketingApp() {
               message: '推薦したい候補者がいます',
               requirements: ['React', 'TypeScript', 'Next.js'],
               closingDate: new Date('2024-12-31'),
-              status: 'new',
-              priority: 'high',
+                      priority: 'high',
               createdAt: new Date(),
               updatedAt: new Date()
             }}
@@ -4018,8 +4239,7 @@ export default function LineMarketingApp() {
                   startDate: request.startDate,
                   priority: request.priority || 'medium',
                   deadline: request.deadline,
-                  status: 'new',
-                  createdAt: new Date(),
+                              createdAt: new Date(),
                   updatedAt: new Date(),
                   // 拡張プロパティ（RequestInboxで使用）
                   ...(request as any)
@@ -4178,51 +4398,91 @@ export default function LineMarketingApp() {
       <div className="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0 fixed left-0 top-0 h-full z-10 flex flex-col">
         {/* Fixed Header */}
         <div className="p-6 border-b border-gray-200 bg-white">
-          <h1 className="text-xl font-bold text-gray-900">LリーチHUB</h1>
-          <p className="text-sm text-gray-600 mt-1">自動化プラットフォーム</p>
+          <h1 className="text-xl font-bold text-gray-900">
+            {accountType === 'crm' ? 'LリーチCRM' : 'LリーチHUB'}
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            {accountType === 'crm' ? 'マーケティング管理システム' : '自動化プラットフォーム'}
+          </p>
         </div>
         
         {/* Scrollable Navigation */}
         <nav className="flex-1 overflow-y-auto">
           <div className="px-4 py-4">
             <div className="space-y-6">
-            {navigationCategories.map((category, categoryIndex) => (
-              <div key={category.title}>
-                {/* カテゴリタイトル */}
-                <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    {category.title}
-                  </h3>
+            {navigationCategories.map((category, categoryIndex) => {
+              // CRMモードで折りたたみ対象のカテゴリかどうか判定
+              const isCollapsible = accountType === 'crm' && 
+                ['MA', '予約', 'CRM', '送客代行', 'CMS'].includes(category.title)
+              const isExpanded = isCollapsible ? expandedCategories[category.title] : true
+              
+              return (
+                <div key={category.title}>
+                  {/* カテゴリタイトル */}
+                  <div 
+                    className={`px-3 py-2 flex items-center justify-between ${
+                      isCollapsible ? 'cursor-pointer hover:bg-gray-50 rounded-lg' : ''
+                    }`}
+                    onClick={() => {
+                      if (isCollapsible) {
+                        setExpandedCategories(prev => ({
+                          ...prev,
+                          [category.title]: !prev[category.title]
+                        }))
+                      }
+                    }}
+                  >
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      {category.title}
+                    </h3>
+                    {isCollapsible && (
+                      isExpanded ? 
+                        <ChevronDown className="w-4 h-4 text-gray-400" /> : 
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
+                  
+                  {/* カテゴリアイテム */}
+                  {isExpanded && (
+                    <div className="space-y-1">
+                      {category.items.map((item) => {
+                        const Icon = item.icon
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => handleTabChange(item.id as typeof activeTab)}
+                            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              activeTab === item.id
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 mr-3" />
+                            {item.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-                
-                {/* カテゴリアイテム */}
-                <div className="space-y-1">
-                  {category.items.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleTabChange(item.id)}
-                        className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                          activeTab === item.id
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        <Icon className="w-5 h-5 mr-3" />
-                        {item.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+              )
+            })}
             </div>
           </div>
         </nav>
         
-        {/* 管理者情報 (固定) */}
+        {/* 管理者情報とアカウント切り替え (固定) */}
         <div className="px-4 py-4 border-t border-gray-200 bg-white">
+          <div className="mb-3">
+            <select
+              value={accountType}
+              onChange={(e) => setAccountType(e.target.value as 'hub' | 'crm')}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="hub">LリーチHUB</option>
+              <option value="crm">LリーチCRM</option>
+            </select>
+          </div>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-sm font-medium">管</span>
@@ -4260,6 +4520,246 @@ export default function LineMarketingApp() {
           reminders={reminders}
           onSend={handleBulkTestSend}
         />
+      )}
+
+      {/* Job Posting Creation Modal */}
+      {showCreateJobPosting && newJobPostingCompany && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">新規求人作成</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {newJobPostingCompany.name} の求人を作成
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCreateJobPosting(false)
+                    setNewJobPostingCompany(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* 基本情報 */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">基本情報</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">職種名 *</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="例: フロントエンドエンジニア"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">部署</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="例: 開発部"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">雇用形態</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="full-time">正社員</option>
+                        <option value="contract">契約社員</option>
+                        <option value="part-time">パートタイム</option>
+                        <option value="internship">インターンシップ</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">勤務地</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="例: 東京都渋谷区"
+                        defaultValue={newJobPostingCompany.location}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 仕事内容 */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">仕事内容</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">職務内容 *</label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={4}
+                        placeholder="具体的な業務内容を記載してください"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">必須要件</label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="必須スキル・経験を記載してください"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">歓迎要件</label>
+                      <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="あると望ましいスキル・経験を記載してください"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 待遇・条件 */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">待遇・条件</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">年収レンジ</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="400"
+                        />
+                        <span className="text-gray-500">〜</span>
+                        <input
+                          type="number"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="800"
+                        />
+                        <span className="text-gray-500">万円</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">リモートワーク</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="office">オフィス勤務</option>
+                        <option value="hybrid">ハイブリッド</option>
+                        <option value="remote">フルリモート</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 採用プロセス */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">採用プロセス</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">1</span>
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="書類選考"
+                      />
+                      <input
+                        type="number"
+                        className="w-20 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="3"
+                      />
+                      <span className="text-sm text-gray-600">日</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">2</span>
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="一次面接"
+                      />
+                      <input
+                        type="number"
+                        className="w-20 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="7"
+                      />
+                      <span className="text-sm text-gray-600">日</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">3</span>
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="最終面接"
+                      />
+                      <input
+                        type="number"
+                        className="w-20 px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        defaultValue="7"
+                      />
+                      <span className="text-sm text-gray-600">日</span>
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <Plus className="w-4 h-4" />
+                      <span>ステップを追加</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* その他 */}
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">その他</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">募集人数</label>
+                      <input
+                        type="number"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="1"
+                        defaultValue="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">公開状態</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="draft">下書き</option>
+                        <option value="published">公開</option>
+                        <option value="closed">募集終了</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ボタン */}
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setShowCreateJobPosting(false)
+                    setNewJobPostingCompany(null)
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Save job posting
+                    alert(`${newJobPostingCompany.name}の求人を作成しました（デモ）`)
+                    setShowCreateJobPosting(false)
+                    setNewJobPostingCompany(null)
+                    // Optionally navigate to job posting list
+                    if (activeTab === 'crm-companies') {
+                      setActiveTab('crm-jobs')
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  作成
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

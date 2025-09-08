@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { JobSeeker, JobSeekerStatus, JobApplication, JobPosting } from '@/types'
+import { UnifiedDetailModal } from '@/components/shared/UnifiedDetailModal'
 import {
   Search,
   Filter,
@@ -19,7 +20,6 @@ import {
   ChevronRight,
   MessageCircle,
   UserPlus,
-  Send,
   FileText,
   Briefcase,
   Users
@@ -61,10 +61,11 @@ export function AgentJobSeekerList({
   onRecommendJobSeeker
 }: AgentJobSeekerListProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState<JobSeekerStatus | 'all'>('all')
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [selectedLineStatus, setSelectedLineStatus] = useState<'all' | 'connected' | 'not_connected' | 'blocked'>('all')
+  const [selectedSource, setSelectedSource] = useState<'all' | 'lp' | 'ad' | 'organic' | 'qr' | 'referral' | 'direct' | 'sns' | 'email'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedJobSeeker, setSelectedJobSeeker] = useState<JobSeeker | null>(null)
   
   const itemsPerPage = 10
 
@@ -77,17 +78,20 @@ export function AgentJobSeekerList({
   const filteredJobSeekers = agentJobSeekers.filter(jobSeeker => {
     const matchesSearch = 
       jobSeeker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobSeeker.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      jobSeeker.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobSeeker.phone.includes(searchQuery) ||
       jobSeeker.currentCompany?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobSeeker.currentPosition?.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesStatus = selectedStatus === 'all' || jobSeeker.status === selectedStatus
+    const matchesLineStatus = selectedLineStatus === 'all' || 
+      (selectedLineStatus === 'connected' && jobSeeker.lineStatus === 'connected') ||
+      (selectedLineStatus === 'not_connected' && jobSeeker.lineStatus === 'not_connected') ||
+      (selectedLineStatus === 'blocked' && jobSeeker.lineStatus === 'blocked')
     
-    const matchesSkills = selectedSkills.length === 0 || 
-      selectedSkills.some(skill => jobSeeker.skills.some(s => s.name === skill))
+    const matchesSource = selectedSource === 'all' || jobSeeker.source === selectedSource
     
-    return matchesSearch && matchesStatus && matchesSkills
+    
+    return matchesSearch && matchesLineStatus && matchesSource
   })
 
   // Pagination
@@ -96,10 +100,6 @@ export function AgentJobSeekerList({
   const endIndex = startIndex + itemsPerPage
   const currentJobSeekers = filteredJobSeekers.slice(startIndex, endIndex)
 
-  // Get all skills
-  const allSkills = Array.from(
-    new Set(agentJobSeekers.flatMap(js => js.skills.map(s => s.name)))
-  ).sort()
 
   return (
     <div className="space-y-6">
@@ -168,61 +168,149 @@ export function AgentJobSeekerList({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ステータス
+                  流入経路
                 </label>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setSelectedStatus('all')}
+                    onClick={() => setSelectedSource('all')}
                     className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedStatus === 'all'
+                      selectedSource === 'all'
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     すべて
                   </button>
-                  {Object.entries(statusLabels).map(([status, { label }]) => (
-                    <button
-                      key={status}
-                      onClick={() => setSelectedStatus(status as JobSeekerStatus)}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        selectedStatus === status
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => setSelectedSource('lp')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'lp'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    LP
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('ad')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'ad'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    広告
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('organic')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'organic'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    オーガニック
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('qr')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'qr'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    QR
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('referral')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'referral'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    紹介
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('direct')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'direct'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    直接
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('sns')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'sns'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    SNS
+                  </button>
+                  <button
+                    onClick={() => setSelectedSource('email')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedSource === 'email'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    メール
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  LINE連携
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedLineStatus('all')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedLineStatus === 'all'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    すべて
+                  </button>
+                  <button
+                    onClick={() => setSelectedLineStatus('connected')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedLineStatus === 'connected'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    連携済み
+                  </button>
+                  <button
+                    onClick={() => setSelectedLineStatus('not_connected')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedLineStatus === 'not_connected'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    未連携
+                  </button>
+                  <button
+                    onClick={() => setSelectedLineStatus('blocked')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedLineStatus === 'blocked'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ブロック
+                  </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  スキル
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {allSkills.map(skill => (
-                    <button
-                      key={skill}
-                      onClick={() => {
-                        if (selectedSkills.includes(skill)) {
-                          setSelectedSkills(selectedSkills.filter(s => s !== skill))
-                        } else {
-                          setSelectedSkills([...selectedSkills, skill])
-                        }
-                      }}
-                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                        selectedSkills.includes(skill)
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -242,37 +330,34 @@ export function AgentJobSeekerList({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">推薦済み</p>
+              <p className="text-sm font-medium text-gray-600">LINE連携済み</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {jobApplications.filter(app => 
-                  app.source === 'agent' && 
-                  agentJobSeekers.some(js => js.id === app.jobSeekerId)
-                ).length}
+                {agentJobSeekers.filter(js => js.lineStatus === 'connected').length}
               </p>
             </div>
-            <Send className="w-8 h-8 text-green-400" />
+            <MessageCircle className="w-8 h-8 text-green-400" />
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">面接中</p>
+              <p className="text-sm font-medium text-gray-600">LINE未連携</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {agentJobSeekers.filter(js => js.status === 'interviewing').length}
+                {agentJobSeekers.filter(js => !js.lineStatus || js.lineStatus === 'not_connected').length}
               </p>
             </div>
-            <Calendar className="w-8 h-8 text-purple-400" />
+            <Phone className="w-8 h-8 text-gray-400" />
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">採用済み</p>
+              <p className="text-sm font-medium text-gray-600">ブロック</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1">
-                {agentJobSeekers.filter(js => js.status === 'hired').length}
+                {agentJobSeekers.filter(js => js.lineStatus === 'blocked').length}
               </p>
             </div>
-            <Briefcase className="w-8 h-8 text-blue-400" />
+            <Calendar className="w-8 h-8 text-red-400" />
           </div>
         </div>
       </div>
@@ -290,13 +375,10 @@ export function AgentJobSeekerList({
                   連絡先
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  スキル
+                  流入経路
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  推薦状況
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ステータス
+                  LINE連携
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   登録日
@@ -313,7 +395,11 @@ export function AgentJobSeekerList({
                 )
                 
                 return (
-                  <tr key={jobSeeker.id} className="hover:bg-gray-50">
+                  <tr 
+                    key={jobSeeker.id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedJobSeeker(jobSeeker)}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
@@ -345,56 +431,86 @@ export function AgentJobSeekerList({
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
-                        <div className="text-gray-900">{jobSeeker.email}</div>
+                        {jobSeeker.email && <div className="text-gray-900">{jobSeeker.email}</div>}
                         <div className="text-gray-500">{jobSeeker.phone}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {jobSeeker.skills.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {jobSeeker.skills.slice(0, 3).map(skill => (
-                            <span
-                              key={skill.id}
-                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                            >
-                              {skill.name}
-                            </span>
-                          ))}
-                          {jobSeeker.skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">
-                              +{jobSeeker.skills.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-gray-900">
-                          {recommendations.length > 0 ? (
-                            <span className="flex items-center gap-1">
-                              <Send className="w-4 h-4 text-green-500" />
-                              {recommendations.length}件推薦中
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">未推薦</span>
-                          )}
-                        </div>
-                        {recommendations.length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            最新: {new Date(recommendations[0].appliedAt).toLocaleDateString('ja-JP')}
-                          </div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">
+                        {jobSeeker.source === 'lp' && (
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-4 h-4 text-blue-500" />
+                            LP
+                          </span>
                         )}
-                      </div>
+                        {jobSeeker.source === 'ad' && (
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="w-4 h-4 text-red-500" />
+                            広告
+                          </span>
+                        )}
+                        {jobSeeker.source === 'organic' && (
+                          <span className="flex items-center gap-1">
+                            <Search className="w-4 h-4 text-green-500" />
+                            オーガニック
+                          </span>
+                        )}
+                        {jobSeeker.source === 'qr' && (
+                          <span className="flex items-center gap-1">
+                            <Building className="w-4 h-4 text-purple-500" />
+                            QR
+                          </span>
+                        )}
+                        {jobSeeker.source === 'referral' && (
+                          <span className="flex items-center gap-1">
+                            <Users className="w-4 h-4 text-orange-500" />
+                            紹介
+                          </span>
+                        )}
+                        {jobSeeker.source === 'direct' && (
+                          <span className="flex items-center gap-1">
+                            <UserPlus className="w-4 h-4 text-indigo-500" />
+                            直接
+                          </span>
+                        )}
+                        {jobSeeker.source === 'sns' && (
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="w-4 h-4 text-pink-500" />
+                            SNS
+                          </span>
+                        )}
+                        {jobSeeker.source === 'email' && (
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-4 h-4 text-gray-600" />
+                            メール
+                          </span>
+                        )}
+                        {!jobSeeker.source && (
+                          <span className="text-gray-500">-</span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                        statusLabels[jobSeeker.status].color
-                      }`}>
-                        {statusLabels[jobSeeker.status].label}
-                      </span>
+                      {jobSeeker.lineStatus === 'connected' && (
+                        <span className="px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                          連携済み
+                        </span>
+                      )}
+                      {jobSeeker.lineStatus === 'not_connected' && (
+                        <span className="px-2 py-1 text-xs rounded-full font-medium bg-gray-100 text-gray-800">
+                          未連携
+                        </span>
+                      )}
+                      {jobSeeker.lineStatus === 'blocked' && (
+                        <span className="px-2 py-1 text-xs rounded-full font-medium bg-red-100 text-red-800">
+                          ブロック
+                        </span>
+                      )}
+                      {!jobSeeker.lineStatus && (
+                        <span className="px-2 py-1 text-xs rounded-full font-medium bg-gray-100 text-gray-800">
+                          未連携
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(jobSeeker.createdAt).toLocaleDateString('ja-JP')}
@@ -402,28 +518,28 @@ export function AgentJobSeekerList({
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => onViewJobSeeker(jobSeeker)}
-                          className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                          title="詳細"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onRecommendJobSeeker(jobSeeker.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onRecommendJobSeeker(jobSeeker.id)
+                          }}
                           className="p-1 text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
                           title="推薦"
                         >
                           <UserPlus className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onEditJobSeeker(jobSeeker)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEditJobSeeker(jobSeeker)
+                          }}
                           className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                           title="編集"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             if (confirm(`求職者「${jobSeeker.name}」を削除しますか？`)) {
                               onDeleteJobSeeker(jobSeeker.id)
                             }
@@ -481,6 +597,22 @@ export function AgentJobSeekerList({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Unified Detail Modal */}
+      {selectedJobSeeker && (
+        <UnifiedDetailModal
+          isOpen={!!selectedJobSeeker}
+          jobSeeker={selectedJobSeeker}
+          jobApplications={jobApplications}
+          jobPostings={jobPostings}
+          onClose={() => setSelectedJobSeeker(null)}
+          onEdit={onEditJobSeeker}
+          onDelete={onDeleteJobSeeker}
+          onRecommend={onRecommendJobSeeker}
+          initialTab="basic"
+          mode="jobseeker"
+        />
       )}
     </div>
   )

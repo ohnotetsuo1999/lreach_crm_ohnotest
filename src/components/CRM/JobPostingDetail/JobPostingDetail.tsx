@@ -87,7 +87,7 @@ export function JobPostingDetail({
   onUpdateApplicationStatus,
   onScheduleInterview
 }: JobPostingDetailProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'pipeline' | 'analytics'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications'>('overview')
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all')
   const [showStatusMenu, setShowStatusMenu] = useState(false)
 
@@ -307,26 +307,6 @@ export function JobPostingDetail({
           >
             応募者一覧 ({applications.length})
           </button>
-          <button
-            onClick={() => setActiveTab('pipeline')}
-            className={`px-6 py-3 text-sm font-medium ${
-              activeTab === 'pipeline'
-                ? 'border-b-2 border-green-500 text-green-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            採用パイプライン
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-6 py-3 text-sm font-medium ${
-              activeTab === 'analytics'
-                ? 'border-b-2 border-green-500 text-green-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            分析
-          </button>
         </nav>
 
         <div className="p-6">
@@ -528,99 +508,6 @@ export function JobPostingDetail({
                     </div>
                   )
                 })}
-              </div>
-            </div>
-          )}
-
-          {/* 採用パイプラインタブ */}
-          {activeTab === 'pipeline' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
-                {['applied', 'reviewing', 'interviewing', 'offered'].map(status => (
-                  <div key={status} className="bg-gray-50 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-3">
-                      {applicationStatusLabels[status as ApplicationStatus].label}
-                    </h5>
-                    <div className="text-2xl font-bold text-gray-900 mb-3">
-                      {applicationStats.byStatus[status as ApplicationStatus]}
-                    </div>
-                    <div className="space-y-2">
-                      {applications
-                        .filter(app => app.status === status)
-                        .slice(0, 3)
-                        .map(app => {
-                          const jobSeeker = jobSeekers.find(js => js.id === app.jobSeekerId)
-                          return jobSeeker ? (
-                            <div key={app.id} className="text-sm text-gray-600 truncate">
-                              {jobSeeker.name}
-                            </div>
-                          ) : null
-                        })}
-                      {applicationStats.byStatus[status as ApplicationStatus] > 3 && (
-                        <div className="text-xs text-gray-500">
-                          他{applicationStats.byStatus[status as ApplicationStatus] - 3}名
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 分析タブ */}
-          {activeTab === 'analytics' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-6">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-gray-700">応募転換率</h5>
-                    <TrendingUp className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900">12.5%</div>
-                  <p className="text-xs text-gray-500 mt-1">閲覧数に対する応募率</p>
-                </div>
-                
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-gray-700">平均応募時間</h5>
-                    <Clock className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900">3.2日</div>
-                  <p className="text-xs text-gray-500 mt-1">公開から応募までの平均日数</p>
-                </div>
-                
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-gray-700">採用率</h5>
-                    <Award className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900">15%</div>
-                  <p className="text-xs text-gray-500 mt-1">応募者に対する採用率</p>
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-medium text-gray-900 mb-3">ステータス別分布</h5>
-                <div className="space-y-2">
-                  {Object.entries(applicationStatusLabels).map(([status, { label, color }]) => {
-                    const count = applicationStats.byStatus[status as ApplicationStatus]
-                    const percentage = (count / applicationStats.total) * 100
-                    
-                    return (
-                      <div key={status} className="flex items-center gap-3">
-                        <span className="w-32 text-sm text-gray-600">{label}</span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
-                          <div
-                            className={`h-full rounded-full ${color.split(' ')[0]}`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <span className="w-12 text-sm text-gray-700 text-right">{count}</span>
-                      </div>
-                    )
-                  })}
-                </div>
               </div>
             </div>
           )}
