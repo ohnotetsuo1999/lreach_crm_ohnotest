@@ -35,7 +35,11 @@ import {
   MoreVertical,
   Activity,
   Archive,
-  Trash2
+  Trash2,
+  X,
+  Info,
+  FileSignature,
+  History
 } from 'lucide-react'
 
 interface Action {
@@ -242,6 +246,8 @@ export default function ActionManagement() {
   const [filterType, setFilterType] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddAction, setShowAddAction] = useState(false)
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null)
+  const [showActionModal, setShowActionModal] = useState(false)
 
   // Filter actions
   const filteredActions = actions.filter(action => {
@@ -455,7 +461,11 @@ export default function ActionManagement() {
                       return (
                         <div
                           key={action.id}
-                          className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                          className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => {
+                            setSelectedAction(action)
+                            setShowActionModal(true)
+                          }}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-3">
@@ -530,6 +540,163 @@ export default function ActionManagement() {
           )}
         </div>
       </div>
+      
+      {/* アクション詳細モーダル */}
+      {showActionModal && selectedAction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            {/* モーダルヘッダー */}
+            <div className="border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">詳細</h2>
+                  <p className="text-sm text-gray-500 mt-1">{selectedAction.targetName}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowActionModal(false)
+                    setSelectedAction(null)
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* タブナビゲーション */}
+            <div className="border-b border-gray-200">
+              <div className="flex">
+                {[
+                  { id: 'info', label: '基本情報', icon: Info },
+                  { id: 'status', label: '選考状況', icon: ClipboardList },
+                  { id: 'stage', label: '選考ステージ', icon: TrendingUp },
+                  { id: 'action', label: 'アクション管理', icon: Activity, active: true },
+                  { id: 'history', label: '履歴書', icon: FileSignature },
+                  { id: 'career', label: '職務経歴書', icon: Briefcase },
+                  { id: 'timeline', label: '編集履歴', icon: History }
+                ].map((tab) => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        tab.active
+                          ? 'text-blue-600 border-blue-600'
+                          : 'text-gray-500 border-transparent hover:text-gray-700'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                      {tab.id === 'timeline' && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                          2
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* モーダルコンテンツ */}
+            <div className="p-6 overflow-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-6">
+                {/* アクション詳細 */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">アクション管理</h3>
+                  
+                  <div className="space-y-4">
+                    {/* アクションタイプと状態 */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">タイプ:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                          {actionTypeLabels[selectedAction.type]}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">ステータス:</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[selectedAction.status]}`}>
+                          {statusLabels[selectedAction.status]}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">優先度:</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${priorityColors[selectedAction.priority]}`}>
+                          {priorityLabels[selectedAction.priority]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* アクションタイトルと説明 */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium text-gray-900 mb-2">{selectedAction.title}</h4>
+                      <p className="text-gray-600">{selectedAction.description}</p>
+                    </div>
+
+                    {/* 期限と担当者 */}
+                    <div className="border-t pt-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">期限</p>
+                        <p className="font-medium text-gray-900">
+                          {selectedAction.dueDate.toLocaleDateString('ja-JP', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">担当者</p>
+                        <p className="font-medium text-gray-900">{selectedAction.assignee}</p>
+                      </div>
+                    </div>
+
+                    {/* 結果 */}
+                    {selectedAction.result && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-2">結果</p>
+                        <div className="bg-white rounded-lg p-3 border border-gray-200">
+                          <p className="text-gray-700">{selectedAction.result}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* メモ */}
+                    {selectedAction.notes && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-2">メモ</p>
+                        <div className="bg-white rounded-lg p-3 border border-gray-200">
+                          <p className="text-gray-700">{selectedAction.notes}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 次のアクション */}
+                    {selectedAction.nextAction && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-2">次のアクション</p>
+                        <div className="bg-white rounded-lg p-3 border border-gray-200">
+                          <p className="text-gray-700">{selectedAction.nextAction}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* プレースホルダー */}
+                <div className="text-center py-8">
+                  <p className="text-gray-500">アクションがありません</p>
+                  <button className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                    アクションを追加
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
