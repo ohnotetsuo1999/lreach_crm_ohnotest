@@ -77,13 +77,16 @@ export function JobPostingList({
     description: '',
     requirements: [],
     benefits: [],
-    salary: '',
+    salary: {
+      min: 0,
+      max: 0,
+      currency: 'JPY',
+      period: 'yearly' as const
+    },
     location: '',
     employmentType: 'full-time',
     department: '',
-    experience_required: '',
-    status: 'draft' as JobPostingStatus,
-    skills_required: []
+    status: 'draft' as JobPostingStatus
   })
   
   const itemsPerPage = 10
@@ -113,12 +116,15 @@ export function JobPostingList({
             '書籍購入支援',
             '資格取得支援'
           ],
-          salary: '600-900万円',
+          salary: {
+            min: 600,
+            max: 900,
+            currency: 'JPY',
+            period: 'yearly' as const
+          },
           location: '東京都渋谷区',
           employmentType: 'full-time',
-          department: '開発部',
-          experience_required: '5年以上',
-          skills_required: ['React', 'Next.js', 'TypeScript', 'Git']
+          department: '開発部'
         }))
         alert('PDFから求人情報を読み取りました')
       }, 1000)
@@ -356,7 +362,7 @@ export function JobPostingList({
                       <Building className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {jobPosting.companyName || jobPosting.company || '企業名未設定'}
+                          {jobPosting.companyName || (typeof jobPosting.company === 'string' ? jobPosting.company : jobPosting.company?.name) || '企業名未設定'}
                         </div>
                         {jobPosting.department && (
                           <div className="text-xs text-gray-500">
@@ -503,13 +509,16 @@ export function JobPostingList({
                       description: '',
                       requirements: [],
                       benefits: [],
-                      salary: '',
+                      salary: {
+      min: 0,
+      max: 0,
+      currency: 'JPY',
+      period: 'yearly' as const
+    },
                       location: '',
                       employmentType: 'full-time',
                       department: '',
-                      experience_required: '',
-                      status: 'draft' as JobPostingStatus,
-                      skills_required: []
+                      status: 'draft' as JobPostingStatus
                     })
                     setUploadedPdf(null)
                   }}
@@ -605,8 +614,21 @@ export function JobPostingList({
                     <label className="block text-sm font-medium text-gray-700 mb-1">給与</label>
                     <input
                       type="text"
-                      value={newJobPosting.salary || ''}
-                      onChange={(e) => setNewJobPosting({...newJobPosting, salary: e.target.value})}
+                      value={newJobPosting.salary ? `${newJobPosting.salary.min}-${newJobPosting.salary.max}万円` : ''}
+                      onChange={(e) => {
+                        const match = e.target.value.match(/(\d+)-(\d+)/)
+                        if (match) {
+                          setNewJobPosting({
+                            ...newJobPosting, 
+                            salary: {
+                              min: parseInt(match[1]),
+                              max: parseInt(match[2]),
+                              currency: 'JPY',
+                              period: 'yearly' as const
+                            }
+                          })
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="例: 500-800万円"
                     />
@@ -634,16 +656,6 @@ export function JobPostingList({
                       placeholder="例: 開発部"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">必要経験年数</label>
-                    <input
-                      type="text"
-                      value={newJobPosting.experience_required || ''}
-                      onChange={(e) => setNewJobPosting({...newJobPosting, experience_required: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="例: 3年以上"
-                    />
-                  </div>
                 </div>
 
                 <div>
@@ -668,16 +680,6 @@ export function JobPostingList({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">必要スキル（カンマ区切り）</label>
-                  <input
-                    type="text"
-                    value={newJobPosting.skills_required?.join(', ') || ''}
-                    onChange={(e) => setNewJobPosting({...newJobPosting, skills_required: e.target.value.split(',').map(s => s.trim())})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="例: React, TypeScript, Git"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
@@ -704,13 +706,16 @@ export function JobPostingList({
                       description: '',
                       requirements: [],
                       benefits: [],
-                      salary: '',
+                      salary: {
+      min: 0,
+      max: 0,
+      currency: 'JPY',
+      period: 'yearly' as const
+    },
                       location: '',
                       employmentType: 'full-time',
                       department: '',
-                      experience_required: '',
-                      status: 'draft' as JobPostingStatus,
-                      skills_required: []
+                      status: 'draft' as JobPostingStatus
                     })
                     setUploadedPdf(null)
                   }}
@@ -729,13 +734,16 @@ export function JobPostingList({
                         description: '',
                         requirements: [],
                         benefits: [],
-                        salary: '',
+                        salary: {
+      min: 0,
+      max: 0,
+      currency: 'JPY',
+      period: 'yearly' as const
+    },
                         location: '',
                         employmentType: 'full-time',
                         department: '',
-                        experience_required: '',
-                        status: 'draft' as JobPostingStatus,
-                        skills_required: []
+                        status: 'draft' as JobPostingStatus
                       })
                       setUploadedPdf(null)
                     } else {

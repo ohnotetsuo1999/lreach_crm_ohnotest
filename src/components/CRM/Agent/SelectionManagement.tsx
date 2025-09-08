@@ -6,6 +6,9 @@ import { JobPosting } from '@/types'
 import { mockJobPostingsData } from '@/data/mockJobPostings'
 import { UnifiedDetailModal } from '@/components/shared/UnifiedDetailModal'
 
+// Type to match UnifiedDetailModal's expected Selection
+type Selection = any
+
 interface Company {
   id: string
   name: string
@@ -37,7 +40,7 @@ interface Candidate {
   registrationDate: Date
   lastContact?: Date
   assignee?: string
-  selections: Selection[]
+  selections: LocalSelection[]
 }
 
 interface Action {
@@ -50,7 +53,7 @@ interface Action {
   notes?: string
 }
 
-interface Selection {
+interface LocalSelection {
   id: string
   candidateId: string
   jobPostingId?: string
@@ -94,7 +97,12 @@ const mockCandidates: Candidate[] = [
           title: 'フロントエンドリードエンジニア',
           companyId: 'c1',
           companyName: '株式会社イノベーション',
-          salary: '900-1200万円',
+          salary: {
+            min: 900,
+            max: 1200,
+            currency: 'JPY',
+            period: 'yearly' as const
+          },
           location: '東京都渋谷区',
           employmentType: 'full-time',
           status: 'active',
@@ -102,7 +110,15 @@ const mockCandidates: Candidate[] = [
           updatedAt: new Date(),
           description: '',
           requirements: [],
-          numberOfOpenings: 1
+          responsibilities: [],
+          jobType: 'full_time' as const,
+          locationType: 'onsite' as const,
+          requiredSkills: [],
+          isActive: true,
+          hiringProcess: [],
+          numberOfOpenings: 1,
+          postedAt: new Date(),
+          createdBy: 'admin'
         } as JobPosting,
         status: 'active',
         applicationDate: new Date('2024-01-15'),
@@ -144,7 +160,12 @@ const mockCandidates: Candidate[] = [
           title: 'プロダクトマネージャー',
           companyId: 'c2',
           companyName: '株式会社テックリード',
-          salary: '1000-1400万円',
+          salary: {
+            min: 1000,
+            max: 1400,
+            currency: 'JPY',
+            period: 'yearly' as const
+          },
           location: '東京都港区',
           employmentType: 'full-time',
           status: 'active',
@@ -152,7 +173,15 @@ const mockCandidates: Candidate[] = [
           updatedAt: new Date(),
           description: '',
           requirements: [],
-          numberOfOpenings: 1
+          responsibilities: [],
+          jobType: 'full_time' as const,
+          locationType: 'onsite' as const,
+          requiredSkills: [],
+          isActive: true,
+          hiringProcess: [],
+          numberOfOpenings: 1,
+          postedAt: new Date(),
+          createdBy: 'admin'
         } as JobPosting,
         status: 'active',
         applicationDate: new Date('2024-01-18'),
@@ -181,7 +210,12 @@ const mockCandidates: Candidate[] = [
           title: 'テクニカルディレクター',
           companyId: 'c3',
           companyName: '株式会社デジタルフロンティア',
-          salary: '850-1100万円',
+          salary: {
+            min: 850,
+            max: 1100,
+            currency: 'JPY',
+            period: 'yearly' as const
+          },
           location: '東京都渋谷区',
           employmentType: 'full-time',
           status: 'active',
@@ -189,7 +223,15 @@ const mockCandidates: Candidate[] = [
           updatedAt: new Date(),
           description: '',
           requirements: [],
-          numberOfOpenings: 1
+          responsibilities: [],
+          jobType: 'full_time' as const,
+          locationType: 'onsite' as const,
+          requiredSkills: [],
+          isActive: true,
+          hiringProcess: [],
+          numberOfOpenings: 1,
+          postedAt: new Date(),
+          createdBy: 'admin'
         } as JobPosting,
         status: 'rejected',
         applicationDate: new Date('2024-01-10'),
@@ -271,7 +313,7 @@ const statusLabels: Record<string, string> = {
   'on-hold': '保留'
 }
 
-const stageStatusIcons: Record<string, JSX.Element> = {
+const stageStatusIcons: Record<string, React.ReactElement> = {
   pending: <Clock className="w-4 h-4 text-gray-400" />,
   'in-progress': <Clock className="w-4 h-4 text-blue-500" />,
   passed: <CheckCircle className="w-4 h-4 text-green-500" />,
@@ -290,14 +332,14 @@ export default function SelectionManagement() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [showJobSeekerSearch, setShowJobSeekerSearch] = useState(false)
 
-  const handleSaveSelection = (selection: Selection, actions: Action[]) => {
+  const handleSaveSelection = (selection: any, actions: any[]) => {
     console.log('保存する選考情報:', selection)
     console.log('保存するアクション:', actions)
     // ここで実際の保存処理を実装
     alert('選考情報を保存しました')
   }
 
-  const getAssigneeLabel = (assignee: string, selection?: Selection, candidate?: Candidate) => {
+  const getAssigneeLabel = (assignee: string, selection?: LocalSelection, candidate?: Candidate) => {
     if (assignee === 'self') return '自分'
     if (assignee === 'candidate') return candidate?.name || '求職者'
     if (assignee === 'company') return selection?.jobPosting?.company?.name || '企業'
@@ -478,7 +520,7 @@ export default function SelectionManagement() {
                       <div 
                         className={`p-4 cursor-pointer hover:bg-gray-50 ${selection.status === 'offered' ? 'bg-green-50' : selection.status === 'rejected' ? 'bg-red-50' : ''}`}
                         onClick={() => {
-                          setEditingSelection(selection)
+                          setEditingSelection(selection as any)
                           setEditingCandidate(candidate)
                           setShowSelectionEdit(true)
                         }}
@@ -492,7 +534,15 @@ export default function SelectionManagement() {
                               </span>
                             </div>
                             <p className="text-sm text-gray-600">
-                              {selection.jobPosting?.company?.name || selection.jobPosting?.companyName || '企業名未設定'} • {selection.jobPosting?.location || '場所未設定'} • {selection.jobPosting?.salary || '給与未設定'}
+                              {typeof selection.jobPosting?.company === 'string' 
+                                ? selection.jobPosting?.company 
+                                : selection.jobPosting?.company?.name || selection.jobPosting?.companyName || '企業名未設定'} • {selection.jobPosting?.location || '場所未設定'} • {
+                                selection.jobPosting?.salary 
+                                  ? typeof selection.jobPosting.salary === 'string'
+                                    ? selection.jobPosting.salary
+                                    : `${selection.jobPosting.salary.min}-${selection.jobPosting.salary.max}万円`
+                                  : '給与未設定'
+                              }
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                               <span>応募日: {selection.applicationDate.toLocaleDateString('ja-JP')}</span>
@@ -585,8 +635,8 @@ export default function SelectionManagement() {
                                       {action.dueDate && (
                                         <span>{action.dueDate.toLocaleDateString('ja-JP')}</span>
                                       )}
-                                      {action.assignee && (
-                                        <span>{getAssigneeLabel(action.assignee, selection, candidate)}</span>
+                                      {action.assignees && action.assignees.length > 0 && (
+                                        <span>{getAssigneeLabel(action.assignees[0], selection, candidate)}</span>
                                       )}
                                     </div>
                                   </div>
@@ -622,8 +672,17 @@ export default function SelectionManagement() {
             setSelectedCandidate(null)
             setCandidateTab('info')
           }}
-          jobSeeker={selectedCandidate}
-          selection={selectedCandidate.selections?.[0]}
+          jobSeeker={selectedCandidate ? {
+            ...selectedCandidate,
+            skills: [],
+            certifications: [],
+            languages: [],
+            desiredPositions: [],
+            tags: [],
+            updatedAt: new Date(),
+            createdAt: selectedCandidate.registrationDate
+          } as any : null}
+          selection={selectedCandidate?.selections?.[0] as any}
           initialTab={candidateTab === 'selection' ? 'selection' : candidateTab === 'actions' ? 'actions' : 'basic'}
           mode="jobseeker"
         />
@@ -638,7 +697,16 @@ export default function SelectionManagement() {
             setEditingSelection(null)
             setEditingCandidate(null)
           }}
-          jobSeeker={editingCandidate}
+          jobSeeker={editingCandidate ? {
+            ...editingCandidate,
+            skills: [],
+            certifications: [],
+            languages: [],
+            desiredPositions: [],
+            tags: [],
+            updatedAt: new Date(),
+            createdAt: editingCandidate.registrationDate
+          } as any : null}
           selection={editingSelection}
           onSave={handleSaveSelection}
           initialTab="stages"

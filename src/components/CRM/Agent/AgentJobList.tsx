@@ -71,9 +71,13 @@ export function AgentJobList({
 
   // Filtering
   const filteredJobPostings = activeJobPostings.filter(jobPosting => {
+    const companyName = typeof jobPosting.company === 'string' 
+      ? jobPosting.company 
+      : jobPosting.company?.name || jobPosting.companyName || ''
+    
     const matchesSearch = 
       jobPosting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobPosting.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobPosting.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobPosting.location.toLowerCase().includes(searchQuery.toLowerCase())
     
@@ -279,7 +283,11 @@ export function AgentJobList({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{jobPosting.company || '-'}</div>
+                      <div className="text-sm text-gray-900">
+                        {typeof jobPosting.company === 'string' 
+                          ? jobPosting.company 
+                          : jobPosting.company?.name || jobPosting.companyName || '-'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{jobPosting.department || '-'}</div>

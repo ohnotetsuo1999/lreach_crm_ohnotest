@@ -97,7 +97,7 @@ export function AgentJobDetail({
                 {jobPosting.company && (
                   <div className="flex items-center gap-1">
                     <Building className="w-4 h-4" />
-                    <span>{jobPosting.company}</span>
+                    <span>{typeof jobPosting.company === 'string' ? jobPosting.company : jobPosting.company?.name || jobPosting.companyName}</span>
                   </div>
                 )}
                 {jobPosting.department && (

@@ -8,6 +8,7 @@ import {
   DollarSign, Clock, CheckCircle, AlertCircle, Star, Users, Target, TrendingUp,
   BookOpen, Printer
 } from 'lucide-react'
+import { JobPosting as ImportedJobPosting, JobSeeker as ImportedJobSeeker } from '@/types'
 
 interface SelectionStage {
   id: string
@@ -53,38 +54,16 @@ interface Selection {
   }
 }
 
-interface JobSeeker {
-  id: string
-  name: string
+type JobSeeker = ImportedJobSeeker & {
+  // Additional fields for backward compatibility
   nameReading?: string
-  email?: string
-  phone?: string
-  address?: string
   postalCode?: string
-  birthDate?: Date
-  age?: number
-  currentTitle?: string
-  currentCompany?: string
-  currentPosition?: string
-  desiredSalary?: string | { min: number; max: number }
   desiredPosition?: string
   desiredWorkLocation?: string[]
   workLocation?: string
-  availableFrom?: Date
   experience?: number | string
-  yearsOfExperience?: number
-  education?: string | any[]
-  certifications?: any[]
-  languages?: any[]
-  skills?: any[]
-  notes?: string
   memo?: string
-  workHistory?: any[]
   workExperience?: any[]
-  profileImageUrl?: string
-  status?: string
-  lineStatus?: string
-  createdAt: Date
   assignee?: string
 }
 
@@ -107,13 +86,7 @@ interface JobApplication {
   status: string
 }
 
-interface JobPosting {
-  id: string
-  title: string
-  company: string
-  salary?: string
-  location?: string
-}
+type JobPosting = ImportedJobPosting
 
 interface UnifiedDetailModalProps {
   isOpen: boolean
@@ -259,7 +232,11 @@ export function UnifiedDetailModal({
   }
 
   const jobTitle = editingSelection?.jobTitle || editingSelection?.jobPosting?.title || ''
-  const companyName = editingSelection?.companyName || editingSelection?.jobPosting?.company?.name || ''
+  const companyName = editingSelection?.companyName || 
+    (typeof editingSelection?.jobPosting?.company === 'string' 
+      ? editingSelection?.jobPosting?.company 
+      : editingSelection?.jobPosting?.company?.name) || 
+    editingSelection?.jobPosting?.companyName || ''
 
   // Always show all tabs for consistency
   const showSelectionTabs = true

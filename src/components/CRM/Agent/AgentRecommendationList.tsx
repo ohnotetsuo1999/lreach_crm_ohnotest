@@ -69,7 +69,7 @@ export function AgentRecommendationList({
     
     const matchesSearch = 
       jobSeeker?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jobSeeker?.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      jobSeeker?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobPosting?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       jobPosting?.department?.toLowerCase().includes(searchQuery.toLowerCase())
     

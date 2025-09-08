@@ -52,14 +52,18 @@ export function AgentRecommendationModal({
 
   const filteredJobSeekers = availableJobSeekers.filter(js =>
     js.name.toLowerCase().includes(searchJobSeeker.toLowerCase()) ||
-    js.email.toLowerCase().includes(searchJobSeeker.toLowerCase())
+    js.email?.toLowerCase().includes(searchJobSeeker.toLowerCase())
   )
 
-  const filteredJobPostings = availableJobPostings.filter(jp =>
-    jp.title.toLowerCase().includes(searchJobPosting.toLowerCase()) ||
-    jp.department?.toLowerCase().includes(searchJobPosting.toLowerCase()) ||
-    jp.company?.toLowerCase().includes(searchJobPosting.toLowerCase())
-  )
+  const filteredJobPostings = availableJobPostings.filter(jp => {
+    const companyName = typeof jp.company === 'string' 
+      ? jp.company 
+      : jp.company?.name || jp.companyName || ''
+    
+    return jp.title.toLowerCase().includes(searchJobPosting.toLowerCase()) ||
+      jp.department?.toLowerCase().includes(searchJobPosting.toLowerCase()) ||
+      companyName.toLowerCase().includes(searchJobPosting.toLowerCase())
+  })
 
   const handleSubmit = () => {
     if (selectedJobSeekerId && selectedJobPostingId) {
@@ -199,7 +203,9 @@ export function AgentRecommendationModal({
                       {selectedJobPosting.company && (
                         <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                           <Building className="w-4 h-4" />
-                          {selectedJobPosting.company}
+                          {typeof selectedJobPosting.company === 'string' 
+                            ? selectedJobPosting.company 
+                            : selectedJobPosting.company?.name || selectedJobPosting.companyName}
                         </p>
                       )}
                       <p className="text-sm text-gray-600 flex items-center gap-1">
@@ -235,7 +241,11 @@ export function AgentRecommendationModal({
                       >
                         <div className="font-medium text-gray-900">{jp.title}</div>
                         {jp.company && (
-                          <div className="text-sm text-gray-600">{jp.company}</div>
+                          <div className="text-sm text-gray-600">
+                            {typeof jp.company === 'string' 
+                              ? jp.company 
+                              : jp.company?.name || jp.companyName}
+                          </div>
                         )}
                         <div className="text-sm text-gray-600">{jp.location}</div>
                       </button>

@@ -89,7 +89,7 @@ export function JobSeekerDetail({
       app.jobSeekerId === jobSeeker.id && app.status === 'offered'
     ).length,
     hired: jobApplications.filter(app => 
-      app.jobSeekerId === jobSeeker.id && app.status === 'hired'
+      app.jobSeekerId === jobSeeker.id && app.status === 'accepted'
     ).length
   }
 
@@ -282,10 +282,10 @@ export function JobSeekerDetail({
                       </div>
                     </div>
                   )}
-                  {jobSeeker.desiredWorkLocation && (
+                  {jobSeeker.desiredLocation && (
                     <div>
                       <div className="text-sm text-gray-500">希望勤務地</div>
-                      <div className="font-medium">{jobSeeker.desiredWorkLocation.join(', ')}</div>
+                      <div className="font-medium">{jobSeeker.desiredLocation}</div>
                     </div>
                   )}
                   {jobSeeker.availableFrom && (
@@ -389,18 +389,18 @@ export function JobSeekerDetail({
                                 {job?.title || '求人タイトル不明'}
                               </h5>
                               <p className="text-sm text-gray-600 mt-1">
-                                {job?.company || '企業名不明'}
+                                {job?.company ? (typeof job.company === 'string' ? job.company : job.company.name) : (job?.companyName || '企業名不明')}
                               </p>
                               <div className="flex items-center gap-4 mt-2">
                                 <span className="text-xs text-gray-500">
                                   応募日: {new Date(app.appliedAt).toLocaleDateString('ja-JP')}
                                 </span>
                                 <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                  app.status === 'screening' ? 'bg-yellow-100 text-yellow-800' :
+                                  app.status === 'reviewing' ? 'bg-yellow-100 text-yellow-800' :
                                   app.status === 'interviewing' ? 'bg-purple-100 text-purple-800' :
                                   'bg-blue-100 text-blue-800'
                                 }`}>
-                                  {app.status === 'screening' ? '書類選考中' :
+                                  {app.status === 'reviewing' ? '審査中' :
                                    app.status === 'interviewing' ? '面接中' : '応募済み'}
                                 </span>
                               </div>
@@ -434,17 +434,17 @@ export function JobSeekerDetail({
                                   {job?.title || '求人タイトル不明'}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  {job?.company || '企業名不明'}
+                                  {job?.company ? (typeof job.company === 'string' ? job.company : job.company.name) : (job?.companyName || '企業名不明')}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                  app.status === 'hired' ? 'bg-green-100 text-green-800' :
+                                  app.status === 'accepted' ? 'bg-green-100 text-green-800' :
                                   app.status === 'rejected' ? 'bg-red-100 text-red-800' :
                                   app.status === 'withdrawn' ? 'bg-gray-100 text-gray-800' :
                                   'bg-blue-100 text-blue-800'
                                 }`}>
-                                  {app.status === 'hired' ? '採用' :
+                                  {app.status === 'accepted' ? '採用' :
                                    app.status === 'rejected' ? '不採用' :
                                    app.status === 'withdrawn' ? '辞退' :
                                    '選考中'}
@@ -616,7 +616,7 @@ export function JobSeekerDetail({
                         <tbody>
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium w-24">ふりがな</td>
-                            <td className="border border-gray-400 px-2 py-1 text-sm" colSpan={2}>{jobSeeker.nameReading || ''}</td>
+                            <td className="border border-gray-400 px-2 py-1 text-sm" colSpan={2}>{''}</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium">氏名</td>
@@ -633,8 +633,6 @@ export function JobSeekerDetail({
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium">現住所</td>
                             <td className="border border-gray-400 px-2 py-1 text-sm" colSpan={2}>
-                              〒 {jobSeeker.postalCode || '---'}
-                              <br />
                               {jobSeeker.address || ''}
                             </td>
                           </tr>
@@ -717,7 +715,7 @@ export function JobSeekerDetail({
                           jobSeeker.certifications.map((cert, index) => (
                             <tr key={index}>
                               <td className="border border-gray-400 px-2 py-1 text-sm text-center">-</td>
-                              <td className="border border-gray-400 px-2 py-1 text-sm">{cert.name || cert}</td>
+                              <td className="border border-gray-400 px-2 py-1 text-sm">{typeof cert === 'string' ? cert : cert.name}</td>
                             </tr>
                           ))
                         ) : (
@@ -734,7 +732,7 @@ export function JobSeekerDetail({
                   <div className="mb-6">
                     <h3 className="text-sm font-bold bg-gray-100 px-2 py-1 border border-gray-400">志望動機・自己PR</h3>
                     <div className="border border-gray-400 p-2 min-h-[100px]">
-                      <p className="text-sm">{jobSeeker.memo || '記載なし'}</p>
+                      <p className="text-sm">{'記載なし'}</p>
                     </div>
                   </div>
 
@@ -746,15 +744,21 @@ export function JobSeekerDetail({
                         <tbody>
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium w-24">希望職種</td>
-                            <td className="border border-gray-400 px-2 py-1 text-sm">{jobSeeker.desiredPosition || '-'}</td>
+                            <td className="border border-gray-400 px-2 py-1 text-sm">{jobSeeker.desiredPositions?.join(', ') || '-'}</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium">希望給与</td>
-                            <td className="border border-gray-400 px-2 py-1 text-sm">{jobSeeker.desiredSalary || '-'}</td>
+                            <td className="border border-gray-400 px-2 py-1 text-sm">
+                              {jobSeeker.desiredSalary 
+                                ? typeof jobSeeker.desiredSalary === 'string' 
+                                  ? jobSeeker.desiredSalary 
+                                  : `${jobSeeker.desiredSalary.min}万円 - ${jobSeeker.desiredSalary.max}万円`
+                                : '-'}
+                            </td>
                           </tr>
                           <tr>
                             <td className="border border-gray-400 bg-gray-100 px-2 py-1 text-sm font-medium">希望勤務地</td>
-                            <td className="border border-gray-400 px-2 py-1 text-sm">{jobSeeker.workLocation || '-'}</td>
+                            <td className="border border-gray-400 px-2 py-1 text-sm">{jobSeeker.desiredLocation || '-'}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -771,7 +775,7 @@ export function JobSeekerDetail({
                         {jobSeeker.education.map((edu, index) => (
                           <div key={index} className="flex justify-between border-b border-gray-200 pb-2">
                             <span className="text-sm">
-                              {edu.startDate} - {edu.endDate || '現在'}
+                              {new Date(edu.startDate).toLocaleDateString('ja-JP')} - {edu.endDate ? new Date(edu.endDate).toLocaleDateString('ja-JP') : '現在'}
                             </span>
                             <span className="text-sm font-medium">
                               {edu.school} {edu.degree}
@@ -793,7 +797,7 @@ export function JobSeekerDetail({
                         {jobSeeker.certifications.map((cert, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <Award className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm">{cert.name || cert}</span>
+                            <span className="text-sm">{typeof cert === 'string' ? cert : cert.name}</span>
                           </div>
                         ))}
                       </div>
@@ -807,7 +811,7 @@ export function JobSeekerDetail({
                         {jobSeeker.languages.map((lang, index) => (
                           <div key={index} className="flex items-center justify-between">
                             <span className="text-sm font-medium">{lang.name}</span>
-                            <span className="text-sm text-gray-600">{lang.level}</span>
+                            <span className="text-sm text-gray-600">{lang.proficiency}</span>
                           </div>
                         ))}
                       </div>
@@ -863,7 +867,7 @@ export function JobSeekerDetail({
                     <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-1 mb-3">職務要約</h2>
                     <div className="px-3">
                       <p className="text-sm leading-relaxed">
-                        {jobSeeker.experience || '経験年数'}の実務経験を有し、
+                        {jobSeeker.yearsOfExperience || '経験年数'}の実務経験を有し、
                         {jobSeeker.currentPosition}として{jobSeeker.currentCompany}に勤務。
                         主に{jobSeeker.skills?.slice(0, 3).join('、')}などのスキルを活用した業務に従事。
                       </p>
@@ -934,7 +938,7 @@ export function JobSeekerDetail({
                           <div key={index} className="border-l-4 border-gray-400 pl-4">
                             <div className="mb-2">
                               <span className="text-sm text-gray-600">
-                                {work.startDate} - {work.endDate || '現在'}
+                                {new Date(work.startDate).toLocaleDateString('ja-JP')} - {work.endDate ? new Date(work.endDate).toLocaleDateString('ja-JP') : '現在'}
                               </span>
                             </div>
                             <h3 className="font-bold text-base mb-1">{work.company}</h3>
@@ -957,7 +961,7 @@ export function JobSeekerDetail({
                     <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-1 mb-3">自己PR</h2>
                     <div className="px-3">
                       <p className="text-sm leading-relaxed">
-                        {jobSeeker.memo || `${jobSeeker.experience}の経験を活かし、貴社の事業に貢献したいと考えております。`}
+                        {`${jobSeeker.yearsOfExperience || ''}年の経験を活かし、貴社の事業に貢献したいと考えております。`}
                       </p>
                     </div>
                   </div>
@@ -970,15 +974,21 @@ export function JobSeekerDetail({
                         <tbody>
                           <tr className="border-b">
                             <td className="py-2 font-bold w-32">希望職種</td>
-                            <td className="py-2">{jobSeeker.desiredPosition || '-'}</td>
+                            <td className="py-2">{jobSeeker.desiredPositions?.join(', ') || '-'}</td>
                           </tr>
                           <tr className="border-b">
                             <td className="py-2 font-bold">希望年収</td>
-                            <td className="py-2">{jobSeeker.desiredSalary || '-'}</td>
+                            <td className="py-2">
+                              {jobSeeker.desiredSalary 
+                                ? typeof jobSeeker.desiredSalary === 'string' 
+                                  ? jobSeeker.desiredSalary 
+                                  : `${jobSeeker.desiredSalary.min}万円 - ${jobSeeker.desiredSalary.max}万円`
+                                : '-'}
+                            </td>
                           </tr>
                           <tr className="border-b">
                             <td className="py-2 font-bold">希望勤務地</td>
-                            <td className="py-2">{jobSeeker.workLocation || '-'}</td>
+                            <td className="py-2">{jobSeeker.desiredLocation || '-'}</td>
                           </tr>
                           <tr>
                             <td className="py-2 font-bold">転職可能時期</td>
@@ -994,9 +1004,9 @@ export function JobSeekerDetail({
                 <div className="space-y-6">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-semibold text-gray-900 mb-3">職務経歴</h4>
-                    {jobSeeker.workExperience && jobSeeker.workExperience.length > 0 ? (
+                    {jobSeeker.workHistory && jobSeeker.workHistory.length > 0 ? (
                       <div className="space-y-4">
-                        {jobSeeker.workExperience.map((exp, index) => (
+                        {jobSeeker.workHistory.map((exp, index) => (
                           <div key={index} className="border-l-4 border-green-500 pl-4">
                             <div className="flex justify-between items-start mb-2">
                               <div>
@@ -1004,7 +1014,7 @@ export function JobSeekerDetail({
                                 <div className="text-sm text-gray-600">{exp.position}</div>
                               </div>
                               <span className="text-sm text-gray-500">
-                                {exp.startDate} - {exp.endDate || '現在'}
+                                {new Date(exp.startDate).toLocaleDateString('ja-JP')} - {exp.endDate ? new Date(exp.endDate).toLocaleDateString('ja-JP') : '現在'}
                               </span>
                             </div>
                             {exp.description && (
@@ -1023,7 +1033,7 @@ export function JobSeekerDetail({
                             </div>
                             <span className="text-sm text-gray-500">現在</span>
                           </div>
-                          <p className="text-sm text-gray-700">経験: {jobSeeker.experience}</p>
+                          <p className="text-sm text-gray-700">経験: {jobSeeker.yearsOfExperience}年</p>
                         </div>
                       </div>
                     )}

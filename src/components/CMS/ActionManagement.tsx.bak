@@ -65,7 +65,7 @@ const mockActions: Action[] = [
     title: '履歴書確認・スクリーニング',
     status: 'pending',
     dueDate: new Date(),
-    assignee: 'self',
+    assignees: ['self'],
     jobSeekerAssignee: 'member-sato',
     notes: 'React/TypeScriptの経験を重点的に確認。過去のプロジェクト実績も評価',
     jobSeekerName: '田中 太郎',
@@ -78,7 +78,7 @@ const mockActions: Action[] = [
     title: '一次面接の日程調整',
     status: 'in-progress',
     dueDate: new Date(),
-    assignee: 'member-sato',
+    assignees: ['member-sato', 'self'],
     jobSeekerAssignee: 'member-tanaka',
     notes: '候補者の希望：月・水・金の14:00以降。企業側は来週で調整中',
     jobSeekerName: '鈴木 花子',
@@ -91,7 +91,7 @@ const mockActions: Action[] = [
     title: '面接フィードバック送信',
     status: 'pending',
     dueDate: new Date(),
-    assignee: 'self',
+    assignees: ['self', 'member-yamada'],
     jobSeekerAssignee: 'self',
     notes: '技術面は問題なし。カルチャーフィットについて追加情報を提供',
     jobSeekerName: '佐藤 一郎',
@@ -106,7 +106,7 @@ const mockActions: Action[] = [
     title: 'オファー条件の最終確認',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    assignee: 'company',
+    assignees: ['company', 'self'],
     jobSeekerAssignee: 'member-sato',
     notes: '年収レンジ：800-1000万円、RSU付与あり、リモート勤務可',
     jobSeekerName: '山田 美咲',
@@ -119,7 +119,7 @@ const mockActions: Action[] = [
     title: '候補者へ面接対策資料送付',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    assignee: 'self',
+    assignees: ['self', 'member-tanaka'],
     jobSeekerAssignee: 'member-yamada',
     notes: '企業の事業内容、技術スタック、面接官の情報をまとめて送付',
     jobSeekerName: '高橋 健太',
@@ -132,7 +132,7 @@ const mockActions: Action[] = [
     title: '職務経歴書の修正依頼',
     status: 'in-progress',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    assignee: 'candidate',
+    assignees: ['candidate'],
     jobSeekerAssignee: 'self',
     notes: '直近のプロジェクト成果を数値で追記してもらう',
     jobSeekerName: '渡辺 理沙',
@@ -147,7 +147,7 @@ const mockActions: Action[] = [
     title: '二次面接の実施',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 3)),
-    assignee: 'company',
+    assignees: ['company', 'self'],
     jobSeekerAssignee: 'member-sato',
     notes: '技術部門責任者との面談。システム設計に関する質問を準備',
     jobSeekerName: '中村 光一',
@@ -160,7 +160,7 @@ const mockActions: Action[] = [
     title: 'リファレンスチェック',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 5)),
-    assignee: 'self',
+    assignees: ['self'],
     jobSeekerAssignee: 'member-tanaka',
     notes: '前職の上司2名に連絡予定',
     jobSeekerName: '斉藤 翔',
@@ -173,7 +173,7 @@ const mockActions: Action[] = [
     title: '最終面接の準備',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 7)),
-    assignee: 'candidate',
+    assignees: ['candidate', 'self'],
     jobSeekerAssignee: 'member-yamada',
     notes: 'CEO面談に向けて、ビジョンマッチングの観点で準備',
     jobSeekerName: '木村 真理子',
@@ -188,7 +188,7 @@ const mockActions: Action[] = [
     title: 'オファー面談の実施',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 10)),
-    assignee: 'company',
+    assignees: ['company', 'candidate', 'self'],
     jobSeekerAssignee: 'self',
     notes: '条件面の最終調整。入社日の確認も含む',
     jobSeekerName: '加藤 健介',
@@ -201,7 +201,7 @@ const mockActions: Action[] = [
     title: '内定承諾書の送付',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 12)),
-    assignee: 'self',
+    assignees: ['self'],
     jobSeekerAssignee: 'member-sato',
     notes: '労働条件通知書と合わせて送付',
     jobSeekerName: '森田 優子',
@@ -214,7 +214,7 @@ const mockActions: Action[] = [
     title: '他社選考状況の確認',
     status: 'in-progress',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 4)),
-    assignee: 'self',
+    assignees: ['self'],
     jobSeekerAssignee: 'member-tanaka',
     notes: '3社並行で選考中。優先順位の確認が必要',
     jobSeekerName: '小林 達也',
@@ -229,7 +229,7 @@ const mockActions: Action[] = [
     title: '書類提出期限',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() - 2)),
-    assignee: 'candidate',
+    assignees: ['candidate'],
     jobSeekerAssignee: 'self',
     notes: '英文レジュメの提出待ち',
     jobSeekerName: '山口 健',
@@ -242,7 +242,7 @@ const mockActions: Action[] = [
     title: '面接結果の連絡',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() - 1)),
-    assignee: 'company',
+    assignees: ['company'],
     jobSeekerAssignee: 'member-yamada',
     notes: '企業から結果待ち。フォローアップが必要',
     jobSeekerName: '橋本 亮',
@@ -257,7 +257,7 @@ const mockActions: Action[] = [
     title: '年収交渉',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 14)),
-    assignee: 'member-yamada',
+    assignees: ['member-yamada', 'self'],
     jobSeekerAssignee: 'member-tanaka',
     notes: '希望年収と企業提示額に100万円の差。調整中',
     jobSeekerName: '前田 将太',
@@ -270,7 +270,7 @@ const mockActions: Action[] = [
     title: '入社後フォローアップ',
     status: 'pending',
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-    assignee: 'self',
+    assignees: ['self'],
     jobSeekerAssignee: 'member-yamada',
     notes: '入社1ヶ月後の定着確認。上司、本人両方にヒアリング',
     jobSeekerName: '岡田 みなみ',
@@ -359,7 +359,7 @@ export function ActionManagement() {
 
   // Handle action click to open selection detail
   const handleActionClick = (action: Action) => {
-    const selection = action.selectionId ? mockSelections[action.selectionId] : undefined
+    const selection = mockSelections[action.selectionId]
     if (selection) {
       // Create mock candidate data
       const mockCandidate = {
@@ -429,14 +429,14 @@ export function ActionManagement() {
   const filteredActions = mockActions.filter(action => {
     const matchesSearch = searchTerm === '' || 
       action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (action.jobSeekerName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (action.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      action.jobSeekerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      action.companyName.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesStatus = filterStatus === 'all' || action.status === filterStatus
     
     // Check action assignees filter (multiple selection)
     const matchesActionAssignees = filterActionAssignees.length === 0 || 
-      (action.assignee && filterActionAssignees.includes(action.assignee))
+      (action.assignees && action.assignees.some(a => filterActionAssignees.includes(a)))
     
     // Check job seeker assignee filter
     const matchesJobSeekerAssignee = filterJobSeekerAssignee === 'all' || 
@@ -637,7 +637,7 @@ export function ActionManagement() {
                               <span>{action.companyName}</span>
                             </div>
                             <div className="text-xs text-gray-500">
-                              アクション担当: {action.assignee ? getAssigneeLabel(action.assignee) : '-'}
+                              アクション担当: {action.assignees?.map(a => getAssigneeLabel(a)).join(', ')}
                             </div>
                           </div>
                         </div>

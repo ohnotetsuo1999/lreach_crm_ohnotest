@@ -71,7 +71,7 @@ export function AgentJobSeekerList({
 
   // Filter job seekers managed by current agent
   const agentJobSeekers = jobSeekers.filter(js => 
-    js.source === 'agency' || js.tags?.includes(`agent:${currentAgentId}`)
+    js.tags?.includes(`agent:${currentAgentId}`)
   )
 
   // Filtering
